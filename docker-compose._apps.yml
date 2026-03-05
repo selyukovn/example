@@ -1,0 +1,237 @@
+name: example
+
+# ----------------------------------------------------------------------------------------------------------------------
+#
+# Детально, но изолированно, контейнеры приложений описаны в соответствующих файлах.
+# Например, docker-compose._app_monitoring.yml.
+#
+# В этом файле все контейнеры приложений объединяются в единую готовую к эксплуатации систему.
+#
+# depends_on приводят к каскадному перестроению множества сервисов при изменении зависимого, что чаще не требуется.
+# Кроме того, depends_on создает последовательные цепочки запуска, что ощутимо замедляет старт проекта.
+# ----------------------------------------------------------------------------------------------------------------------
+
+networks:
+  admin-rproxy-network:           # `rproxy` --> `bff`
+  admin-internal-network:         # `bff` --> ...внутренние-сервисы... <--> ...внутренние-сервисы ...
+  admin-internal-storage-network: # `admin-storage-mysql-prometheus-exporter` и миграции --> `admin-storage-...`
+  monitoring-internal-network:    # ...внутренние-сервисы... <--> ...внутренние-сервисы ...
+  monitoring-logs-network:        # все экспортеры --> loki
+  monitoring-metrics-network:     # все экспортеры --> prometheus (см. monitoring/build/prometheus/prometheus.yml).
+
+services:
+  # --------------------------------------------------------------------------------------------------------------------
+  # ADMIN
+  # --------------------------------------------------------------------------------------------------------------------
+
+  # AUTH
+  # --------------------------------------------------------------------------------------------------------------------
+
+  admin-auth-grpc:
+    extends:
+      file: docker-compose._app_admin.yml
+      service: admin-auth-grpc
+    networks:
+      - admin-internal-network
+      - monitoring-metrics-network
+
+  admin-auth-sch:
+    extends:
+      file: docker-compose._app_admin.yml
+      service: admin-auth-sch
+    networks:
+      - admin-internal-network
+      - monitoring-metrics-network
+
+  admin-auth-logs-exporter:
+    extends:
+      file: docker-compose._app_admin.yml
+      service: admin-auth-logs-exporter
+    build:
+      args:
+        LOKI_BASEURL: "http://monitoring-loki:3100"
+    networks:
+      - monitoring-logs-network
+
+  # BFF
+  # --------------------------------------------------------------------------------------------------------------------
+
+  admin-bff-http:
+    extends:
+      file: docker-compose._app_admin.yml
+      service: admin-bff-http
+    networks:
+      - admin-rproxy-network
+      - admin-internal-network
+      - monitoring-metrics-network
+
+  admin-bff-logs-exporter:
+    extends:
+      file: docker-compose._app_admin.yml
+      service: admin-bff-logs-exporter
+    build:
+      args:
+        LOKI_BASEURL: "http://monitoring-loki:3100"
+    networks:
+      - monitoring-logs-network
+
+  # CFM
+  # --------------------------------------------------------------------------------------------------------------------
+
+  admin-cfm-grpc:
+    extends:
+      file: docker-compose._app_admin.yml
+      service: admin-cfm-grpc
+    networks:
+      - admin-internal-network
+      - monitoring-metrics-network
+
+  admin-cfm-sch:
+    extends:
+      file: docker-compose._app_admin.yml
+      service: admin-cfm-sch
+    networks:
+      - admin-internal-network
+      - monitoring-metrics-network
+
+  admin-cfm-logs-exporter:
+    extends:
+      file: docker-compose._app_admin.yml
+      service: admin-cfm-logs-exporter
+    build:
+      args:
+        LOKI_BASEURL: "http://monitoring-loki:3100"
+    networks:
+      - monitoring-logs-network
+
+  # RPROXY
+  # --------------------------------------------------------------------------------------------------------------------
+
+  admin-rproxy-server:
+    extends:
+      file: docker-compose._app_admin.yml
+      service: admin-rproxy-server
+    ports:
+      - ${DEPLOY_PUBLIC_PORT_ADMIN}:80
+    networks:
+      - admin-rproxy-network
+
+  admin-rproxy-logs-exporter:
+    extends:
+      file: docker-compose._app_admin.yml
+      service: admin-rproxy-logs-exporter
+    build:
+      args:
+        LOKI_BASEURL: "http://monitoring-loki:3100"
+    networks:
+      - monitoring-logs-network
+
+  admin-rproxy-metrics-exporter:
+    extends:
+      file: docker-compose._app_admin.yml
+      service: admin-rproxy-metrics-exporter
+    networks:
+      - monitoring-metrics-network
+
+  # STORAGE
+  # --------------------------------------------------------------------------------------------------------------------
+
+  admin-storage-mysql-master:
+    extends:
+      file: docker-compose._app_admin.yml
+      service: admin-storage-mysql-master
+    networks:
+      - admin-internal-network
+      - admin-internal-storage-network
+
+  admin-storage-mysql-replica:
+    extends:
+      file: docker-compose._app_admin.yml
+      service: admin-storage-mysql-replica
+    networks:
+      - admin-internal-network
+      - admin-internal-storage-network
+
+  admin-storage-mysql-prometheus-exporter:
+    extends:
+      file: docker-compose._app_admin.yml
+      service: admin-storage-mysql-prometheus-exporter
+    networks:
+      - admin-internal-storage-network
+      - monitoring-metrics-network
+
+  admin-storage-logs-exporter:
+    extends:
+      file: docker-compose._app_admin.yml
+      service: admin-storage-logs-exporter
+    build:
+      args:
+        LOKI_BASEURL: "http://monitoring-loki:3100"
+    networks:
+      - monitoring-logs-network
+
+  # --------------------------------------------------------------------------------------------------------------------
+  # MONITORING
+  # --------------------------------------------------------------------------------------------------------------------
+
+  monitoring-alertmanager:
+    extends:
+      file: docker-compose._app_monitoring.yml
+      service: monitoring-alertmanager
+    networks:
+      - monitoring-internal-network
+
+  monitoring-grafana:
+    extends:
+      file: docker-compose._app_monitoring.yml
+      service: monitoring-grafana
+    networks:
+      - monitoring-internal-network
+    ports:
+      - ${DEPLOY_PUBLIC_PORT_MONITORING}:3000
+
+  monitoring-loki:
+    extends:
+      file: docker-compose._app_monitoring.yml
+      service: monitoring-loki
+    networks:
+      - monitoring-logs-network
+      - monitoring-internal-network
+
+  monitoring-prometheus:
+    extends:
+      file: docker-compose._app_monitoring.yml
+      service: monitoring-prometheus
+    networks:
+      - monitoring-metrics-network
+      - monitoring-internal-network
+
+  # --------------------------------------------------------------------------------------------------------------------
+  # NODE
+  # --------------------------------------------------------------------------------------------------------------------
+
+  node-logrotate:
+    extends:
+      file: docker-compose._app_node.yml
+      service: node-logrotate
+
+  node-prometheus-exporter-proxy:
+    extends:
+      file: docker-compose._app_node.yml
+      service: node-prometheus-exporter-proxy
+    networks:
+      - monitoring-metrics-network
+
+  node-prometheus-exporter-local-pusher:
+    extends:
+      file: docker-compose._app_node.yml
+      service: node-prometheus-exporter-local-pusher
+    network_mode: host # !!!
+
+  node-prometheus-exporter-local-exporter:
+    extends:
+      file: docker-compose._app_node.yml
+      service: node-prometheus-exporter-local-exporter
+    network_mode: host # !!!
+
+  # --------------------------------------------------------------------------------------------------------------------

@@ -1,0 +1,58 @@
+name: example
+
+services:
+  monitoring-alertmanager:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: monitoring
+      dockerfile: build/alertmanager/Dockerfile
+    volumes:
+      - ./monitoring/state/alertmanager:/alertmanager
+    develop:
+      watch:
+        - action: rebuild
+          path: monitoring/build/alertmanager
+
+  # --------------------------------------------------------------------------------------------------------------------
+
+  monitoring-grafana:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: monitoring
+      dockerfile: build/grafana/Dockerfile
+    volumes:
+      - ./monitoring/state/grafana:/var/lib/grafana
+    develop:
+      watch:
+        - action: rebuild
+          path: monitoring/build/grafana
+
+  # --------------------------------------------------------------------------------------------------------------------
+
+  monitoring-loki:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: monitoring
+      dockerfile: build/loki/Dockerfile
+    volumes:
+      - ./monitoring/state/loki:/loki
+    develop:
+      watch:
+        - action: rebuild
+          path: monitoring/build/loki
+
+  # --------------------------------------------------------------------------------------------------------------------
+
+  monitoring-prometheus:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: monitoring
+      dockerfile: build/prometheus/Dockerfile
+    volumes:
+      - ./monitoring/state/prometheus:/prometheus
+    develop:
+      watch:
+        - action: rebuild
+          path: monitoring/build/prometheus
+
+  # --------------------------------------------------------------------------------------------------------------------

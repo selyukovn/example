@@ -1,0 +1,37 @@
+name: example
+
+# В develop:watch нельзя прописать go.mod и go.sum-файлы для отслеживания,
+# т.к. их собственные сервисы уже наблюдают за ними как за частью /app.
+# Watch не предназначен для наблюдения за одними и теми же файлами из разных сервисов,
+# это приводит к непредсказуемому поведению и ошибкам (например,
+# "... Error response from daemon: Conflict. The container name ... is already in use ...").
+#
+# Прописать зависимость в depends_on от go-сервисов означает впустую пересобирать sdk и все пакеты
+# после каждого изменения в зависимых сервисах (ребилд зависимости приводит к ребилду),
+# а не только после изменения файлов go.mod или go.sum.
+#
+# Поэтому на данный момент придется ребилдить этот сервис вручную.
+# К счастью, случается это редко и требует одного единственного клика по кнопке.
+
+services:
+  ide-go:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ../../admin/auth/app/go.mod:/ide/admin/auth/go.mod
+      - ../../admin/auth/app/go.sum:/ide/admin/auth/go.sum
+
+      - ../../admin/bff/app/go.mod:/ide/admin/bff/go.mod
+      - ../../admin/bff/app/go.sum:/ide/admin/bff/go.sum
+
+      - ../../admin/auth/app/go.mod:/ide/admin/cfm/go.mod
+      - ../../admin/auth/app/go.sum:/ide/admin/cfm/go.sum
+
+      - ./sdk:/ide/sdk
+      - ./path:/ide/path
+    develop:
+      watch:
+        - action: rebuild
+          path: Dockerfile

@@ -1,0 +1,36 @@
+// https://grafana.com/docs/alloy/latest/tutorials/send-logs-to-loki/
+// https://grafana.com/docs/alloy/latest/tutorials/logs-and-relabeling-basics/
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Target
+// ---------------------------------------------------------------------------------------------------------------------
+
+local.file_match "step_0_files" {
+  path_targets = [{"__path__" = "/input/access.loki.log"}, {"__path__" = "/input/error.log"}]
+  sync_period = "5s"
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Process
+// ---------------------------------------------------------------------------------------------------------------------
+
+loki.source.file "step_1_scrap" {
+  targets    = local.file_match.step_0_files.targets
+  forward_to = [loki.relabel.step_2_labels.receiver]
+}
+
+loki.relabel "step_2_labels" {
+  rule {
+    target_label = "job"
+    replacement = "admin-rproxy-server"
+  }
+  forward_to = [loki.write.step_3_push.receiver]
+}
+
+loki.write "step_3_push" {
+  endpoint {
+    url = "__LOKI_BASEURL__/loki/api/v1/push"
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------

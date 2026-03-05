@@ -1,0 +1,5 @@
+name: example
+
+include:
+  - docker-compose._apps.yml
+  - docker-compose._scripts.yml

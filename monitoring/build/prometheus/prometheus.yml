@@ -1,0 +1,127 @@
+# https://prometheus.io/docs/prometheus/3.5/configuration/configuration/
+
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  evaluation_interval: 15s
+
+  # Вместо std -- т.е. в логах контейнера записей уже не будет видно.
+  query_log_file: "/prometheus/query.log"
+  scrape_failure_log_file: "/prometheus/scrap_failure.log"
+
+# ...два типа правил, которые можно настроить и затем регулярно проверять: правила записи и правила оповещения.
+# Правила записи предварительно вычисляют часто необходимые или ресурсоемкие выражения
+# и сохраняют их результаты в виде нового набора временных рядов.
+# Правила оповещения позволяют определять условия оповещения на основе выражений Prometheus
+# и отправлять уведомления о срабатывании оповещений во внешний сервис.
+rule_files:
+  - "alerts.yml"
+  - "records.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: [ "monitoring-alertmanager:9093" ]
+
+# В терминологии Prometheus, конечная точка, с которой можно собирать данные,
+# называется instance, обычно соответствующим одному процессу.
+# Совокупность экземпляров с одинаковой целью,
+# например, процесс, реплицированный для масштабируемости или надежности, называется job.
+
+scrape_configs:
+  # --------------------------------------------------------------------------------------------------------------------
+  # ADMIN
+  # --------------------------------------------------------------------------------------------------------------------
+
+  # AUTH
+  # --------------------------------------------------------------------------------------------------------------------
+
+  - job_name: admin-auth-grpc
+    static_configs:
+      - targets: ["admin-auth-grpc:8080"]
+    metrics_path: "/prometheus-metrics"
+
+  - job_name: admin-auth-sch
+    static_configs:
+      - targets: ["admin-auth-sch:8080"]
+    metrics_path: "/prometheus-metrics"
+
+  # BFF
+  # --------------------------------------------------------------------------------------------------------------------
+
+  - job_name: admin-bff-http
+    static_configs:
+      - targets: ["admin-bff-http:8080"]
+    metrics_path: "/prometheus-metrics"
+
+  # CFM
+  # --------------------------------------------------------------------------------------------------------------------
+
+  - job_name: admin-cfm-grpc
+    static_configs:
+      - targets: ["admin-cfm-grpc:8080"]
+    metrics_path: "/prometheus-metrics"
+
+  - job_name: admin-cfm-sch
+    static_configs:
+      - targets: ["admin-cfm-sch:8080"]
+    metrics_path: "/prometheus-metrics"
+
+  # RPROXY
+  # --------------------------------------------------------------------------------------------------------------------
+
+  - job_name: admin-rproxy-server
+    static_configs:
+      - targets: ["admin-rproxy-metrics-exporter:4040"]
+
+  # STORAGE
+  # --------------------------------------------------------------------------------------------------------------------
+
+  - job_name: admin-storage-mysql-master
+    metrics_path: /probe
+    params:
+      target: [ admin-storage-mysql-master:3306 ]
+      auth_module: [ client.master ]
+    static_configs:
+      - targets: ["admin-storage-mysql-prometheus-exporter:9104"]
+
+  - job_name: admin-storage-mysql-replica
+    metrics_path: /probe
+    params:
+      target: [ admin-storage-mysql-replica:3306 ]
+      auth_module: [ client.replica ]
+    static_configs:
+      - targets: ["admin-storage-mysql-prometheus-exporter:9104"]
+
+  # --------------------------------------------------------------------------------------------------------------------
+  # NODE
+  # --------------------------------------------------------------------------------------------------------------------
+
+  - job_name: node
+    static_configs:
+      - targets: ["node-prometheus-exporter-proxy:9100"]
+
+  # --------------------------------------------------------------------------------------------------------------------
+  # MONITORING
+  # --------------------------------------------------------------------------------------------------------------------
+
+  # ALERTMANAGER
+  # --------------------------------------------------------------------------------------------------------------------
+
+  - job_name: monitoring-alertmanager
+    static_configs:
+      - targets: ['monitoring-alertmanager:9093']
+
+  # GRAFANA
+  # --------------------------------------------------------------------------------------------------------------------
+
+  - job_name: monitoring-grafana
+    static_configs:
+      - targets: ['monitoring-grafana:3000']
+
+  # PROMETHEUS
+  # --------------------------------------------------------------------------------------------------------------------
+
+  - job_name: monitoring-prometheus
+    static_configs:
+      - targets: ['localhost:9090']

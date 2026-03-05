@@ -1,0 +1,17 @@
+# https://github.com/martin-helmich/prometheus-nginxlog-exporter
+
+listen:
+  # Демон экспортера. Это скармливать prometheus'у.
+  port: 4040
+  metrics_endpoint: "/metrics"
+
+namespaces:
+  # В name нельзя использовать "admin-rproxy-server", потому что "-" является недопустимым символом.
+  - name: admin_rproxy_server
+
+    # cм. build/server/nginx.conf
+    format: '$time_local|||$remote_addr|||$remote_user|||$request|||$status|||$body_bytes_sent|||$http_referer|||$http_user_agent|||$request_length|||$request_time|||$upstream_addr|||$upstream_status|||$upstream_cache_status|||$upstream_connect_time|||$upstream_header_time|||$upstream_response_time'
+
+    source:
+      files:
+        - /input/access.prometheus.log

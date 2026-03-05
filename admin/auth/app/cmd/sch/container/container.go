@@ -1,0 +1,106 @@
+package container
+
+import (
+	"context"
+	"database/sql"
+	adapt_domain_event_storage "example/admin/auth/internal/adapt/domain/event_storage"
+	adapt_domain_session "example/admin/auth/internal/adapt/domain/session"
+	adapt_opera_components "example/admin/auth/internal/adapt/opera/components"
+	domain_event_storage "example/admin/auth/internal/domain/event_storage"
+	domain_session "example/admin/auth/internal/domain/session"
+	infra_logger "example/admin/auth/internal/infra/logger"
+	opera_domain_facades "example/admin/auth/internal/opera/domain_facades"
+	"example/admin/auth/internal/opera/use_cases/session_tick_time"
+	"fmt"
+	_ "github.com/go-sql-driver/mysql"
+	goroutiner "github.com/selyukovn/go-routiner"
+	"github.com/selyukovn/go-std"
+	"github.com/selyukovn/go-txr"
+	assert "github.com/selyukovn/go-wm-assert"
+	"io"
+	"time"
+)
+
+type Container struct {
+	Logger   *infra_logger.Logger
+	UseCases UseCases
+}
+
+type UseCases = struct {
+	SessionTickTime *session_tick_time.Command
+}
+
+func New(
+	logIo io.Writer,
+	isDebug bool,
+	sqlDb *sql.DB,
+	sqlDbFnIsDeadlockError func(error) bool,
+	sqlDbFnIsDuplicateKeyError func(error) bool,
+) *Container {
+	assert.NotNilDeepMust(logIo)
+	assert.NotNilDeepMust(logIo)
+	assert.NotNilDeepMust(sqlDb)
+	assert.NotNilDeepMust(sqlDbFnIsDeadlockError)
+	assert.NotNilDeepMust(sqlDbFnIsDuplicateKeyError)
+
+	// -----------------------------------------------------------------------------------------------------------------
+	// Infra
+	// -----------------------------------------------------------------------------------------------------------------
+
+	// logger
+	infraLogger := infra_logger.NewLogger(logIo, isDebug)
+
+	// -----------------------------------------------------------------------------------------------------------------
+	// Domain
+	// -----------------------------------------------------------------------------------------------------------------
+
+	// event storage
+	evStorage := domain_event_storage.NewStorage(
+		adapt_domain_event_storage.NewRepositoryImplSql(),
+	)
+
+	// session
+	sessIdGen := adapt_domain_session.NewIdGeneratorImplUniqueRandom()
+	sessFactory := domain_session.NewFactory(sessIdGen)
+	sessRepo := adapt_domain_session.NewRepositoryImplSql(sqlDbFnIsDuplicateKeyError)
+
+	// -----------------------------------------------------------------------------------------------------------------
+	// Opera
+	// -----------------------------------------------------------------------------------------------------------------
+
+	// txr
+	operaTxr := txr.NewTxrImplSql(sqlDb, 2, 50*time.Millisecond, sqlDbFnIsDeadlockError)
+
+	// logger
+	operaLogger := adapt_opera_components.NewLoggerImplInfraLogger(infraLogger)
+
+	// goroutiner
+	operaGrt := goroutiner.New(
+		goroutiner.MwPanicToError(func(panicValue any, debugStack []byte, ctx context.Context) error {
+			infraLogger.CtxPanicFf(ctx, panicValue, debugStack, "container.operaGrt.MwPanicToError")
+			// --
+			var err error
+			switch pv := panicValue.(type) {
+			case error:
+				err = fmt.Errorf("panic: %w; stack: %s", pv, string(debugStack))
+			case string, fmt.Stringer:
+				err = fmt.Errorf("panic: %q; stack: %s", pv, string(debugStack))
+			default:
+				err = fmt.Errorf("panic: %#v; stack: %s", pv, string(debugStack))
+			}
+			return std.WrapErrorToRuntime(err, "container.operaGrt", "MwPanicToError")
+		}),
+	)
+
+	// domain facades
+	sessDomFac := opera_domain_facades.NewSessionDomFac(operaTxr, evStorage, sessFactory, sessRepo)
+
+	// -----------------------------------------------------------------------------------------------------------------
+
+	return &Container{
+		Logger: infraLogger,
+		UseCases: UseCases{
+			SessionTickTime: session_tick_time.NewCommand(operaLogger, operaGrt, sessDomFac),
+		},
+	}
+}

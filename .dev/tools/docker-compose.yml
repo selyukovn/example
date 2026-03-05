@@ -1,0 +1,41 @@
+name: example
+
+x-prototypes:
+  dev-tools-go-build: &dev-tools-go-build
+    context: ./go
+    dockerfile: Dockerfile
+
+  dev-tools-develop: &dev-tools-go-develop
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    develop:
+      watch:
+        - action: rebuild
+          path: ./go/Dockerfile
+
+services:
+  dev-tools-admin-auth:
+    << : *dev-tools-go-develop
+    build:
+      << : *dev-tools-go-build
+      args:
+        GRPC_API_SERVICE_NAME: auth
+    volumes:
+      - ../../admin/auth/app:/app
+
+  dev-tools-admin-bff:
+    << : *dev-tools-go-develop
+    build:
+      << : *dev-tools-go-build
+      args:
+        GRPC_API_SERVICE_NAME: bff
+    volumes:
+      - ../../admin/bff/app:/app
+
+  dev-tools-admin-cfm:
+    << : *dev-tools-go-develop
+    build:
+      << : *dev-tools-go-build
+      args:
+        GRPC_API_SERVICE_NAME: cfm
+    volumes:
+      - ../../admin/cfm/app:/app

@@ -1,0 +1,76 @@
+name: example
+
+services:
+  # --------------------------------------------------------------------------------------------------------------------
+  # LOGROTATE
+  # --------------------------------------------------------------------------------------------------------------------
+
+  node-logrotate:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: node
+      dockerfile: build/logrotate/Dockerfile
+    volumes:
+      - ./node/state/logrotate:/logrotate/state.d
+      - ./admin/auth/state/grpc:/app/admin/auth/grpc
+      - ./admin/auth/state/sch:/app/admin/auth/sch
+      - ./admin/bff/state/http:/app/admin/bff/http
+      - ./admin/cfm/state/grpc:/app/admin/cfm/grpc
+      - ./admin/cfm/state/sch:/app/admin/cfm/sch
+      - ./admin/rproxy/state/server/logs:/app/admin/rproxy/server
+      - ./admin/storage/state/mysql:/app/admin/storage/mysql
+    develop:
+      watch:
+        - action: rebuild
+          path: node/build/logrotate
+
+  # --------------------------------------------------------------------------------------------------------------------
+  # PROMETHEUS-EXPORTER
+  # --------------------------------------------------------------------------------------------------------------------
+
+  node-prometheus-exporter-proxy:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: node
+      dockerfile: build/prometheus-exporter/proxy/Dockerfile
+    environment:
+      PORT_FOR_PROMETHEUS: 9100 # cм. monitoring/build/prometheus/prometheus.yml
+      PORT_FOR_PUSH_FROM_LOCALHOST: 9101
+      DEBUG: 0
+    ports:
+      - 127.0.0.1:${DEPLOY_LOCAL_PORT_NODE_EXPORTER_PROXY_PUSH}:9101
+    develop:
+      watch:
+        - action: rebuild
+          path: node/build/prometheus-exporter/proxy
+
+  node-prometheus-exporter-local-pusher:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: node
+      dockerfile: build/prometheus-exporter/local-pusher/Dockerfile
+    environment:
+      PORT_EXPORTER: ${DEPLOY_LOCAL_PORT_NODE_EXPORTER_EXPORTER}
+      PORT_PROXY_PUSH: ${DEPLOY_LOCAL_PORT_NODE_EXPORTER_PROXY_PUSH}
+      INTERVAL_SECONDS: 10
+      DEBUG: 0
+    network_mode: host # !!!
+    develop:
+      watch:
+        - action: rebuild
+          path: node/build/prometheus-exporter/local-pusher
+
+  node-prometheus-exporter-local-exporter:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: node
+      dockerfile: build/prometheus-exporter/local-exporter/Dockerfile
+    environment:
+      PORT: ${DEPLOY_LOCAL_PORT_NODE_EXPORTER_EXPORTER}
+    volumes:
+      - /:/host:ro,rslave
+    network_mode: host # !!!
+    pid: host # !!!
+    # develop.watch работать не будет, поскольку любые наблюдаемые файлы уже примонтированы к контейнеру в "/:/host"
+
+  # --------------------------------------------------------------------------------------------------------------------

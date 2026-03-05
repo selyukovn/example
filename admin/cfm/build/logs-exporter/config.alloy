@@ -1,0 +1,54 @@
+// https://grafana.com/docs/alloy/latest/tutorials/send-logs-to-loki/
+// https://grafana.com/docs/alloy/latest/tutorials/logs-and-relabeling-basics/
+
+// ---------------------------------------------------------------------------------------------------------------------
+// GRPC
+// ---------------------------------------------------------------------------------------------------------------------
+
+local.file_match "step_0_files_grpc" {
+  path_targets = [{"__path__" = "/input/grpc/app.log"}]
+  sync_period = "5s"
+}
+loki.source.file "step_1_scrap_grpc" {
+  targets    = local.file_match.step_0_files_grpc.targets
+  forward_to = [loki.relabel.step_2_labels_grpc.receiver]
+}
+loki.relabel "step_2_labels_grpc" {
+  rule {
+    target_label = "job"
+    replacement = "admin-cfm-grpc"
+  }
+  forward_to = [loki.write.step_3_push.receiver]
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// SCH
+// ---------------------------------------------------------------------------------------------------------------------
+
+local.file_match "step_0_files_sch" {
+  path_targets = [{"__path__" = "/input/sch/app.log"}]
+  sync_period = "5s"
+}
+loki.source.file "step_1_scrap_sch" {
+  targets    = local.file_match.step_0_files_sch.targets
+  forward_to = [loki.relabel.step_2_labels_sch.receiver]
+}
+loki.relabel "step_2_labels_sch" {
+  rule {
+    target_label = "job"
+    replacement = "admin-cfm-sch"
+  }
+  forward_to = [loki.write.step_3_push.receiver]
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// LOKI
+// ---------------------------------------------------------------------------------------------------------------------
+
+loki.write "step_3_push" {
+  endpoint {
+    url = "__LOKI_BASEURL__/loki/api/v1/push"
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------

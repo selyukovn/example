@@ -1,0 +1,179 @@
+syntax = "proto3";
+
+package admin_auth_v1;
+
+option go_package = "/pb";
+
+import "google/protobuf/timestamp.proto";
+
+// ---------------------------------------------------------------------------------------------------------------------
+// SERVICE
+// ---------------------------------------------------------------------------------------------------------------------
+
+service AuthService {
+  // Errors:
+  //   - INVALID_ARGUMENT
+  //   - NOT_FOUND -- аккаунт не найден
+  //   - FAILED_PRECONDITION:
+  //        - ErrorValidationDetail
+  //        - ErrorAccountAccessDeniedDetail
+  //   - INTERNAL
+  rpc SignInRequest(SignInRequestRequest) returns (SignInRequestResponse);
+
+  // Errors:
+  //    - INVALID_ARGUMENT
+  //    - NOT_FOUND -- sign-in не найден
+  //    - FAILED_PRECONDITION:
+  //        - ErrorValidationDetail
+  //        - ErrorAccountAccessDeniedDetail
+  //        - ErrorSignInFinishedDetail
+  //        - ErrorNoAttemptsLeftDetail
+  //        - ErrorRequestsFrequencyDetail
+  //        - ErrorUnprocessableDetail -- сессия уже существует
+  //    - INTERNAL
+  rpc SignInRequestRetry(SignInRequestRetryRequest) returns (SignInRequestRetryResponse);
+
+  // Errors:
+  //    - INVALID_ARGUMENT
+  //    - NOT_FOUND -- sign-in не найден
+  //    - FAILED_PRECONDITION:
+  //        - ErrorValidationDetail
+  //        - ErrorAccountAccessDeniedDetail
+  //        - ErrorSignInFinishedDetail
+  //        - ErrorUnprocessableDetail -- сессия уже существует
+  //    - INTERNAL
+  rpc SignInConfirm(SignInConfirmRequest) returns (SignInConfirmResponse);
+
+  // Errors:
+  //    - INVALID_ARGUMENT
+  //    - NOT_FOUND -- сессия не найдена
+  //    - FAILED_PRECONDITION:
+  //        - ErrorValidationDetail
+  //        - ErrorAccountAccessDeniedDetail
+  //        - ErrorAlreadyDoneDetail -- сессия уже закрыта
+  //    - INTERNAL
+  rpc SignOut(SignOutRequest) returns (SignOutResponse);
+
+  // Errors:
+  //    - INVALID_ARGUMENT
+  //    - NOT_FOUND -- сессия не найдена
+  //    - FAILED_PRECONDITION:
+  //        - ErrorValidationDetail
+  //        - ErrorAccountAccessDeniedDetail
+  //        - ErrorSessionClosedDetail
+  //    - INTERNAL
+  rpc CheckSession(CheckSessionRequest) returns (CheckSessionResponse);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// ERRORS
+// ---------------------------------------------------------------------------------------------------------------------
+
+message ErrorValidationDetail {
+  string field = 1;
+  string message = 2;
+}
+
+message ErrorAccountAccessDeniedDetail {}
+
+message ErrorSignInFinishedDetail {
+  bool isPassed = 1;
+  bool isFailed = 2;
+  bool isExpired = 3;
+}
+
+message ErrorNoAttemptsLeftDetail {}
+
+message ErrorRequestsFrequencyDetail {
+  google.protobuf.Timestamp canReqAfter = 1;
+  int32 canReqAttemptsLeft = 2;
+}
+
+message ErrorUnprocessableDetail {}
+message ErrorAlreadyDoneDetail {}
+
+message ErrorSessionClosedDetail {
+  bool isExpired = 1;
+  google.protobuf.Timestamp closedAt = 2;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// SIGN IN - REQUEST
+// ---------------------------------------------------------------------------------------------------------------------
+
+message SignInRequestRequest {
+  string fromIp = 1;
+  string fromUserAgent = 2;
+  string email = 3;
+}
+
+message SignInRequestResponse {
+  string signInId = 1;
+  int32 retriesLeft = 2;
+  google.protobuf.Timestamp canRetryAt = 3;
+  google.protobuf.Timestamp expireAt = 4;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// SIGN IN - REQUEST RETRY
+// ---------------------------------------------------------------------------------------------------------------------
+
+message SignInRequestRetryRequest {
+  string fromIp = 1;
+  string fromUserAgent = 2;
+  string signInId = 3;
+}
+
+message SignInRequestRetryResponse {
+  string signInId = 1;
+  int32 retriesLeft = 2;
+  google.protobuf.Timestamp canRetryAt = 3;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// SIGN IN - CONFIRM
+// ---------------------------------------------------------------------------------------------------------------------
+
+message SignInConfirmRequest {
+  string fromIp = 1;
+  string fromUserAgent = 2;
+  string signInId = 3;
+  string code = 4;
+}
+
+message SignInConfirmResponse {
+  bool isPassed = 1;
+  int32 attemptsLeft = 2;
+  string sessionId = 3;
+  google.protobuf.Timestamp sessionExpireAt = 4;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// SIGN OUT
+// ---------------------------------------------------------------------------------------------------------------------
+
+message SignOutRequest {
+  string fromIp = 1;
+  string fromUserAgent = 2;
+  string sessionId = 3;
+}
+
+message SignOutResponse {
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// CHECK SESSION
+// ---------------------------------------------------------------------------------------------------------------------
+
+message CheckSessionRequest {
+  string fromIp = 1;
+  string fromUserAgent = 2;
+  string sessionId = 3;
+}
+
+message CheckSessionResponse {
+  string accountId = 1;
+  google.protobuf.Timestamp sessionExpireAt = 4;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------

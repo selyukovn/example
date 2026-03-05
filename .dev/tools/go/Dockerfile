@@ -1,0 +1,37 @@
+FROM golang:1.22.0-alpine
+
+ARG GRPC_API_SERVICE_NAME
+
+# <grpc>
+WORKDIR /protoc
+RUN apk add curl && \
+    curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v30.2/protoc-30.2-linux-x86_64.zip && \
+    unzip protoc-30.2-linux-x86_64.zip && rm protoc-30.2-linux-x86_64.zip && \
+    # плагины protoc'а для генерации кода на Go
+    go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.7 && \
+    go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1 && \
+    # полезные proto-файлы
+    curl -LO https://github.com/googleapis/googleapis/archive/refs/tags/common-protos-1_3_1.zip && \
+    unzip common-protos-1_3_1.zip && rm common-protos-1_3_1.zip && \
+    mv googleapis-common-protos-1_3_1/google/* include/google/ && rm -r googleapis-common-protos-1_3_1
+ENV PATH="${PATH}:/protoc/bin"
+# Скрипт для удобства запуска генерации
+RUN echo "protoc \\" > /protoc/generate_grpc_api.sh && \
+    echo "--go_out=/app/cmd/grpc \\" >> /protoc/generate_grpc_api.sh && \
+    echo "--go-grpc_out=/app/cmd/grpc \\" >> /protoc/generate_grpc_api.sh && \
+    echo "--proto_path=/app/cmd/grpc/pb \\" >> /protoc/generate_grpc_api.sh && \
+    echo "/app/cmd/grpc/pb/${GRPC_API_SERVICE_NAME}.proto" >> /protoc/generate_grpc_api.sh && \
+    chmod +x /protoc/generate_grpc_api.sh
+# </grpc>
+
+WORKDIR /app
+VOLUME /app
+
+# Игнорируем предупреждение "JSONArgsRecommended",
+# т.к. CMD требуется прописать не по форме, а корректная обработка сигналов ОС в данном случае неважна.
+# https://docs.docker.com/reference/build-checks/json-args-recommended/#explicitly-specify-the-shell
+SHELL ["/bin/sh", "-c"]
+
+CMD echo "Готово! Жду -- подключайтесь..." \
+    # Чтобы контейнер был всегда запущен -- для предотвращения перезапуска при watch-ребилде любого другого контейнера.
+    && touch /tmp/tail && tail -F /tmp/tail > /dev/null

@@ -1,0 +1,16 @@
+# ======================================================================================================================
+# MASTER
+# ======================================================================================================================
+
+[mysqld]
+
+# https://dev.mysql.com/doc/refman/8.4/en/innodb-parameters.html#sysvar_innodb_flush_log_at_trx_commit
+innodb_flush_log_at_trx_commit=1
+
+# https://dev.mysql.com/doc/refman/8.4/en/replication-options-binary-log.html#sysvar_sync_binlog
+sync_binlog=1
+
+# Запретить UPDATE / DELETE без WHERE или LIMIT
+# Поскольку это переменная, а не параметр, нужно использовать init-connect -- будет выполняться для каждого соединения.
+# Но для root'а это будет проигнорировано из соображений доступности.
+init-connect="SET sql_safe_updates=1"

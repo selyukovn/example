@@ -1,0 +1,127 @@
+package tick_time
+
+import (
+	"context"
+	"errors"
+	"example/admin/cfm/internal/domain/cfm"
+	"example/admin/cfm/internal/opera/components"
+	"example/admin/cfm/internal/opera/domain_facades"
+	"fmt"
+	goroutiner "github.com/selyukovn/go-routiner"
+	"github.com/selyukovn/go-std"
+	assert "github.com/selyukovn/go-wm-assert"
+	"strconv"
+)
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Struct
+// ---------------------------------------------------------------------------------------------------------------------
+
+type Command struct {
+	logger    components.LoggerInterface
+	grt       *goroutiner.Goroutiner
+	cfmDomFac *domain_facades.CfmDomFac
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Create
+// ---------------------------------------------------------------------------------------------------------------------
+
+// NewCommand
+//
+// Паникует при нулевых аргументах.
+func NewCommand(
+	logger components.LoggerInterface,
+	grt *goroutiner.Goroutiner,
+	cfmDomFac *domain_facades.CfmDomFac,
+) *Command {
+	assert.NotNilDeepMust(logger)
+	assert.NotNilDeepMust(grt)
+	assert.NotNilDeepMust(cfmDomFac)
+
+	return &Command{
+		logger:    logger,
+		grt:       grt,
+		cfmDomFac: cfmDomFac,
+	}
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Actions
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Execute
+//
+// Паникует при нулевых аргументах.
+//
+// Ошибки:
+//   - std.ErrorRuntime
+func (c *Command) Execute(args Args) error {
+	assert.FalseMust(args.IsNil())
+
+	ctx := args.Ctx()
+	limit := args.Limit()
+
+	// --
+
+	// Находим конфирмации на тик
+	cfmIds, err := c.cfmDomFac.GetIdsGoingToExpire(ctx, limit)
+	switch err.(type) {
+	case nil:
+	case std.ErrorRuntime:
+		return std.WrapErrorToRuntime(err, c, "Execute")
+	default:
+		panic(err)
+	}
+	c.logger.InfoFf(ctx, "Конфирмации: %v", cfmIds)
+
+	cfmIdsCount := len(cfmIds)
+	if cfmIdsCount == 0 {
+		return nil
+	}
+
+	// --
+
+	workersCount := cfmIdsCount/10 + std.Ternary[int](cfmIdsCount%10 > 0, 1, 0)
+	errs := c.grt.
+		Batch(ctx).
+		AddRange(workersCount, func(i int) (goroutiner.Goroutine, []goroutiner.Middleware) {
+			from := i * 10
+			to := min(from+10, cfmIdsCount)
+			wCfmIds := cfmIds[from:to]
+			c.logger.DebugFf(ctx, "Конфирмации воркера #%d: %v", i, wCfmIds)
+			return func(ctx context.Context) error {
+				ctx = c.logger.AddExtraAttrToCtx(ctx, "worker", strconv.Itoa(i))
+				return errors.Join(c.executeWorker(ctx, wCfmIds)...)
+			}, nil
+		}).
+		Wait()
+
+	if err = errors.Join(errs...); err != nil {
+		err = std.WrapErrorToRuntime(err, c, "Execute")
+		c.logger.ErrorFf(ctx, "Ошибки: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func (c *Command) executeWorker(ctx context.Context, wCfmIds []cfm.Id) []error {
+	errs := make([]error, 0)
+	for _, cfmId := range wCfmIds {
+		err := c.cfmDomFac.TickTime(ctx, cfmId)
+		switch err.(type) {
+		case nil:
+		case std.ErrorNotFound, cfm.ErrorFinished, std.ErrorAlreadyDone, std.ErrorRuntime:
+			// NotFound -- тоже баг: id есть, а конфирмации нет.
+			// Closed -- тоже баг: нашли как незавершенную, а она завершена.
+			// AlreadyDone -- тоже баг: нашли как протухшую незавершенную, а делать с ней нечего.
+			errs = append(errs, std.WrapErrorToRuntime(err, c, "Execute", fmt.Sprintf("cfmId: %q", cfmId)))
+		default:
+			panic(err)
+		}
+	}
+	return errs
+}
+
+// ---------------------------------------------------------------------------------------------------------------------

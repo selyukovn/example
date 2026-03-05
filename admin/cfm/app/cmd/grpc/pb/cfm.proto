@@ -1,0 +1,111 @@
+syntax = "proto3";
+
+package admin_cfm_v1;
+
+option go_package = "/pb";
+
+import "google/protobuf/timestamp.proto";
+
+// ---------------------------------------------------------------------------------------------------------------------
+// SERVER
+// ---------------------------------------------------------------------------------------------------------------------
+
+service CfmService {
+  // Errors:
+  //   - INVALID_ARGUMENT
+  //   - INTERNAL
+  rpc CreateForEmail(CreateForEmailRequest) returns (CreateForEmailResponse);
+
+  // Errors:
+  //   - INVALID_ARGUMENT
+  //   - NOT_FOUND
+  //   - FAILED_PRECONDITION:
+  //       - ErrorFinishedDetail
+  //       - ErrorNoAttemptsLeftDetail
+  //       - ErrorRequestsFrequencyDetail
+  //   - INTERNAL
+  rpc Request(RequestRequest) returns (RequestResponse);
+
+  // Errors:
+  //   - INVALID_ARGUMENT
+  //   - NOT_FOUND
+  //   - FAILED_PRECONDITION:
+  //       - ErrorFinishedDetail
+  //       - ErrorNotRequestedDetail
+  //   - INTERNAL
+  rpc Confirm(ConfirmRequest) returns (ConfirmResponse);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// ERRORS
+// ---------------------------------------------------------------------------------------------------------------------
+
+message ErrorFinishedDetail {
+  string cfmId = 1;
+  google.protobuf.Timestamp finishedAt = 2;
+  bool isAsExpired = 3;
+  bool isAsFailed = 4;
+  bool isAsPassed = 5;
+}
+
+message ErrorNoAttemptsLeftDetail {
+  string cfmId = 1;
+}
+
+message ErrorRequestsFrequencyDetail {
+  string cfmId = 1;
+  uint32 canReqAttemptsLeft = 2;
+  google.protobuf.Timestamp canReqAfter = 3;
+}
+
+message ErrorNotRequestedDetail {
+  string cfmId = 1;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// CREATE FOR EMAIL
+// ---------------------------------------------------------------------------------------------------------------------
+
+message CreateForEmailRequest {
+  string email = 1;
+}
+
+message CreateForEmailResponse {
+  string email = 1;
+  string cfmId = 2;
+  google.protobuf.Timestamp expireAt = 3;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// REQUEST
+// ---------------------------------------------------------------------------------------------------------------------
+
+message RequestRequest {
+  string cfmId = 1;
+}
+
+message RequestResponse {
+  string cfmId = 1;
+  bool canReqAgain = 2;
+  uint32 canReqAttemptsLeft = 3;
+  google.protobuf.Timestamp canReqAfter = 4;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// CONFIRM
+// ---------------------------------------------------------------------------------------------------------------------
+
+message ConfirmRequest {
+  string cfmId = 1;
+  string code = 2;
+}
+
+message ConfirmResponse {
+  string cfmId = 1;
+  google.protobuf.Timestamp finishedAt = 2;
+  bool isFinishedAsFailed = 3;
+  bool isFinishedAsPassed = 4;
+  uint32 failsLeft = 5;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------

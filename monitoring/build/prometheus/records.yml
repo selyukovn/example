@@ -1,0 +1,13 @@
+# Правила записи и оповещения находятся в группе правил.
+# Правила внутри группы выполняются последовательно через равные промежутки времени с одинаковым временем оценки.
+
+groups:
+  # Пример из туториала.
+  # ... посекундной скорости процессорного времени (node_cpu_seconds_total),
+  # усредненной по всем процессорам для каждого экземпляра (с сохранением измерений job, instanceи mode),
+  # измеренной за 5-минутный интервал.
+  - name: cpu-node
+    rules:
+      # новую метрику с именем job_instance_mode:node_cpu_seconds:avg_rate5m
+      - record: job_instance_mode:node_cpu_seconds:avg_rate5m
+        expr: avg by (job, instance, mode) (rate(node_cpu_seconds_total[5m]))

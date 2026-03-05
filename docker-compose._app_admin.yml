@@ -1,0 +1,302 @@
+name: example
+
+services:
+  # --------------------------------------------------------------------------------------------------------------------
+  # AUTH
+  # --------------------------------------------------------------------------------------------------------------------
+
+  admin-auth-grpc:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: admin/auth
+      dockerfile: build/grpc/Dockerfile
+    environment:
+      MYSQL_HOST_MASTER: "admin-storage-mysql-master"
+      MYSQL_HOST_REPLICA: "admin-storage-mysql-replica"
+      MYSQL_USER: ${ADMIN_STORAGE_MYSQL_CLIENT_APP_USER}
+      MYSQL_PASSWORD: ${ADMIN_STORAGE_MYSQL_CLIENT_APP_PASSWORD}
+      MYSQL_DB: ${ADMIN_STORAGE_MYSQL_DB_AUTH}
+      API_GRPC_APIKEY: ${ADMIN_AUTH_API_GRPC_APIKEY}
+      SERVICE_CFM_API_GRPC_BASEURL: "admin-cfm-grpc:50051"
+      SERVICE_CFM_API_GRPC_APIKEY: ${ADMIN_CFM_API_GRPC_APIKEY}
+    volumes:
+      - ./admin/auth/state/grpc:/state
+    develop:
+      watch:
+        - action: rebuild
+          path: admin/auth/app
+        - action: rebuild
+          path: admin/auth/build/grpc
+
+  # --------------------------------------------------------------------------------------------------------------------
+
+  admin-auth-sch:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: admin/auth
+      dockerfile: build/sch/Dockerfile
+    environment:
+      MYSQL_HOST_MASTER: "admin-storage-mysql-master"
+      MYSQL_HOST_REPLICA: "admin-storage-mysql-replica"
+      MYSQL_USER: ${ADMIN_STORAGE_MYSQL_CLIENT_APP_USER}
+      MYSQL_PASSWORD: ${ADMIN_STORAGE_MYSQL_CLIENT_APP_PASSWORD}
+      MYSQL_DB: ${ADMIN_STORAGE_MYSQL_DB_AUTH}
+    volumes:
+      - ./admin/auth/state/sch:/state
+    develop:
+      watch:
+        - action: rebuild
+          path: admin/auth/app
+        - action: rebuild
+          path: admin/auth/build/sch
+
+  # --------------------------------------------------------------------------------------------------------------------
+
+  admin-auth-logs-exporter:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: admin/auth
+      dockerfile: build/logs-exporter/Dockerfile
+    volumes:
+      - ./admin/auth/state/logs-exporter:/state
+      - ./admin/auth/state/grpc:/input/grpc
+      - ./admin/auth/state/sch:/input/sch
+    develop:
+      watch:
+        - action: rebuild
+          path: admin/auth/build/logs-exporter
+
+  # --------------------------------------------------------------------------------------------------------------------
+  # BFF
+  # --------------------------------------------------------------------------------------------------------------------
+
+  admin-bff-http:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: admin/bff
+      dockerfile: build/http/Dockerfile
+    environment:
+      APP_NAME: ${DEPLOY_ADMIN_APP_NAME}
+      BASE_URL: ${DEPLOY_ADMIN_BASE_URL}
+      SESSION_COOKIE_NAME: ${ADMIN_BFF_SESSION_COOKIE_NAME}
+      SERVICE_AUTH_API_GRPC_BASEURL: "admin-auth-grpc:50051"
+      SERVICE_AUTH_API_GRPC_APIKEY: ${ADMIN_AUTH_API_GRPC_APIKEY}
+    volumes:
+      - ./admin/bff/state/http:/state
+    develop:
+      watch:
+        - action: rebuild
+          path: admin/bff/app
+        - action: rebuild
+          path: admin/bff/build/http
+
+  # --------------------------------------------------------------------------------------------------------------------
+
+  admin-bff-logs-exporter:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: admin/bff
+      dockerfile: build/logs-exporter/Dockerfile
+    volumes:
+      - ./admin/bff/state/logs-exporter:/state
+      - ./admin/bff/state/http:/input
+    develop:
+      watch:
+        - action: rebuild
+          path: admin/bff/build/logs-exporter
+
+  # --------------------------------------------------------------------------------------------------------------------
+  # CFM
+  # --------------------------------------------------------------------------------------------------------------------
+
+  admin-cfm-grpc:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: admin/cfm
+      dockerfile: build/grpc/Dockerfile
+    environment:
+      MYSQL_HOST: "admin-storage-mysql-master"
+      MYSQL_USER: ${ADMIN_STORAGE_MYSQL_CLIENT_APP_USER}
+      MYSQL_PASSWORD: ${ADMIN_STORAGE_MYSQL_CLIENT_APP_PASSWORD}
+      MYSQL_DB: ${ADMIN_STORAGE_MYSQL_DB_CFM}
+      API_GRPC_APIKEY: ${ADMIN_CFM_API_GRPC_APIKEY}
+    volumes:
+      - ./admin/cfm/state/grpc:/state
+    develop:
+      watch:
+        - action: rebuild
+          path: admin/cfm/app
+        - action: rebuild
+          path: admin/cfm/build/grpc
+
+  # --------------------------------------------------------------------------------------------------------------------
+
+  admin-cfm-sch:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: admin/cfm
+      dockerfile: build/sch/Dockerfile
+    environment:
+      MYSQL_HOST: "admin-storage-mysql-master"
+      MYSQL_USER: ${ADMIN_STORAGE_MYSQL_CLIENT_APP_USER}
+      MYSQL_PASSWORD: ${ADMIN_STORAGE_MYSQL_CLIENT_APP_PASSWORD}
+      MYSQL_DB: ${ADMIN_STORAGE_MYSQL_DB_CFM}
+      API_GRPC_APIKEY: ${ADMIN_CFM_API_GRPC_APIKEY}
+    volumes:
+      - ./admin/cfm/state/sch:/state
+    develop:
+      watch:
+        - action: rebuild
+          path: admin/cfm/app
+        - action: rebuild
+          path: admin/cfm/build/sch
+
+  # --------------------------------------------------------------------------------------------------------------------
+
+  admin-cfm-logs-exporter:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: admin/cfm
+      dockerfile: build/logs-exporter/Dockerfile
+    volumes:
+      - ./admin/cfm/state/logs-exporter:/state
+      - ./admin/cfm/state/grpc:/input/grpc
+      - ./admin/cfm/state/sch:/input/sch
+    develop:
+      watch:
+        - action: rebuild
+          path: admin/cfm/build/logs-exporter
+
+  # --------------------------------------------------------------------------------------------------------------------
+  # RPROXY
+  # --------------------------------------------------------------------------------------------------------------------
+
+  admin-rproxy-server:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: admin/rproxy
+      dockerfile: build/server/Dockerfile
+      args:
+        BFF_PROXY_PASS: "http://admin-bff-http:80"
+    volumes:
+      - ./admin/rproxy/state/server/cache:/state/cache
+      - ./admin/rproxy/state/server/logs:/state/logs
+      - ./admin/rproxy/state/server/run:/state/run
+    develop:
+      watch:
+        - action: rebuild
+          path: admin/rproxy/app
+        - action: rebuild
+          path: admin/rproxy/build/server
+
+  # --------------------------------------------------------------------------------------------------------------------
+
+  admin-rproxy-metrics-exporter:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: admin/rproxy
+      dockerfile: build/metrics-exporter/Dockerfile
+    volumes:
+      - ./admin/rproxy/state/server/logs:/input
+    develop:
+      watch:
+        - action: rebuild
+          path: admin/rproxy/build/metrics-exporter
+
+  # --------------------------------------------------------------------------------------------------------------------
+
+  admin-rproxy-logs-exporter:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: admin/rproxy
+      dockerfile: build/logs-exporter/Dockerfile
+    volumes:
+      - ./admin/rproxy/state/logs-exporter:/state
+      - ./admin/rproxy/state/server/logs:/input
+    develop:
+      watch:
+        - action: rebuild
+          path: admin/rproxy/build/logs-exporter
+
+  # --------------------------------------------------------------------------------------------------------------------
+  # STORAGE
+  # --------------------------------------------------------------------------------------------------------------------
+
+  admin-storage-mysql-master:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: admin/storage
+      dockerfile: build/mysql/Dockerfile
+      args:
+        INITIAL_ROOT_PASSWORD: "initial_root_password"
+        SERVER_TYPE: master
+        SERVER_ID: 1
+    volumes:
+      - ./admin/storage/state/mysql/master:/var/lib/mysql
+    develop:
+      watch:
+        - action: rebuild
+          path: admin/storage/build/mysql/master/custom.cnf
+        - action: rebuild
+          path: admin/storage/build/mysql/common.cnf
+        - action: rebuild
+          path: admin/storage/build/mysql/Dockerfile
+        - action: rebuild
+          path: admin/storage/build/mysql/healthcheck.sh
+
+  # --------------------------------------------------------------------------------------------------------------------
+
+  admin-storage-mysql-replica:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: admin/storage
+      dockerfile: build/mysql/Dockerfile
+      args:
+        INITIAL_ROOT_PASSWORD: "initial_root_password"
+        SERVER_TYPE: replica
+        SERVER_ID: 2
+        EXTRA_REPLICA_SOURCE_HOST: "admin-storage-mysql-master"
+    volumes:
+      - ./admin/storage/state/mysql/replica:/var/lib/mysql
+    develop:
+      watch:
+        - action: rebuild
+          path: admin/storage/build/mysql/replica/custom.cnf
+        - action: rebuild
+          path: admin/storage/build/mysql/common.cnf
+        - action: rebuild
+          path: admin/storage/build/mysql/Dockerfile
+        - action: rebuild
+          path: admin/storage/build/mysql/healthcheck.sh
+
+  # --------------------------------------------------------------------------------------------------------------------
+
+  admin-storage-mysql-prometheus-exporter:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: admin/storage
+      dockerfile: build/mysql-prometheus-exporter/Dockerfile
+      args:
+        MYSQL_USER: ${ADMIN_STORAGE_MYSQL_CLIENT_PROMETHEUS_EXPORTER_USER}
+        MYSQL_PASSWORD: ${ADMIN_STORAGE_MYSQL_CLIENT_PROMETHEUS_EXPORTER_PASSWORD}
+    develop:
+      watch:
+        - action: rebuild
+          path: admin/storage/build/mysql-prometheus-exporter
+
+  # --------------------------------------------------------------------------------------------------------------------
+
+  admin-storage-logs-exporter:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: admin/storage
+      dockerfile: build/logs-exporter/Dockerfile
+    volumes:
+      - ./admin/storage/state/logs-exporter:/state
+      - ./admin/storage/state/mysql:/input
+    develop:
+      watch:
+        - action: rebuild
+          path: admin/storage/build/logs-exporter
+
+  # --------------------------------------------------------------------------------------------------------------------

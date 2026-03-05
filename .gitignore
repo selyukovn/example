@@ -1,0 +1,5 @@
+.idea
+
+# local overrides
+.env
+docker-compose.override.yml

@@ -1,0 +1,134 @@
+// https://grafana.com/docs/alloy/latest/tutorials/send-logs-to-loki/
+// https://grafana.com/docs/alloy/latest/tutorials/logs-and-relabeling-basics/
+
+// ---------------------------------------------------------------------------------------------------------------------
+// MASTER - ERROR
+// ---------------------------------------------------------------------------------------------------------------------
+
+local.file_match "step_0_files_master_error" {
+  path_targets = [{"__path__" = "/input/master/log.error"}]
+  sync_period = "5s"
+}
+loki.source.file "step_1_scrap_master_error" {
+  targets    = local.file_match.step_0_files_master_error.targets
+  forward_to = [loki.relabel.step_2_labels_master_error.receiver]
+}
+loki.relabel "step_2_labels_master_error" {
+  rule {
+    target_label = "job"
+    replacement = "admin-storage-mysql-master"
+  }
+  forward_to = [loki.write.step_3_push.receiver]
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// MASTER - GENERAL
+// ---------------------------------------------------------------------------------------------------------------------
+
+local.file_match "step_0_files_master_general" {
+  path_targets = [{"__path__" = "/input/master/log.general"}]
+  sync_period = "5s"
+}
+loki.source.file "step_1_scrap_master_general" {
+  targets    = local.file_match.step_0_files_master_general.targets
+  forward_to = [loki.relabel.step_2_labels_master_general.receiver]
+}
+loki.relabel "step_2_labels_master_general" {
+  rule {
+    target_label = "job"
+    replacement = "admin-storage-mysql-master"
+  }
+  forward_to = [loki.write.step_3_push.receiver]
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// MASTER - SLOW
+// ---------------------------------------------------------------------------------------------------------------------
+
+local.file_match "step_0_files_master_slow" {
+  path_targets = [{"__path__" = "/input/master/log.slow"}]
+  sync_period = "5s"
+}
+loki.source.file "step_1_scrap_master_slow" {
+  targets    = local.file_match.step_0_files_master_slow.targets
+  forward_to = [loki.relabel.step_2_labels_master_slow.receiver]
+}
+loki.relabel "step_2_labels_master_slow" {
+  rule {
+    target_label = "job"
+    replacement = "admin-storage-mysql-master"
+  }
+  forward_to = [loki.write.step_3_push.receiver]
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// REPLICA - ERROR
+// ---------------------------------------------------------------------------------------------------------------------
+
+local.file_match "step_0_files_replica_error" {
+  path_targets = [{"__path__" = "/input/replica/log.error"}]
+  sync_period = "5s"
+}
+loki.source.file "step_1_scrap_replica_error" {
+  targets    = local.file_match.step_0_files_replica_error.targets
+  forward_to = [loki.relabel.step_2_labels_replica_error.receiver]
+}
+loki.relabel "step_2_labels_replica_error" {
+  rule {
+    target_label = "job"
+    replacement = "admin-storage-mysql-replica"
+  }
+  forward_to = [loki.write.step_3_push.receiver]
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// REPLICA - GENERAL
+// ---------------------------------------------------------------------------------------------------------------------
+
+local.file_match "step_0_files_replica_general" {
+  path_targets = [{"__path__" = "/input/replica/log.general"}]
+  sync_period = "5s"
+}
+loki.source.file "step_1_scrap_replica_general" {
+  targets    = local.file_match.step_0_files_replica_general.targets
+  forward_to = [loki.relabel.step_2_labels_replica_general.receiver]
+}
+loki.relabel "step_2_labels_replica_general" {
+  rule {
+    target_label = "job"
+    replacement = "admin-storage-mysql-replica"
+  }
+  forward_to = [loki.write.step_3_push.receiver]
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// REPLICA - SLOW
+// ---------------------------------------------------------------------------------------------------------------------
+
+local.file_match "step_0_files_replica_slow" {
+  path_targets = [{"__path__" = "/input/replica/log.slow"}]
+  sync_period = "5s"
+}
+loki.source.file "step_1_scrap_replica_slow" {
+  targets    = local.file_match.step_0_files_replica_slow.targets
+  forward_to = [loki.relabel.step_2_labels_replica_slow.receiver]
+}
+loki.relabel "step_2_labels_replica_slow" {
+  rule {
+    target_label = "job"
+    replacement = "admin-storage-mysql-replica"
+  }
+  forward_to = [loki.write.step_3_push.receiver]
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// LOKI
+// ---------------------------------------------------------------------------------------------------------------------
+
+loki.write "step_3_push" {
+  endpoint {
+    url = "__LOKI_BASEURL__/loki/api/v1/push"
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
