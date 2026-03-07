@@ -1,32 +1,32 @@
 package handlers
 
 import (
+	"bytes"
+	"context"
 	"example/admin/bff/cmd/http/bundles/auth/config"
+	"example/admin/bff/cmd/http/bundles/auth/openapi"
 	"example/admin/bff/cmd/http/components/security"
-	"example/admin/bff/cmd/http/container"
-	"example/admin/bff/cmd/http/kernel"
 	"html/template"
-	"net/http"
 )
 
-func NewSignInWelcome(ctr *container.Container, cfg *config.Config, sec *security.Security) http.Handler {
+func NewSignInWelcome(
+	sec *security.Security,
+	cfg *config.Config,
+) func(context.Context, openapi.GetAuthSignInWelcomeRequestObject) (openapi.GetAuthSignInWelcomeResponseObject, error) {
 	tpl := template.Must(template.ParseFiles(cfg.StaticBasePath() + "/sign_in_welcome.html"))
 
-	return sec.AllowAny(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user := sec.AssociatedUser(r)
-
-		if user.IsAuthorized() {
-			kernel.Redirect307(w, r, cfg.UrlRedirectToOnSuccess())
-			return
+	return func(ctx context.Context, r openapi.GetAuthSignInWelcomeRequestObject) (openapi.GetAuthSignInWelcomeResponseObject, error) {
+		user := sec.AssociatedUser(ctx)
+		if user.IsAuthenticated() {
+			return openapi.GetAuthSignInWelcome307Response{
+				Headers: openapi.GetAuthSignInWelcome307ResponseHeaders{Location: cfg.UrlRedirectToOnSuccess()},
+			}, nil
 		}
 
 		// --
 
-		ctx := r.Context()
-
-		// --
-
-		if err := tpl.Execute(w, struct {
+		bb := bytes.NewBuffer(nil)
+		if err := tpl.Execute(bb, struct {
 			AppName               string
 			UrlSignInRequest      string
 			UrlSignInRequestRetry string
@@ -34,13 +34,13 @@ func NewSignInWelcome(ctr *container.Container, cfg *config.Config, sec *securit
 			StaticBaseUrl         string
 		}{
 			AppName:               cfg.AppName(),
-			UrlSignInRequest:      cfg.UrlSignInRequest(),
-			UrlSignInRequestRetry: cfg.UrlSignInRequestRetry(),
-			UrlSignInConfirm:      cfg.UrlSignInConfirm(),
+			UrlSignInRequest:      openapi.UrlSignInRequest,
+			UrlSignInRequestRetry: openapi.UrlSignInRequestRetry,
+			UrlSignInConfirm:      openapi.UrlSignInConfirm,
 			StaticBaseUrl:         cfg.StaticBaseUrl(),
 		}); err != nil {
-			ctr.Logger.CtxErrorFf(ctx, err.Error())
-			kernel.Error500(w)
+			return nil, err
 		}
-	}))
+		return openapi.GetAuthSignInWelcome200TexthtmlResponse{Body: bb}, nil
+	}
 }

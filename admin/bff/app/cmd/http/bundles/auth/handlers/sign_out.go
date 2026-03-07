@@ -1,71 +1,59 @@
 package handlers
 
 import (
-	"example/admin/bff/cmd/http/bundles/auth/config"
+	"context"
+	"example/admin/bff/cmd/http/bundles/auth/openapi"
 	"example/admin/bff/cmd/http/components/security"
-	"example/admin/bff/cmd/http/container"
-	"example/admin/bff/cmd/http/kernel"
-	"example/admin/bff/cmd/http/kernel_ext"
-	"example/admin/bff/internal/infra/clients/auth"
-	"fmt"
 	"github.com/selyukovn/go-std"
 	"net/http"
 )
 
-func NewSignOut(ctr *container.Container, cfg *config.Config, sec *security.Security) http.Handler {
-	return sec.AllowOnlyAuthorized(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		traceId := kernel_ext.TraceId(r)
-		fromIp := kernel_ext.UserIp(r)
-		fromUag := kernel_ext.UserAgent(r)
-
-		rData := kernel.ParseRequestJson(r, struct {
-			SessionId string `json:"session_id"`
-		}{})
-		if rData == nil {
-			kernel.Error400(w)
-			return
-		}
-
-		sessionId := rData.SessionId
-
-		// --
-
-		err := ctr.Services.Auth.SignOut(ctx, traceId, fromIp, fromUag, sessionId)
-		switch vErr := err.(type) {
-		case nil:
-		case auth.ErrorValidation:
-			kernel.Error400(w, fmt.Sprintf("%s: %s", vErr.Field, vErr.Message))
-			return
-		case std.ErrorNotFound:
-			kernel.Error404(w, "Сессия не найдена")
-			return
-		case auth.ErrorAccountAccessDenied:
-			kernel.Error403(w)
-			return
-		case std.ErrorAlreadyDone:
-			kernel.Error422(w, "Сессия уже закрыта")
-			return
-		case std.ErrorRuntime:
-			ctr.Logger.CtxErrorFf(ctx, vErr.Error())
-			kernel.Error500(w)
-			return
-		default:
-			panic(err)
+func NewSignOut(
+	sec *security.Security,
+) func(context.Context, openapi.DeleteAuthSignOutRequestObject) (openapi.DeleteAuthSignOutResponseObject, error) {
+	return func(ctx context.Context, r openapi.DeleteAuthSignOutRequestObject) (openapi.DeleteAuthSignOutResponseObject, error) {
+		user := sec.AssociatedUser(ctx)
+		if user.IsGuest() {
+			return openapi.DeleteAuthSignOut422JSONResponse{
+				Code:    http.StatusUnauthorized,
+				Message: http.StatusText(http.StatusUnauthorized),
+			}, nil
 		}
 
 		// --
 
-		sec.UnAuthorizeClient(w)
-
-		if err := kernel.RenderJson(w, struct {
-			RedirectUrl string `json:"redirect_url"`
-		}{
-			RedirectUrl: cfg.UrlSignInWelcome(),
-		}); err != nil {
-			ctr.Logger.CtxErrorFf(ctx, err.Error())
-			kernel.Error500(w)
-		}
-	}))
+		redirectUrl := openapi.UrlSignInWelcome
+		return signOutSuccessResponse{
+			openapi.DeleteAuthSignOut200JSONResponse{
+				RedirectUrl: &redirectUrl,
+			},
+			func(w http.ResponseWriter) error {
+				err := sec.UnAuthenticate(ctx, user, w)
+				switch err.(type) {
+				case nil:
+				case std.ErrorRuntime:
+					return std.WrapErrorToRuntime(err, "handlers", "NewSignOut", "UnAuthenticate")
+				default:
+					panic(err)
+				}
+				return nil
+			},
+		}, nil
+	}
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+type signOutSuccessResponse struct {
+	openapi.DeleteAuthSignOutResponseObject
+	fnPreResponse func(http.ResponseWriter) error
+}
+
+func (r signOutSuccessResponse) VisitDeleteAuthSignOutResponse(w http.ResponseWriter) error {
+	if err := r.fnPreResponse(w); err != nil {
+		return err
+	}
+	return r.DeleteAuthSignOutResponseObject.VisitDeleteAuthSignOutResponse(w)
+}
+
+// ---------------------------------------------------------------------------------------------------------------------

@@ -1,117 +1,106 @@
 package handlers
 
 import (
+	"context"
+	"example/admin/bff/cmd/http/bundles/auth/openapi"
 	"example/admin/bff/cmd/http/components/security"
 	"example/admin/bff/cmd/http/container"
-	"example/admin/bff/cmd/http/kernel"
-	"example/admin/bff/cmd/http/kernel_ext"
 	"example/admin/bff/internal/infra/clients/auth"
-	"fmt"
 	"github.com/selyukovn/go-std"
 	"net/http"
 	"time"
 )
 
-func NewSignInRequestRetry(ctr *container.Container, sec *security.Security) http.Handler {
-	type Response = struct {
-		SignInId    string `json:"sign_in_id"`
-		RetriesLeft uint   `json:"retries_left"`
-		CanRetryAt  string `json:"can_retry_at"`
-	}
-
-	return sec.AllowOnlyGuests(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		traceId := kernel_ext.TraceId(r)
-		fromIp := kernel_ext.UserIp(r)
-		fromUag := kernel_ext.UserAgent(r)
-
-		rData := kernel.ParseRequestJson(r, struct {
-			SignInId string `json:"sign_in_id"`
-		}{})
-		if rData == nil {
-			kernel.Error400(w)
-			return
+func NewSignInRequestRetry(
+	ctr *container.Container,
+	sec *security.Security,
+) func(context.Context, openapi.PutAuthSignInRequestRetryRequestObject) (openapi.PutAuthSignInRequestRetryResponseObject, error) {
+	return func(ctx context.Context, r openapi.PutAuthSignInRequestRetryRequestObject) (openapi.PutAuthSignInRequestRetryResponseObject, error) {
+		user := sec.AssociatedUser(ctx)
+		if user.IsAuthenticated() {
+			return openapi.PutAuthSignInRequestRetry422JSONResponse{
+				Code:    http.StatusForbidden,
+				Message: http.StatusText(http.StatusForbidden),
+			}, nil
 		}
-
-		signInId := rData.SignInId
 
 		// --
 
-		res, err := ctr.Services.Auth.SignInRequestRetry(ctx, traceId, fromIp, fromUag, signInId)
+		signInId := *r.Body.SignInId
+
+		// --
+
+		res, err := ctr.Services.Auth.SignInRequestRetry(ctx, user.TraceId(), user.Ip(), user.UserAgent(), signInId)
 		switch vErr := err.(type) {
 		case nil:
 		case auth.ErrorValidation:
-			kernel.Error400(w, fmt.Sprintf("%s: %s", vErr.Field, vErr.Message))
-			return
+			return openapi.PutAuthSignInRequestRetry422JSONResponse{
+				Code:    http.StatusBadRequest,
+				Message: vErr.Message,
+			}, nil
 		case std.ErrorNotFound:
-			kernel.Error404(w)
-			return
+			return openapi.PutAuthSignInRequestRetry422JSONResponse{
+				Code:    http.StatusNotFound,
+				Message: http.StatusText(http.StatusNotFound),
+			}, nil
 		case auth.ErrorAccountAccessDenied:
-			kernel.Error403(w, "Доступ запрещен")
-			return
+			return openapi.PutAuthSignInRequestRetry422JSONResponse{
+				Code:    http.StatusForbidden,
+				Message: http.StatusText(http.StatusForbidden),
+			}, nil
 		case auth.ErrorSignInFinished:
 			ctr.Logger.CtxWarnFf(ctx, "Обращение к завершенному SignIn %q: %#v", signInId, vErr)
 			if vErr.IsPassed {
-				kernel.Error422(w, "Уже подтверждено")
+				return openapi.PutAuthSignInRequestRetry422JSONResponse{
+					Code:    http.StatusUnprocessableEntity,
+					Message: "Уже подтверждено",
+				}, nil
 			} else if vErr.IsFailed {
-				kernel.Error422(w, "Уже провалено")
+				return openapi.PutAuthSignInRequestRetry422JSONResponse{
+					Code:    http.StatusUnprocessableEntity,
+					Message: "Уже провалено",
+				}, nil
 			} else if vErr.IsExpired {
-				kernel.Error422(w, "Время вышло")
+				return openapi.PutAuthSignInRequestRetry422JSONResponse{
+					Code:    http.StatusUnprocessableEntity,
+					Message: "Время вышло",
+				}, nil
 			} else {
 				panic(vErr)
 			}
-			return
 		case auth.ErrorNoAttemptsLeft:
-			kernel.Error422(w, "Попытки кончились")
-			return
+			return openapi.PutAuthSignInRequestRetry422JSONResponse{
+				Code:    http.StatusUnprocessableEntity,
+				Message: "Попытки кончились",
+			}, nil
 		case auth.ErrorRequestsFrequency:
 			// фронт обновляет данные, а не реагирует на статус, поэтому отвечаем как при успехе
-			if err := kernel.RenderJson(w, Response{
-				SignInId:    signInId,
-				RetriesLeft: uint(vErr.CanReqAttemptsLeft),
-				CanRetryAt:  vErr.CanReqAfter.Format(time.RFC3339),
-			}); err != nil {
-				ctr.Logger.CtxErrorFf(ctx, err.Error())
-				kernel.Error500(w)
-			}
-			return
+			canRetryAtStr := vErr.CanReqAfter.Format(time.RFC3339)
+			return openapi.PutAuthSignInRequestRetry200JSONResponse{
+				SignInId:    &signInId,
+				RetriesLeft: &vErr.CanReqAttemptsLeft,
+				CanRetryAt:  &canRetryAtStr,
+			}, nil
 		case std.ErrorUnprocessable:
 			// todo : по логике это дубликат IsAsPassed случая cfm.ErrorFinished, но...
 			ctr.Logger.CtxWarnFf(ctx, "Обращение к завершенному SignIn %q с сессией: %#v", signInId, vErr)
-			kernel.Error422(w, "Уже есть сессия")
-			return
+			return openapi.PutAuthSignInRequestRetry422JSONResponse{
+				Code:    http.StatusUnprocessableEntity,
+				Message: "Уже есть сессия",
+			}, nil
 		case std.ErrorRuntime:
-			ctr.Logger.CtxErrorFf(ctx, vErr.Error())
-			kernel.Error500(w)
-			return
+			return nil, err
 		default:
 			panic(err)
 		}
 
 		// --
 
-		// can again
-		if res.RetriesLeft > 0 {
-			if err := kernel.RenderJson(w, Response{
-				SignInId:    signInId,
-				RetriesLeft: uint(res.RetriesLeft),
-				CanRetryAt:  res.CanRetryAt.Format(time.RFC3339),
-			}); err != nil {
-				ctr.Logger.CtxErrorFf(ctx, err.Error())
-				kernel.Error500(w)
-			}
-			return // !!!
-		}
-
-		// last
-		if err := kernel.RenderJson(w, Response{
-			SignInId:    signInId,
-			RetriesLeft: 0,
-			CanRetryAt:  "",
-		}); err != nil {
-			ctr.Logger.CtxErrorFf(ctx, err.Error())
-			kernel.Error500(w)
-		}
-	}))
+		canRetryAtStr := std.Ternary(res.RetriesLeft > 0, res.CanRetryAt.Format(time.RFC3339), "")
+		return openapi.PutAuthSignInRequestRetry200JSONResponse{
+			SignInId:    &res.SignInId,
+			RetriesLeft: &res.RetriesLeft,
+			CanRetryAt:  &canRetryAtStr,
+		}, nil
+	}
 }

@@ -1,0 +1,29 @@
+openapi: 3.0.0
+info:
+  title: "BFF - Auth"
+  version: 0.1.0
+paths:
+  # Внимание!
+  # Url должны совпадать с константами `urls.go`!
+
+  /auth/sign-in/welcome:
+    $ref: "./sign-in-welcome.yml"
+
+  /auth/sign-in/request:
+    $ref: "./sign-in-request.yml"
+
+  /auth/sign-in/request-retry:
+    $ref: "./sign-in-request-retry.yml"
+
+  /auth/sign-in/confirm:
+    $ref: "./sign-in-confirm.yml"
+
+  /auth/sign-out:
+    $ref: "./sign-out.yml"
+
+components:
+  securitySchemes:
+    sessId:
+      in: cookie
+      type: apiKey
+      name: "ASID"

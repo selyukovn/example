@@ -7,10 +7,8 @@ import assert "github.com/selyukovn/go-wm-assert"
 // ---------------------------------------------------------------------------------------------------------------------
 
 type Config struct {
-	appName                string
-	urlRedirectToOnSuccess string
-	staticBasePath         string
-	staticBaseUrl          string
+	urlForGuest      string
+	urlForAuthorized string
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -18,21 +16,15 @@ type Config struct {
 // ---------------------------------------------------------------------------------------------------------------------
 
 func New(
-	appName string,
-	urlRedirectToOnSuccess string,
-	staticBasePath string,
-	staticBaseUrl string,
+	urlForGuest string,
+	urlForAuthorized string,
 ) *Config {
-	assert.Str().NotEmpty().Must(appName)
-	assert.Str().NotEmpty().Must(urlRedirectToOnSuccess)
-	assert.Str().NotEmpty().Must(staticBasePath)
-	assert.Str().NotEmpty().Must(staticBaseUrl)
+	assert.Str().NotEmpty().Must(urlForGuest)
+	assert.Str().NotEmpty().Must(urlForAuthorized)
 
 	return &Config{
-		appName:                appName,
-		urlRedirectToOnSuccess: urlRedirectToOnSuccess,
-		staticBasePath:         staticBasePath,
-		staticBaseUrl:          staticBaseUrl,
+		urlForGuest:      urlForGuest,
+		urlForAuthorized: urlForAuthorized,
 	}
 }
 
@@ -40,20 +32,12 @@ func New(
 // State
 // ---------------------------------------------------------------------------------------------------------------------
 
-func (c *Config) AppName() string {
-	return c.appName
+func (c *Config) UrlForGuest() string {
+	return c.urlForGuest
 }
 
-func (c *Config) UrlRedirectToOnSuccess() string {
-	return c.urlRedirectToOnSuccess
-}
-
-func (c *Config) StaticBasePath() string {
-	return c.staticBasePath
-}
-
-func (c *Config) StaticBaseUrl() string {
-	return c.staticBaseUrl
+func (c *Config) UrlForAuthorized() string {
+	return c.urlForAuthorized
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

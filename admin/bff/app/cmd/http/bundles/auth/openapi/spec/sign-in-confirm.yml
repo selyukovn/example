@@ -1,0 +1,36 @@
+put:
+  security:
+    - sessId: [ ]
+
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            sign_in_id:
+              type: string
+              example: bc2d0f53-5041-46e8-a14c-267875a49f0c
+            code:
+              type: string
+              format: regex
+              pattern: \d{6}
+
+  responses:
+    "200":
+      description: success
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              is_passed:
+                type: boolean
+              attempts_left:
+                type: integer
+              redirect_url:
+                type: string
+                format: uri
+    "422":
+      $ref: "./common/expected-error.yml"

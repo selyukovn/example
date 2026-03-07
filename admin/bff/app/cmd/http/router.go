@@ -1,13 +1,12 @@
 package http
 
 import (
-	auth_cfg "example/admin/bff/cmd/http/bundles/auth/config"
-	auth_handlers "example/admin/bff/cmd/http/bundles/auth/handlers"
+	"example/admin/bff/cmd/http/bundles/auth"
+	"example/admin/bff/cmd/http/bundles/root"
 	"example/admin/bff/cmd/http/components/monitoring"
 	"example/admin/bff/cmd/http/components/security"
 	"example/admin/bff/cmd/http/container"
 	"example/admin/bff/cmd/http/kernel"
-	"example/admin/bff/cmd/http/kernel_ext"
 	assert "github.com/selyukovn/go-wm-assert"
 	"net/http"
 	"runtime/debug"
@@ -22,88 +21,32 @@ func registerRoutes(
 ) {
 	sec := security.New(ctr, baseUrl, sessionCookieName)
 
-	globalInterceptors := []func(http.Handler) http.Handler{
-		_newBoundaryInterceptor(ctr),
-		monitoring.NewMetricsInterceptor(),
+	middlewares := []func(http.Handler) http.Handler{
+		_boundaryMiddleware(ctr),
+		monitoring.MetricsMiddleware(),
+		_securityMiddleware(ctr, sec),
 	}
 
-	// -----------------------------------------------------------------------------------------------------------------
-	// Root
-	// -----------------------------------------------------------------------------------------------------------------
+	root.Register(
+		mux,
+		middlewares,
+		sec,
+		auth.UrlSignInWelcome,
+		"/TODO", /* TODO */
+	)
 
-	// Большого смысла нет заводить маленький bundle для редиректа,
-	// поэтому, несмотря на нарушенное однообразие, пусть будет тут.
-	_registerDynamicHandlers(mux, globalInterceptors, map[string]http.Handler{
-		"GET /{$}": sec.AllowAny(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			user := sec.AssociatedUser(r)
-			if user.IsGuest() {
-				kernel.Redirect307(w, r, "/auth/sign-in/welcome/")
-			} else {
-				// todo : kernel.Redirect307(w, r, ...)
-				w.Header().Set("Content-Type", "text/html; charset=utf-8")
-				_, _ = w.Write([]byte("Account: " + user.AccountId()))
-			}
-		})),
-	})
-
-	// -----------------------------------------------------------------------------------------------------------------
-	// Auth
-	// -----------------------------------------------------------------------------------------------------------------
-
-	authStaticPath, authStaticUrl := _registerStaticHandler(mux, "auth")
-	authCfg := auth_cfg.New(
+	auth.Register(
+		mux,
+		middlewares,
+		ctr,
+		sec,
 		appName,
-		"/auth/sign-in/welcome/",
-		"/auth/sign-in/request/",
-		"/auth/sign-in/request-retry/",
-		"/auth/sign-in/confirm/",
-		"/",
-		authStaticPath,
-		authStaticUrl,
+		root.UrlRoot,
 	)
-	_registerDynamicHandlers(mux, globalInterceptors, map[string]http.Handler{
-		"GET /auth/sign-in/welcome/{$}":       auth_handlers.NewSignInWelcome(ctr, authCfg, sec),
-		"POST /auth/sign-in/request/{$}":      auth_handlers.NewSignInRequest(ctr, sec),
-		"PUT /auth/sign-in/request-retry/{$}": auth_handlers.NewSignInRequestRetry(ctr, sec),
-		"PUT /auth/sign-in/confirm/{$}":       auth_handlers.NewSignInConfirm(ctr, authCfg, sec),
-		"DELETE /auth/sign-out/{$}":           auth_handlers.NewSignOut(ctr, authCfg, sec),
-	})
-
-	// -----------------------------------------------------------------------------------------------------------------
-
-	return
-}
-
-func _registerDynamicHandlers(
-	mux *http.ServeMux,
-	interceptors []func(http.Handler) http.Handler,
-	routes map[string]http.Handler,
-) {
-	for route, handler := range routes {
-		for i := len(interceptors) - 1; i >= 0; i-- {
-			handler = interceptors[i](handler)
-		}
-		mux.Handle(route, handler)
-	}
-}
-
-func _registerStaticHandler(mux *http.ServeMux, bundleName string) (string, string) {
-	// см. bff/build/http/Dockerfile
-	dirPath := "./static/" + bundleName
-	urlPrefix := "/static/" + bundleName + "/" + kernel_ext.CalcFilesVersion(dirPath)
-
-	// `rproxy` кеширует файлы, полученные из `bff` -- cм. README.md.
-	mux.Handle(
-		// GET разрешает и HEAD
-		"GET "+urlPrefix+"/",
-		http.StripPrefix(urlPrefix, http.FileServer(http.Dir(dirPath))),
-	)
-
-	return dirPath, urlPrefix
 }
 
 // Данный перехватчик должен быть самым внешним!
-func _newBoundaryInterceptor(ctr *container.Container) func(http.Handler) http.Handler {
+func _boundaryMiddleware(ctr *container.Container) func(http.Handler) http.Handler {
 	// Все описанные в данном перехватчике действия слишком связаны между собой,
 	// чтобы выделить каждое в отдельный перехватчик.
 	// Например, логирование статуса ответа не имеет смысла без trace-id из обогащенного контекста,
@@ -118,7 +61,7 @@ func _newBoundaryInterceptor(ctr *container.Container) func(http.Handler) http.H
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			fnResponseOnPanic := func(w http.ResponseWriter) {
-				kernel.Error500(w)
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
 
 			// ---------------------------------------------------------------------------------------------------------
@@ -130,7 +73,7 @@ func _newBoundaryInterceptor(ctr *container.Container) func(http.Handler) http.H
 
 			defer func() {
 				if pv := recover(); pv != nil {
-					ctr.Logger.GeneralPanicFf(pv, debug.Stack(), "http._newBoundaryInterceptor (резервный recover)")
+					ctr.Logger.GeneralPanicFf(pv, debug.Stack(), "http._boundaryMiddleware (резервный recover)")
 					fnResponseOnPanic(w)
 				}
 			}()
@@ -152,10 +95,10 @@ func _newBoundaryInterceptor(ctr *container.Container) func(http.Handler) http.H
 			// X-Trace-Id прописывается rproxy -- его отсутствие есть проблема сервера, а не пользователя.
 			// Поэтому вместо 400 нужно отдавать 500.
 			// см. rproxy/build/server/nginx.conf
-			traceId := kernel_ext.TraceId(r)
+			traceId := kernel.TraceId(r)
 			if err := assert.Str().NotEmpty().Check(traceId); err != nil {
 				ctr.Logger.GeneralErrorFf("Похоже, `rproxy` не передал TraceId!")
-				kernel.Error500(w)
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 				return
 			}
 
@@ -182,7 +125,7 @@ func _newBoundaryInterceptor(ctr *container.Container) func(http.Handler) http.H
 			defer func() {
 				if pv := recover(); pv != nil {
 					fnResponseOnPanic(w)
-					ctr.Logger.CtxPanicFf(ctx, pv, debug.Stack(), "http._newBoundaryInterceptor")
+					ctr.Logger.CtxPanicFf(ctx, pv, debug.Stack(), "http._boundaryMiddleware")
 				}
 			}()
 
@@ -190,5 +133,29 @@ func _newBoundaryInterceptor(ctr *container.Container) func(http.Handler) http.H
 
 			next.ServeHTTP(w, r)
 		})
+	}
+}
+
+func _securityMiddleware(ctr *container.Container, sec *security.Security) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return sec.Middleware(
+			// Имеет смысл искать логи по аккаунту,
+			// но обогащение контекста для логгера не входит в обязанности security-middleware --
+			// нужна еще одна обертка.
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				ctx := r.Context()
+
+				user := sec.AssociatedUser(ctx)
+				if user.IsAuthenticated() {
+					ctx = ctr.Logger.AddExtraAttrToCtx(ctx, "account_id", user.AccountId())
+				} else {
+					// todo : аналогично сделать для гостей с каким-то guest-id ???
+				}
+
+				r = r.WithContext(ctx)
+
+				next.ServeHTTP(w, r)
+			}),
+		)
 	}
 }

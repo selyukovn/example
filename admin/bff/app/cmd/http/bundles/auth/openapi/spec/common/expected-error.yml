@@ -1,0 +1,20 @@
+description: ожидаемые неуспешные сценарии
+content:
+  application/json:
+    schema:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          description:
+            400 - ошибка валидации,
+            401 - требуется аутентификация,
+            403 - отказ в доступе,
+            404 - не найдено,
+            422 - специфическая ошибка ("заказ отменен" и т.д.)
+        message:
+          type: string
+          example: "аккаунт не найден"

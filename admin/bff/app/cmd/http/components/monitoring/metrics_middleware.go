@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func NewMetricsInterceptor() func(http.Handler) http.Handler {
+func MetricsMiddleware() func(http.Handler) http.Handler {
 	promReqCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "http_server_handled_total",
 		Help: "Общее число HTTP‑запросов",
