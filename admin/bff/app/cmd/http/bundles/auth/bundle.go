@@ -8,6 +8,7 @@ import (
 	"example/admin/bff/cmd/http/components/security"
 	"example/admin/bff/cmd/http/components/static"
 	"example/admin/bff/cmd/http/container"
+	"github.com/selyukovn/go-std"
 	"net/http"
 )
 
@@ -41,12 +42,16 @@ func Register(
 		staticUrl,
 	)
 
-	xRouter := &router{
+	var xRouter openapi.StrictServerInterface = &router{
 		signInWelcome:      handlers.NewSignInWelcome(sec, cfg),
 		signInRequest:      handlers.NewSignInRequest(ctr, sec),
 		signInRequestRetry: handlers.NewSignInRequestRetry(ctr, sec),
 		signInConfirm:      handlers.NewSignInConfirm(ctr, sec, cfg),
 		signOut:            handlers.NewSignOut(sec),
+	}
+	xRouter = &routerLogRequestResponseData{
+		StrictServerInterface: xRouter,
+		ctr:                   ctr,
 	}
 
 	// Генерируемый `github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.4.1` код
@@ -74,6 +79,7 @@ func Register(
 	)
 }
 
+// DEFAULT
 // ---------------------------------------------------------------------------------------------------------------------
 
 var _ openapi.StrictServerInterface = (*router)(nil)
@@ -104,6 +110,101 @@ func (r *router) PutAuthSignInConfirm(ctx context.Context, request openapi.PutAu
 
 func (r *router) DeleteAuthSignOut(ctx context.Context, request openapi.DeleteAuthSignOutRequestObject) (openapi.DeleteAuthSignOutResponseObject, error) {
 	return r.signOut(ctx, request)
+}
+
+// LOGGABLE
+// ---------------------------------------------------------------------------------------------------------------------
+
+var _ openapi.StrictServerInterface = (*routerLogRequestResponseData)(nil)
+
+type routerLogRequestResponseData struct {
+	openapi.StrictServerInterface
+	ctr *container.Container
+}
+
+func (r *routerLogRequestResponseData) PostAuthSignInRequest(ctx context.Context, request openapi.PostAuthSignInRequestRequestObject) (openapi.PostAuthSignInRequestResponseObject, error) {
+	r.ctr.Logger.CtxInfoFf(ctx, "%T: %+v", request, struct {
+		Email string
+	}{
+		Email: *request.Body.Email,
+	})
+
+	resp, err := r.StrictServerInterface.PostAuthSignInRequest(ctx, request)
+
+	switch vResp := resp.(type) {
+	case openapi.PostAuthSignInRequest200JSONResponse:
+		r.ctr.Logger.CtxInfoFf(ctx, "%T: %+v", resp, struct {
+			CanRetryAt  string
+			ExpireAt    string
+			RetriesLeft int
+			SignInId    string
+		}{
+			CanRetryAt:  *vResp.CanRetryAt,
+			ExpireAt:    *vResp.ExpireAt,
+			RetriesLeft: *vResp.RetriesLeft,
+			SignInId:    *vResp.SignInId,
+		})
+	default:
+		r.ctr.Logger.CtxInfoFf(ctx, "%T: %+v", resp, resp)
+	}
+
+	return resp, err
+}
+
+func (r *routerLogRequestResponseData) PutAuthSignInRequestRetry(ctx context.Context, request openapi.PutAuthSignInRequestRetryRequestObject) (openapi.PutAuthSignInRequestRetryResponseObject, error) {
+	r.ctr.Logger.CtxInfoFf(ctx, "%T: %+v", request, struct {
+		SignInId string
+	}{
+		SignInId: *request.Body.SignInId,
+	})
+
+	resp, err := r.StrictServerInterface.PutAuthSignInRequestRetry(ctx, request)
+
+	switch vResp := resp.(type) {
+	case openapi.PutAuthSignInRequestRetry200JSONResponse:
+		r.ctr.Logger.CtxInfoFf(ctx, "%T: %+v", resp, struct {
+			CanRetryAt  string
+			RetriesLeft int
+			SignInId    string
+		}{
+			CanRetryAt:  *vResp.CanRetryAt,
+			RetriesLeft: *vResp.RetriesLeft,
+			SignInId:    *vResp.SignInId,
+		})
+	default:
+		r.ctr.Logger.CtxInfoFf(ctx, "%T: %+v", resp, resp)
+	}
+
+	return resp, err
+}
+
+func (r *routerLogRequestResponseData) PutAuthSignInConfirm(ctx context.Context, request openapi.PutAuthSignInConfirmRequestObject) (openapi.PutAuthSignInConfirmResponseObject, error) {
+	r.ctr.Logger.CtxInfoFf(ctx, "%T: %+v", request, struct {
+		SignInId string
+		Code     string
+	}{
+		SignInId: *request.Body.SignInId,
+		Code:     std.MaskStrNotFirstLast(*request.Body.Code),
+	})
+
+	resp, err := r.StrictServerInterface.PutAuthSignInConfirm(ctx, request)
+
+	switch vResp := resp.(type) {
+	case openapi.PutAuthSignInConfirm200JSONResponse:
+		r.ctr.Logger.CtxInfoFf(ctx, "%T: %+v", resp, struct {
+			AttemptsLeft int
+			IsPassed     bool
+			RedirectUrl  string
+		}{
+			AttemptsLeft: *vResp.AttemptsLeft,
+			IsPassed:     *vResp.IsPassed,
+			RedirectUrl:  *vResp.RedirectUrl,
+		})
+	default:
+		r.ctr.Logger.CtxInfoFf(ctx, "%T: %+v", resp, resp)
+	}
+
+	return resp, err
 }
 
 // #####################################################################################################################
