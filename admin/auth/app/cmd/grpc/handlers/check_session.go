@@ -24,7 +24,7 @@ func NewCheckSession(ctr *container.Container) func(ctx context.Context, req *pb
 		if err != nil {
 			ctr.Logger.CtxDebugFf(ctx, err.Error())
 			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorValidationDetail{
-				Field:   "SessionId",
+				Field:   "sessionId",
 				Message: err.Error(),
 			})
 		}

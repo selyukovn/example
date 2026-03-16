@@ -23,7 +23,7 @@ func NewSignOut(ctr *container.Container) func(ctx context.Context, req *pb.Sign
 		if err != nil {
 			ctr.Logger.CtxDebugFf(ctx, err.Error())
 			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorValidationDetail{
-				Field:   "SessionId",
+				Field:   "sessionId",
 				Message: err.Error(),
 			})
 		}

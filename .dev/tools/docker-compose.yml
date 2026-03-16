@@ -1,20 +1,26 @@
 name: example
 
 x-prototypes:
-  dev-tools-go-build: &dev-tools-go-build
-    context: ./go
-    dockerfile: Dockerfile
-
-  dev-tools-develop: &dev-tools-go-develop
+  # go
+  dev-tools-go-general: &dev-tools-go-general
     user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
     develop:
       watch:
         - action: rebuild
-          path: ./go/Dockerfile
+          path: ./go/
+  dev-tools-go-build: &dev-tools-go-build
+    context: ./go
+    dockerfile: Dockerfile
+
+# ----------------------------------------------------------------------------------------------------------------------
 
 services:
+  # --------------------------------------------------------------------------------------------------------------------
+  # Admin - Auth
+  # --------------------------------------------------------------------------------------------------------------------
+
   dev-tools-admin-auth:
-    << : *dev-tools-go-develop
+    << : *dev-tools-go-general
     build:
       << : *dev-tools-go-build
       args:
@@ -22,8 +28,12 @@ services:
     volumes:
       - ../../admin/auth/app:/app
 
+  # --------------------------------------------------------------------------------------------------------------------
+  # Admin - BFF
+  # --------------------------------------------------------------------------------------------------------------------
+
   dev-tools-admin-bff:
-    << : *dev-tools-go-develop
+    << : *dev-tools-go-general
     build:
       << : *dev-tools-go-build
       args:
@@ -31,11 +41,17 @@ services:
     volumes:
       - ../../admin/bff/app:/app
 
+  # --------------------------------------------------------------------------------------------------------------------
+  # Admin - Cfm
+  # --------------------------------------------------------------------------------------------------------------------
+
   dev-tools-admin-cfm:
-    << : *dev-tools-go-develop
+    << : *dev-tools-go-general
     build:
       << : *dev-tools-go-build
       args:
         GRPC_API_SERVICE_NAME: cfm
     volumes:
       - ../../admin/cfm/app:/app
+
+  # --------------------------------------------------------------------------------------------------------------------
