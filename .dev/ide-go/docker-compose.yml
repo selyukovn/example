@@ -23,11 +23,14 @@ services:
       - ../../admin/auth/app/go.mod:/ide/admin/auth/go.mod
       - ../../admin/auth/app/go.sum:/ide/admin/auth/go.sum
 
-      - ../../admin/bff/app/go.mod:/ide/admin/bff/go.mod
-      - ../../admin/bff/app/go.sum:/ide/admin/bff/go.sum
+      - ../../admin/cfm/app/go.mod:/ide/admin/cfm/go.mod
+      - ../../admin/cfm/app/go.sum:/ide/admin/cfm/go.sum
 
-      - ../../admin/auth/app/go.mod:/ide/admin/cfm/go.mod
-      - ../../admin/auth/app/go.sum:/ide/admin/cfm/go.sum
+      - ../../admin/front/app/go.mod:/ide/admin/front/go.mod
+      - ../../admin/front/app/go.sum:/ide/admin/front/go.sum
+
+      - ../../admin/gateway/app/go.mod:/ide/admin/gateway/go.mod
+      - ../../admin/gateway/app/go.sum:/ide/admin/gateway/go.sum
 
       - ./sdk:/ide/sdk
       - ./path:/ide/path

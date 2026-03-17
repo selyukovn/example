@@ -56,10 +56,9 @@ RUN chmod 0444 logrotate.conf
 
 VOLUME /app/admin/auth/grpc
 VOLUME /app/admin/auth/sch
-VOLUME /app/admin/bff/http
 VOLUME /app/admin/cfm/grpc
 VOLUME /app/admin/cfm/sch
-VOLUME /app/admin/rproxy/server
+VOLUME /app/admin/gateway/http
 VOLUME /app/admin/storage/mysql
 
 # --------------------

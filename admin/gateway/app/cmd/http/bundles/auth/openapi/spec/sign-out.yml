@@ -1,0 +1,17 @@
+delete:
+  security:
+    - sessId: [ ]
+
+  responses:
+    "200":
+      description: success
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                description: "всегда true -- костыль для OpenApi-генератора"
+    "422":
+      $ref: "./common/expected-error.yml"

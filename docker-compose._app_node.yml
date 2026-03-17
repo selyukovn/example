@@ -14,10 +14,9 @@ services:
       - ./node/state/logrotate:/logrotate/state.d
       - ./admin/auth/state/grpc:/app/admin/auth/grpc
       - ./admin/auth/state/sch:/app/admin/auth/sch
-      - ./admin/bff/state/http:/app/admin/bff/http
       - ./admin/cfm/state/grpc:/app/admin/cfm/grpc
       - ./admin/cfm/state/sch:/app/admin/cfm/sch
-      - ./admin/rproxy/state/server/logs:/app/admin/rproxy/server
+      - ./admin/gateway/state/http:/app/admin/gateway/http
       - ./admin/storage/state/mysql:/app/admin/storage/mysql
     develop:
       watch:

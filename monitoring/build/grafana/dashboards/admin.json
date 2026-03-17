@@ -121,25 +121,12 @@
             "uid": "P1809F7CD0C75ACF3"
           },
           "editorMode": "code",
-          "expr": "up{job=\"admin-rproxy-server\"}",
+          "expr": "up{job=\"admin-gateway-http\"}",
           "hide": false,
           "instant": false,
           "legendFormat": "{{job}}",
           "range": true,
-          "refId": "RPROXY"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "P1809F7CD0C75ACF3"
-          },
-          "editorMode": "code",
-          "expr": "up{job=\"admin-bff-http\"}",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{job}}",
-          "range": true,
-          "refId": "BFF"
+          "refId": "GATEWAY"
         },
         {
           "datasource": {
@@ -393,12 +380,12 @@
             "uid": "P1809F7CD0C75ACF3"
           },
           "editorMode": "code",
-          "expr": "avg(go_goroutines{job=\"admin-bff-http\"})",
+          "expr": "avg(go_goroutines{job=\"admin-gateway-http\"})",
           "hide": false,
           "instant": false,
-          "legendFormat": "BFF-HTTP",
+          "legendFormat": "Gateway-HTTP",
           "range": true,
-          "refId": "BFF-HTTP"
+          "refId": "GATEWAY-HTTP"
         },
         {
           "datasource": {
@@ -603,12 +590,12 @@
             "uid": "P1809F7CD0C75ACF3"
           },
           "editorMode": "code",
-          "expr": "avg(go_memstats_alloc_bytes{job=\"admin-bff-http\"})",
+          "expr": "avg(go_memstats_alloc_bytes{job=\"admin-gateway-http\"})",
           "hide": false,
           "instant": false,
-          "legendFormat": "BFF / HTTP - Heap Allocated",
+          "legendFormat": "Gateway / HTTP - Heap Allocated",
           "range": true,
-          "refId": "BFF-HTTP"
+          "refId": "GATEWAY-HTTP"
         },
         {
           "datasource": {

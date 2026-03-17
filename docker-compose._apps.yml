@@ -12,8 +12,8 @@ name: example
 # ----------------------------------------------------------------------------------------------------------------------
 
 networks:
-  admin-rproxy-network:           # `rproxy` --> `bff`
-  admin-internal-network:         # `bff` --> ...внутренние-сервисы... <--> ...внутренние-сервисы ...
+  admin-front-network:            # `front` --> `gateway`
+  admin-internal-network:         # `gateway` --> ...внутренние-сервисы... <--> ...внутренние-сервисы ...
   admin-internal-storage-network: # `admin-storage-mysql-prometheus-exporter` и миграции --> `admin-storage-...`
   monitoring-internal-network:    # ...внутренние-сервисы... <--> ...внутренние-сервисы ...
   monitoring-logs-network:        # все экспортеры --> loki
@@ -53,28 +53,6 @@ services:
     networks:
       - monitoring-logs-network
 
-  # BFF
-  # --------------------------------------------------------------------------------------------------------------------
-
-  admin-bff-http:
-    extends:
-      file: docker-compose._app_admin.yml
-      service: admin-bff-http
-    networks:
-      - admin-rproxy-network
-      - admin-internal-network
-      - monitoring-metrics-network
-
-  admin-bff-logs-exporter:
-    extends:
-      file: docker-compose._app_admin.yml
-      service: admin-bff-logs-exporter
-    build:
-      args:
-        LOKI_BASEURL: "http://monitoring-loki:3100"
-    networks:
-      - monitoring-logs-network
-
   # CFM
   # --------------------------------------------------------------------------------------------------------------------
 
@@ -104,34 +82,39 @@ services:
     networks:
       - monitoring-logs-network
 
-  # RPROXY
+  # FRONT
   # --------------------------------------------------------------------------------------------------------------------
 
-  admin-rproxy-server:
+  admin-front-server:
     extends:
       file: docker-compose._app_admin.yml
-      service: admin-rproxy-server
+      service: admin-front-server
+    networks:
+      - admin-front-network
     ports:
       - ${DEPLOY_PUBLIC_PORT_ADMIN}:80
-    networks:
-      - admin-rproxy-network
 
-  admin-rproxy-logs-exporter:
+  # GATEWAY
+  # --------------------------------------------------------------------------------------------------------------------
+
+  admin-gateway-http:
     extends:
       file: docker-compose._app_admin.yml
-      service: admin-rproxy-logs-exporter
+      service: admin-gateway-http
+    networks:
+      - admin-front-network
+      - admin-internal-network
+      - monitoring-metrics-network
+
+  admin-gateway-logs-exporter:
+    extends:
+      file: docker-compose._app_admin.yml
+      service: admin-gateway-logs-exporter
     build:
       args:
         LOKI_BASEURL: "http://monitoring-loki:3100"
     networks:
       - monitoring-logs-network
-
-  admin-rproxy-metrics-exporter:
-    extends:
-      file: docker-compose._app_admin.yml
-      service: admin-rproxy-metrics-exporter
-    networks:
-      - monitoring-metrics-network
 
   # STORAGE
   # --------------------------------------------------------------------------------------------------------------------

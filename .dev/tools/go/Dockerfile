@@ -27,10 +27,11 @@ RUN echo "protoc \\" > /protoc/generate_grpc_api.sh && \
 # <open-api>
 WORKDIR /openapi
 RUN go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.4.1
-RUN echo "rm -f /app/cmd/http/bundles/\$1/openapi/openapi.go" >> /openapi/gen.sh \
+RUN echo "rm -f /app/cmd/http/bundles/\$1/openapi/*.openapi.go" >> /openapi/gen.sh \
     # разбивка по файлам работает не как ожидается: типы response'ы будут в файле с сервером, а не в файле с типами,
     # поэтому весь код записывается в один файл.
-    && echo "oapi-codegen -generate=types,std-http,strict-server -o /app/cmd/http/bundles/\$1/openapi/openapi.go /app/cmd/http/bundles/\$1/openapi/spec/openapi.yml" >> /openapi/gen.sh \
+    && echo "oapi-codegen -generate=types,std-http,strict-server -o /app/cmd/http/bundles/\$1/openapi/server.openapi.go /app/cmd/http/bundles/\$1/openapi/spec/openapi.yml" >> /openapi/gen.sh \
+    && echo "oapi-codegen -generate=types,client -o /app/cmd/http/bundles/\$1/openapi/client.openapi.go /app/cmd/http/bundles/\$1/openapi/spec/openapi.yml" >> /openapi/gen.sh \
     && chmod +x /openapi/gen.sh
 # </open-api>
 

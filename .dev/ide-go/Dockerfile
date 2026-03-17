@@ -5,11 +5,14 @@ WORKDIR /ide
 VOLUME ./admin/auth/go.mod
 VOLUME ./admin/auth/go.sum
 
-VOLUME ./admin/bff/go.mod
-VOLUME ./admin/bff/go.sum
-
 VOLUME ./admin/cfm/go.mod
 VOLUME ./admin/cfm/go.sum
+
+VOLUME ./admin/front/go.mod
+VOLUME ./admin/front/go.sum
+
+VOLUME ./admin/gateway/go.mod
+VOLUME ./admin/gateway/go.sum
 
 VOLUME ./path
 VOLUME ./sdk
@@ -22,11 +25,14 @@ SHELL ["/bin/sh", "-c"]
 CMD echo $(date +"%Y/%m/%d %H:%M:%S") ": Установка пакетов для \"admin/auth\"..." \
     && cd /ide/admin/auth && go mod download \
     # --
-    && echo $(date +"%Y/%m/%d %H:%M:%S") ": Установка пакетов для \"admin/bff\"..." \
-    && cd /ide/admin/bff && go mod download \
-    # --
     && echo $(date +"%Y/%m/%d %H:%M:%S") ": Установка пакетов для \"admin/cfm\"..." \
     && cd /ide/admin/cfm && go mod download \
+    # --
+    && echo $(date +"%Y/%m/%d %H:%M:%S") ": Установка пакетов для \"admin/front\"..." \
+    && cd /ide/admin/front && go mod download \
+    # --
+    && echo $(date +"%Y/%m/%d %H:%M:%S") ": Установка пакетов для \"admin/gateway\"..." \
+    && cd /ide/admin/gateway && go mod download \
     # ----
     && echo $(date +"%Y/%m/%d %H:%M:%S") ": Передача всех пакетов IDE..." \
     && chmod -Rf 0775 /ide/path \

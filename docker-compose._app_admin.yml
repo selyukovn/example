@@ -67,45 +67,6 @@ services:
           path: admin/auth/build/logs-exporter
 
   # --------------------------------------------------------------------------------------------------------------------
-  # BFF
-  # --------------------------------------------------------------------------------------------------------------------
-
-  admin-bff-http:
-    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
-    build:
-      context: admin/bff
-      dockerfile: build/http/Dockerfile
-    environment:
-      APP_NAME: ${DEPLOY_ADMIN_APP_NAME}
-      BASE_URL: ${DEPLOY_ADMIN_BASE_URL}
-      SESSION_COOKIE_NAME: ${ADMIN_BFF_SESSION_COOKIE_NAME}
-      SERVICE_AUTH_API_GRPC_BASEURL: "admin-auth-grpc:50051"
-      SERVICE_AUTH_API_GRPC_APIKEY: ${ADMIN_AUTH_API_GRPC_APIKEY}
-    volumes:
-      - ./admin/bff/state/http:/state
-    develop:
-      watch:
-        - action: rebuild
-          path: admin/bff/app
-        - action: rebuild
-          path: admin/bff/build/http
-
-  # --------------------------------------------------------------------------------------------------------------------
-
-  admin-bff-logs-exporter:
-    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
-    build:
-      context: admin/bff
-      dockerfile: build/logs-exporter/Dockerfile
-    volumes:
-      - ./admin/bff/state/logs-exporter:/state
-      - ./admin/bff/state/http:/input
-    develop:
-      watch:
-        - action: rebuild
-          path: admin/bff/build/logs-exporter
-
-  # --------------------------------------------------------------------------------------------------------------------
   # CFM
   # --------------------------------------------------------------------------------------------------------------------
 
@@ -168,55 +129,61 @@ services:
           path: admin/cfm/build/logs-exporter
 
   # --------------------------------------------------------------------------------------------------------------------
-  # RPROXY
+  # FRONT
   # --------------------------------------------------------------------------------------------------------------------
 
-  admin-rproxy-server:
+  admin-front-server:
     user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
     build:
-      context: admin/rproxy
+      context: admin/front
       dockerfile: build/server/Dockerfile
-      args:
-        BFF_PROXY_PASS: "http://admin-bff-http:80"
-    volumes:
-      - ./admin/rproxy/state/server/cache:/state/cache
-      - ./admin/rproxy/state/server/logs:/state/logs
-      - ./admin/rproxy/state/server/run:/state/run
+    environment:
+      APP_NAME: ${DEPLOY_ADMIN_APP_NAME}
+      BASE_URL: ${DEPLOY_ADMIN_BASE_URL}
+      SESSION_COOKIE_NAME: ${ADMIN_FRONT_SESSION_COOKIE_NAME}
+      API_BASEURL: "http://admin-gateway-http:80"
     develop:
       watch:
         - action: rebuild
-          path: admin/rproxy/app
+          path: admin/front/app
         - action: rebuild
-          path: admin/rproxy/build/server
+          path: admin/front/build/server
 
   # --------------------------------------------------------------------------------------------------------------------
+  # GATEWAY
+  # --------------------------------------------------------------------------------------------------------------------
 
-  admin-rproxy-metrics-exporter:
+  admin-gateway-http:
     user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
     build:
-      context: admin/rproxy
-      dockerfile: build/metrics-exporter/Dockerfile
+      context: admin/gateway
+      dockerfile: build/http/Dockerfile
+    environment:
+      SERVICE_AUTH_API_GRPC_BASEURL: "admin-auth-grpc:50051"
+      SERVICE_AUTH_API_GRPC_APIKEY: ${ADMIN_AUTH_API_GRPC_APIKEY}
     volumes:
-      - ./admin/rproxy/state/server/logs:/input
+      - ./admin/gateway/state/http:/state
     develop:
       watch:
         - action: rebuild
-          path: admin/rproxy/build/metrics-exporter
+          path: admin/gateway/app
+        - action: rebuild
+          path: admin/gateway/build/http
 
   # --------------------------------------------------------------------------------------------------------------------
 
-  admin-rproxy-logs-exporter:
+  admin-gateway-logs-exporter:
     user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
     build:
-      context: admin/rproxy
+      context: admin/gateway
       dockerfile: build/logs-exporter/Dockerfile
     volumes:
-      - ./admin/rproxy/state/logs-exporter:/state
-      - ./admin/rproxy/state/server/logs:/input
+      - ./admin/gateway/state/logs-exporter:/state
+      - ./admin/gateway/state/http:/input
     develop:
       watch:
         - action: rebuild
-          path: admin/rproxy/build/logs-exporter
+          path: admin/gateway/build/logs-exporter
 
   # --------------------------------------------------------------------------------------------------------------------
   # STORAGE

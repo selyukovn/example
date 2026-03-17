@@ -1,0 +1,23 @@
+openapi: 3.0.0
+info:
+  title: "Gateway - Auth"
+  version: 0.1.0
+paths:
+
+  /auth/sign-in/request:
+    $ref: "./sign-in-request.yml"
+
+  /auth/sign-in/request-retry:
+    $ref: "./sign-in-request-retry.yml"
+
+  /auth/sign-in/confirm:
+    $ref: "./sign-in-confirm.yml"
+
+  /auth/sign-out:
+    $ref: "./sign-out.yml"
+
+components:
+  securitySchemes:
+    sessId:
+      type: http
+      scheme: bearer

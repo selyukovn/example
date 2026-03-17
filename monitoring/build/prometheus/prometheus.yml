@@ -46,14 +46,6 @@ scrape_configs:
       - targets: ["admin-auth-sch:8080"]
     metrics_path: "/prometheus-metrics"
 
-  # BFF
-  # --------------------------------------------------------------------------------------------------------------------
-
-  - job_name: admin-bff-http
-    static_configs:
-      - targets: ["admin-bff-http:8080"]
-    metrics_path: "/prometheus-metrics"
-
   # CFM
   # --------------------------------------------------------------------------------------------------------------------
 
@@ -67,12 +59,13 @@ scrape_configs:
       - targets: ["admin-cfm-sch:8080"]
     metrics_path: "/prometheus-metrics"
 
-  # RPROXY
+  # GATEWAY
   # --------------------------------------------------------------------------------------------------------------------
 
-  - job_name: admin-rproxy-server
+  - job_name: admin-gateway-http
     static_configs:
-      - targets: ["admin-rproxy-metrics-exporter:4040"]
+      - targets: ["admin-gateway-http:8080"]
+    metrics_path: "/prometheus-metrics"
 
   # STORAGE
   # --------------------------------------------------------------------------------------------------------------------
