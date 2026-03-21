@@ -4,7 +4,7 @@ import (
 	"example/admin/front/cmd/http/kernel"
 	"example/admin/front/cmd/http/pages/sign_in/handlers"
 	"example/admin/front/internal/infra/clients/gateway"
-	"example/admin/front/internal/infra/logger"
+	"github.com/selyukovn/go-std/logger"
 	"html/template"
 	"net/http"
 )
@@ -16,7 +16,6 @@ const Url = "/sign-in/"
 // ---------------------------------------------------------------------------------------------------------------------
 
 func Register(
-	logger *logger.Logger,
 	apiClient *gateway.ApiClient,
 	mux *http.ServeMux,
 	appName string,
@@ -27,22 +26,20 @@ func Register(
 	const HandlerUrlConfirm = "/sign-in/confirm/"
 
 	mux.Handle("GET "+Url+"{$}", newRenderer(
-		logger,
 		appName,
 		redirectUrlForAuthorized,
 		HandlerUrlRequest,
 		HandlerUrlRequestRetry,
 		HandlerUrlConfirm,
 	))
-	mux.Handle("POST "+HandlerUrlRequest+"{$}", handlers.NewRequest(logger, apiClient))
-	mux.Handle("PUT "+HandlerUrlRequestRetry+"{$}", handlers.NewRequestRetry(logger, apiClient))
-	mux.Handle("PUT "+HandlerUrlConfirm+"{$}", handlers.NewConfirm(logger, apiClient, redirectUrlForAuthorized))
+	mux.Handle("POST "+HandlerUrlRequest+"{$}", handlers.NewRequest(apiClient))
+	mux.Handle("PUT "+HandlerUrlRequestRetry+"{$}", handlers.NewRequestRetry(apiClient))
+	mux.Handle("PUT "+HandlerUrlConfirm+"{$}", handlers.NewConfirm(apiClient, redirectUrlForAuthorized))
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 func newRenderer(
-	logger *logger.Logger,
 	appName string,
 	redirectUrlForAuthorized string,
 	handlerUrlRequest string,
@@ -57,6 +54,8 @@ func newRenderer(
 			return
 		}
 
+		ctx := r.Context()
+
 		if err := tpl.Execute(w, struct {
 			AppName         string
 			UrlRequest      string
@@ -68,7 +67,7 @@ func newRenderer(
 			UrlRequestRetry: handlerUrlRequestRetry,
 			UrlConfirm:      handlerUrlConfirm,
 		}); err != nil {
-			logger.GeneralErrorFf(err.Error())
+			logger.ErrorFf(ctx, err.Error())
 			kernel.Error500(w)
 		}
 	})

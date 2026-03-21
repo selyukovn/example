@@ -4,6 +4,7 @@ import (
 	"context"
 	"example/admin/cfm/cmd/common/container"
 	"github.com/google/uuid"
+	"github.com/selyukovn/go-std/logger"
 	"runtime/debug"
 	"strings"
 )
@@ -25,7 +26,7 @@ func NewBoundary() func(func(context.Context), string, *container.Container) fun
 
 			defer func() {
 				if pv := recover(); pv != nil {
-					ctr.Logger.GeneralPanicFf(pv, debug.Stack(), "shc.interceptors.NewBoundary")
+					logger.PanicFf(ctx, pv, debug.Stack(), "shc.interceptors.NewBoundary")
 				}
 			}()
 
@@ -44,14 +45,14 @@ func NewBoundary() func(func(context.Context), string, *container.Container) fun
 			traceId := traceUuid.String()
 			traceId = strings.Replace(traceId, "-", "", -1)
 
-			ctx = ctr.Logger.AddTraceIdToCtx(ctx, traceId)
+			ctx = logger.AddAttrToCtx(ctx, "trace_id", traceId)
 
 			// ---------------------------------------------------------------------------------------------------------
 			// Логирование
 			// ---------------------------------------------------------------------------------------------------------
 
-			ctr.Logger.CtxInfoFf(ctx, "%s - запуск...", name)
-			defer ctr.Logger.CtxInfoFf(ctx, "%s - готово!", name)
+			logger.InfoFf(ctx, "%s - запуск...", name)
+			defer logger.InfoFf(ctx, "%s - готово!", name)
 
 			// ---------------------------------------------------------------------------------------------------------
 			// Основной перехватчик паники
@@ -63,7 +64,7 @@ func NewBoundary() func(func(context.Context), string, *container.Container) fun
 
 			defer func() {
 				if pv := recover(); pv != nil {
-					ctr.Logger.CtxPanicFf(ctx, pv, debug.Stack(), "grpc.interceptors.NewBoundary")
+					logger.PanicFf(ctx, pv, debug.Stack(), "grpc.interceptors.NewBoundary")
 				}
 			}()
 

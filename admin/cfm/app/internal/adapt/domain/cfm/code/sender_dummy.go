@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"example/admin/cfm/internal/domain/cfm/code"
-	"example/admin/cfm/internal/infra/logger"
 	"fmt"
 	"github.com/selyukovn/go-std"
+	"github.com/selyukovn/go-std/logger"
 	assert "github.com/selyukovn/go-wm-assert"
 	"math"
 	"math/rand"
@@ -17,18 +17,14 @@ import (
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
-type SenderImplDummy struct {
-	l *logger.Logger
-}
+type SenderImplDummy struct{}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
-func NewSenderImplDummy(l *logger.Logger) *SenderImplDummy {
-	return &SenderImplDummy{
-		l: l,
-	}
+func NewSenderImplDummy() *SenderImplDummy {
+	return &SenderImplDummy{}
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -46,8 +42,6 @@ func (s *SenderImplDummy) Send(ctx context.Context, code code.Code, email std.Em
 	assert.FalseMust(code.IsNil())
 	assert.FalseMust(email.IsNil())
 
-	traceId, _ := s.l.GetTraceIdFromCtx(ctx)
-
 	var rMin uint32 = 100
 	var rMax uint32 = 5000
 	sendingDuration := time.Duration(rMin+rand.Uint32()%(rMax-rMin+1)) * time.Millisecond
@@ -55,9 +49,8 @@ func (s *SenderImplDummy) Send(ctx context.Context, code code.Code, email std.Em
 	isSuccess := rand.Uint32() > math.MaxUint32/2
 
 	message := fmt.Sprintf(
-		"[%T] [traceId=%s] Send(%v, %v) -- %s (%s)",
+		"[%T] Send(%v, %v) -- %s (%s)",
 		s,
-		traceId,
 		code,
 		email,
 		std.Ternary[string](isSuccess, "success", "failed"),
@@ -66,7 +59,7 @@ func (s *SenderImplDummy) Send(ctx context.Context, code code.Code, email std.Em
 
 	time.Sleep(sendingDuration)
 
-	println(message)
+	logger.InfoFf(ctx, message)
 
 	if !isSuccess {
 		return std.WrapErrorToRuntime(errors.New(message), s, "Send")

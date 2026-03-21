@@ -10,6 +10,7 @@ import (
 	"example/admin/auth/internal/domain/cfm"
 	"example/admin/auth/internal/opera/use_cases/sign_in_confirm"
 	"github.com/selyukovn/go-std"
+	"github.com/selyukovn/go-std/logger"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -17,13 +18,13 @@ func NewSignInConfirm(ctr *container.Container) func(ctx context.Context, req *p
 	return func(ctx context.Context, req *pb.SignInConfirmRequest) (*pb.SignInConfirmResponse, error) {
 		cl, err := helpers.ParseClient(req.FromIp, req.FromUserAgent)
 		if err != nil {
-			ctr.Logger.CtxDebugFf(ctx, err.Error())
+			logger.DebugFf(ctx, err.Error())
 			return nil, helpers.ErrorInvalidArgument("кривой client")
 		}
 
 		signInId, err := action_request.IdFromString(req.SignInId)
 		if err != nil {
-			ctr.Logger.CtxDebugFf(ctx, err.Error())
+			logger.DebugFf(ctx, err.Error())
 			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorValidationDetail{
 				Field:   "SignInId",
 				Message: err.Error(),
@@ -31,7 +32,7 @@ func NewSignInConfirm(ctr *container.Container) func(ctx context.Context, req *p
 		}
 		code, err := cfm.CodeFromString(req.Code)
 		if err != nil {
-			ctr.Logger.CtxDebugFf(ctx, err.Error())
+			logger.DebugFf(ctx, err.Error())
 			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorValidationDetail{
 				Field:   "Code",
 				Message: err.Error(),
@@ -55,10 +56,10 @@ func NewSignInConfirm(ctr *container.Container) func(ctx context.Context, req *p
 			})
 		case std.ErrorUnprocessable:
 			// todo : по логике это дубликат IsAsPassed случая cfm.ErrorFinished, но...
-			ctr.Logger.CtxWarnFf(ctx, "%v обратился к завершенному SignIn %q: %#v", cl, signInId, vErr)
+			logger.WarnFf(ctx, "%v обратился к завершенному SignIn %q: %#v", cl, signInId, vErr)
 			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorUnprocessableDetail{})
 		case std.ErrorRuntime:
-			ctr.Logger.CtxErrorFf(ctx, err.Error())
+			logger.ErrorFf(ctx, err.Error())
 			return nil, helpers.ErrorInternal()
 		default:
 			panic(err)

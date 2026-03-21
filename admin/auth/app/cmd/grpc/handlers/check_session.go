@@ -9,6 +9,7 @@ import (
 	"example/admin/auth/internal/domain/session"
 	"example/admin/auth/internal/opera/use_cases/check_session"
 	"github.com/selyukovn/go-std"
+	"github.com/selyukovn/go-std/logger"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -16,13 +17,13 @@ func NewCheckSession(ctr *container.Container) func(ctx context.Context, req *pb
 	return func(ctx context.Context, req *pb.CheckSessionRequest) (*pb.CheckSessionResponse, error) {
 		cl, err := helpers.ParseClient(req.FromIp, req.FromUserAgent)
 		if err != nil {
-			ctr.Logger.CtxDebugFf(ctx, err.Error())
+			logger.DebugFf(ctx, err.Error())
 			return nil, helpers.ErrorInvalidArgument("кривой client")
 		}
 
 		sessId, err := session.IdFromString(req.SessionId)
 		if err != nil {
-			ctr.Logger.CtxDebugFf(ctx, err.Error())
+			logger.DebugFf(ctx, err.Error())
 			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorValidationDetail{
 				Field:   "sessionId",
 				Message: err.Error(),
@@ -44,7 +45,7 @@ func NewCheckSession(ctr *container.Container) func(ctx context.Context, req *pb
 				ClosedAt:  timestamppb.New(vErr.ClosedAt()),
 			})
 		case std.ErrorRuntime:
-			ctr.Logger.CtxErrorFf(ctx, err.Error())
+			logger.ErrorFf(ctx, err.Error())
 			return nil, helpers.ErrorInternal()
 		default:
 			panic(err)

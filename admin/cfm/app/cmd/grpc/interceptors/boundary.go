@@ -4,6 +4,7 @@ import (
 	"context"
 	"example/admin/cfm/cmd/common/container"
 	"example/admin/cfm/cmd/grpc/helpers"
+	"github.com/selyukovn/go-std/logger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -52,7 +53,7 @@ func NewBoundary(ctr *container.Container) grpc.UnaryServerInterceptor {
 		if !ok || traceId == "" {
 			return nil, helpers.ErrorInvalidArgument("x-trace-id header not found")
 		}
-		ctx = ctr.Logger.AddTraceIdToCtx(ctx, traceId)
+		ctx = logger.AddAttrToCtx(ctx, "trace_id", traceId)
 
 		// FullMethod
 		// ------------
@@ -63,7 +64,7 @@ func NewBoundary(ctr *container.Container) grpc.UnaryServerInterceptor {
 		// Логирование запроса
 		// -------------------------------------------------------------------------------------------------------------
 
-		ctr.Logger.CtxInfoFf(ctx, "Запрос: %q", helpers.GrpcInfoFullMethod(ctx))
+		logger.InfoFf(ctx, "Запрос: %q", helpers.GrpcInfoFullMethod(ctx))
 
 		defer func() {
 			code := codes.OK
@@ -74,7 +75,7 @@ func NewBoundary(ctr *container.Container) grpc.UnaryServerInterceptor {
 				msg = st.Message()
 			}
 
-			ctr.Logger.CtxInfoFf(ctx, "Ответ: %d %s", code, msg)
+			logger.InfoFf(ctx, "Ответ: %d %s", code, msg)
 		}()
 
 		// -------------------------------------------------------------------------------------------------------------
@@ -90,7 +91,7 @@ func NewBoundary(ctr *container.Container) grpc.UnaryServerInterceptor {
 				rRes = nil
 				rErr = rErrOnPanic
 
-				ctr.Logger.CtxPanicFf(ctx, pv, debug.Stack(), "grpc.interceptors.NewBoundary")
+				logger.PanicFf(ctx, pv, debug.Stack(), "grpc.interceptors.NewBoundary")
 			}
 		}()
 

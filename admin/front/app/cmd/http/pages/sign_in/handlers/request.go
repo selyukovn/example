@@ -3,13 +3,12 @@ package handlers
 import (
 	"example/admin/front/cmd/http/kernel"
 	"example/admin/front/internal/infra/clients/gateway"
-	"example/admin/front/internal/infra/logger"
+	"github.com/selyukovn/go-std/logger"
 	assert "github.com/selyukovn/go-wm-assert"
 	"net/http"
 )
 
 func NewRequest(
-	logger *logger.Logger,
 	apiClient *gateway.ApiClient,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -25,6 +24,8 @@ func NewRequest(
 			kernel.Error400(w)
 			return
 		}
+
+		ctx := r.Context()
 
 		fromIp := kernel.ClientIp(r)
 		fromUag := kernel.ClientUag(r)
@@ -68,7 +69,7 @@ func NewRequest(
 			CanRetryAt:  *resp.JSON200.CanRetryAt,
 			ExpireAt:    *resp.JSON200.ExpireAt,
 		}); err != nil {
-			logger.GeneralErrorFf(err.Error())
+			logger.ErrorFf(ctx, err.Error())
 			kernel.Error500(w)
 		}
 	})

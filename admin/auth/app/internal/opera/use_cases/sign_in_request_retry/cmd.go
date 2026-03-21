@@ -4,10 +4,10 @@ import (
 	"context"
 	"example/admin/auth/internal/domain/account"
 	"example/admin/auth/internal/domain/cfm"
-	"example/admin/auth/internal/opera/components"
 	"example/admin/auth/internal/opera/domain_facades"
 	goroutiner "github.com/selyukovn/go-routiner"
 	"github.com/selyukovn/go-std"
+	"github.com/selyukovn/go-std/logger"
 	assert "github.com/selyukovn/go-wm-assert"
 )
 
@@ -16,7 +16,6 @@ import (
 // ---------------------------------------------------------------------------------------------------------------------
 
 type Command struct {
-	logger       components.LoggerInterface
 	grt          *goroutiner.Goroutiner
 	accDomFac    *domain_facades.AccountDomFac
 	actReqDomFac *domain_facades.ActionRequestDomFac
@@ -32,14 +31,12 @@ type Command struct {
 //
 // Паникует при нулевых аргументах.
 func NewCommand(
-	logger components.LoggerInterface,
 	grt *goroutiner.Goroutiner,
 	accDomFac *domain_facades.AccountDomFac,
 	actReqDomFac *domain_facades.ActionRequestDomFac,
 	cfmService cfm.ServiceInterface,
 	sessDomFac *domain_facades.SessionDomFac,
 ) *Command {
-	assert.NotNilDeepMust(logger)
 	assert.NotNilDeepMust(grt)
 	assert.NotNilDeepMust(accDomFac)
 	assert.NotNilDeepMust(cfmService)
@@ -47,7 +44,6 @@ func NewCommand(
 	assert.NotNilDeepMust(sessDomFac)
 
 	return &Command{
-		logger:       logger,
 		grt:          grt,
 		accDomFac:    accDomFac,
 		actReqDomFac: actReqDomFac,
@@ -115,7 +111,7 @@ func (c *Command) Execute(args Args) (Result, error) {
 			switch err.(type) {
 			case nil:
 			case std.ErrorRuntime:
-				c.logger.ErrorFf(ctx, "%T не удалось проверить сессию для SignIn %q: %#v", c, signInId, err)
+				logger.ErrorFf(ctx, "%T не удалось проверить сессию для SignIn %q: %#v", c, signInId, err)
 				// Нет return'а, потому что ветвь сценария не является основной -- лога достаточно.
 			default:
 				panic(err)

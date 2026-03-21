@@ -3,7 +3,6 @@ package sign_in_request
 import (
 	"example/admin/auth/internal/domain/account"
 	"example/admin/auth/internal/domain/cfm"
-	"example/admin/auth/internal/opera/components"
 	"example/admin/auth/internal/opera/domain_facades"
 	"github.com/selyukovn/go-std"
 	assert "github.com/selyukovn/go-wm-assert"
@@ -14,7 +13,6 @@ import (
 // ---------------------------------------------------------------------------------------------------------------------
 
 type Command struct {
-	logger       components.LoggerInterface
 	accDomFac    *domain_facades.AccountDomFac
 	actReqDomFac *domain_facades.ActionRequestDomFac
 	cfmService   cfm.ServiceInterface
@@ -28,18 +26,15 @@ type Command struct {
 //
 // Паникует при нулевых аргументах.
 func NewCommand(
-	logger components.LoggerInterface,
 	accDomFac *domain_facades.AccountDomFac,
 	actReqDomFac *domain_facades.ActionRequestDomFac,
 	cfmService cfm.ServiceInterface,
 ) *Command {
-	assert.NotNilDeepMust(logger)
 	assert.NotNilDeepMust(accDomFac)
 	assert.NotNilDeepMust(actReqDomFac)
 	assert.NotNilDeepMust(cfmService)
 
 	return &Command{
-		logger:       logger,
 		accDomFac:    accDomFac,
 		actReqDomFac: actReqDomFac,
 		cfmService:   cfmService,

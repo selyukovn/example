@@ -3,14 +3,13 @@ package handlers
 import (
 	"example/admin/front/cmd/http/kernel"
 	"example/admin/front/internal/infra/clients/gateway"
-	"example/admin/front/internal/infra/logger"
+	"github.com/selyukovn/go-std/logger"
 	assert "github.com/selyukovn/go-wm-assert"
 	"net/http"
 	"time"
 )
 
 func NewConfirm(
-	logger *logger.Logger,
 	apiClient *gateway.ApiClient,
 	redirectUrlForAuthorized string,
 ) http.Handler {
@@ -28,6 +27,8 @@ func NewConfirm(
 			kernel.Error400(w)
 			return
 		}
+
+		ctx := r.Context()
 
 		fromIp := kernel.ClientIp(r)
 		fromUag := kernel.ClientUag(r)
@@ -63,7 +64,7 @@ func NewConfirm(
 		if *resp.JSON200.IsPassed {
 			sessExpAt, err := time.Parse(time.RFC3339, *resp.JSON200.SessionExpireAt)
 			if err != nil {
-				logger.GeneralErrorFf(err.Error())
+				logger.ErrorFf(ctx, err.Error())
 				kernel.Error500(w)
 				return
 			}
@@ -79,7 +80,7 @@ func NewConfirm(
 			AttemptsLeft: uint(*resp.JSON200.AttemptsLeft),
 			RedirectUrl:  redirectUrlForAuthorized,
 		}); err != nil {
-			logger.GeneralErrorFf(err.Error())
+			logger.ErrorFf(ctx, err.Error())
 			kernel.Error500(w)
 		}
 	})

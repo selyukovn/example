@@ -3,13 +3,12 @@ package handlers
 import (
 	"example/admin/front/cmd/http/kernel"
 	"example/admin/front/internal/infra/clients/gateway"
-	"example/admin/front/internal/infra/logger"
+	"github.com/selyukovn/go-std/logger"
 	assert "github.com/selyukovn/go-wm-assert"
 	"net/http"
 )
 
 func NewSignOut(
-	logger *logger.Logger,
 	apiClient *gateway.ApiClient,
 	redirectUrlForGuests string,
 ) http.Handler {
@@ -19,6 +18,8 @@ func NewSignOut(
 			kernel.Error401(w)
 			return
 		}
+
+		ctx := r.Context()
 
 		fromIp := kernel.ClientIp(r)
 		fromUag := kernel.ClientUag(r)
@@ -56,7 +57,7 @@ func NewSignOut(
 		}{
 			RedirectUrl: redirectUrlForGuests,
 		}); err != nil {
-			logger.GeneralErrorFf(err.Error())
+			logger.ErrorFf(ctx, err.Error())
 			kernel.Error500(w)
 		}
 	})

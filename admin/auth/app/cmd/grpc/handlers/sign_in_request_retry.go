@@ -10,6 +10,7 @@ import (
 	"example/admin/auth/internal/domain/cfm"
 	"example/admin/auth/internal/opera/use_cases/sign_in_request_retry"
 	"github.com/selyukovn/go-std"
+	"github.com/selyukovn/go-std/logger"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -17,13 +18,13 @@ func NewSignInRequestRetry(ctr *container.Container) func(ctx context.Context, r
 	return func(ctx context.Context, req *pb.SignInRequestRetryRequest) (*pb.SignInRequestRetryResponse, error) {
 		cl, err := helpers.ParseClient(req.FromIp, req.FromUserAgent)
 		if err != nil {
-			ctr.Logger.CtxDebugFf(ctx, err.Error())
+			logger.DebugFf(ctx, err.Error())
 			return nil, helpers.ErrorInvalidArgument("кривой client")
 		}
 
 		signInId, err := action_request.IdFromString(req.SignInId)
 		if err != nil {
-			ctr.Logger.CtxDebugFf(ctx, err.Error())
+			logger.DebugFf(ctx, err.Error())
 			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorValidationDetail{
 				Field:   "SignInId",
 				Message: err.Error(),
@@ -40,7 +41,7 @@ func NewSignInRequestRetry(ctr *container.Container) func(ctx context.Context, r
 		case account.ErrorDeactivated, account.ErrorIpWhitelist:
 			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorAccountAccessDeniedDetail{})
 		case cfm.ErrorFinished:
-			ctr.Logger.CtxWarnFf(ctx, "%v обратился к завершенному SignIn %q: %#v", cl, signInId, vErr)
+			logger.WarnFf(ctx, "%v обратился к завершенному SignIn %q: %#v", cl, signInId, vErr)
 			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorSignInFinishedDetail{
 				IsPassed:  vErr.IsAsPassed(),
 				IsFailed:  vErr.IsAsFailed(),
@@ -56,10 +57,10 @@ func NewSignInRequestRetry(ctr *container.Container) func(ctx context.Context, r
 			})
 		case std.ErrorUnprocessable:
 			// todo : по логике это дубликат IsAsPassed случая cfm.ErrorFinished, но...
-			ctr.Logger.CtxWarnFf(ctx, "%v обратился к завершенному SignIn %q: %#v", cl, signInId, vErr)
+			logger.WarnFf(ctx, "%v обратился к завершенному SignIn %q: %#v", cl, signInId, vErr)
 			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorUnprocessableDetail{})
 		case std.ErrorRuntime:
-			ctr.Logger.CtxErrorFf(ctx, err.Error())
+			logger.ErrorFf(ctx, err.Error())
 			return nil, helpers.ErrorInternal()
 		default:
 			panic(err)

@@ -3,7 +3,6 @@ package general
 import (
 	"example/admin/front/cmd/http/layouts/general/handlers"
 	"example/admin/front/internal/infra/clients/gateway"
-	"example/admin/front/internal/infra/logger"
 	assert "github.com/selyukovn/go-wm-assert"
 	"html/template"
 	"net/http"
@@ -19,7 +18,6 @@ var config = struct {
 }{}
 
 func Register(
-	logger *logger.Logger,
 	apiClient *gateway.ApiClient,
 	mux *http.ServeMux,
 	appName string,
@@ -29,7 +27,7 @@ func Register(
 	assert.Str().NotEmpty().Must(appName)
 	assert.Str().NotEmpty().Must(redirectUrlForGuests)
 
-	mux.Handle("DELETE "+urlSignOut, handlers.NewSignOut(logger, apiClient, redirectUrlForGuests))
+	mux.Handle("DELETE "+urlSignOut, handlers.NewSignOut(apiClient, redirectUrlForGuests))
 
 	staticDir := "/layouts/general/"
 	mux.Handle("GET "+staticDir, http.StripPrefix(staticDir, http.FileServer(http.Dir("./static"+staticDir))))

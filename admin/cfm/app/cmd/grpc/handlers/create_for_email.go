@@ -7,6 +7,7 @@ import (
 	"example/admin/cfm/cmd/grpc/pb"
 	"example/admin/cfm/internal/opera/use_cases/create_for_email"
 	"github.com/selyukovn/go-std"
+	"github.com/selyukovn/go-std/logger"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -14,7 +15,7 @@ func NewCreateForEmail(ctr *container.Container) func(ctx context.Context, req *
 	return func(ctx context.Context, req *pb.CreateForEmailRequest) (*pb.CreateForEmailResponse, error) {
 		email, err := std.EmailFromString(req.Email)
 		if err != nil {
-			ctr.Logger.CtxDebugFf(ctx, err.Error())
+			logger.DebugFf(ctx, err.Error())
 			return nil, helpers.ErrorInvalidArgument("кривой email")
 		}
 
@@ -24,7 +25,7 @@ func NewCreateForEmail(ctr *container.Container) func(ctx context.Context, req *
 		switch err.(type) {
 		case nil:
 		case std.ErrorRuntime:
-			ctr.Logger.CtxErrorFf(ctx, err.Error())
+			logger.ErrorFf(ctx, err.Error())
 			return nil, helpers.ErrorInternal()
 		default:
 			panic(err)

@@ -2,7 +2,6 @@ package confirm
 
 import (
 	"example/admin/cfm/internal/domain/cfm"
-	"example/admin/cfm/internal/opera/components"
 	"example/admin/cfm/internal/opera/domain_facades"
 	"github.com/selyukovn/go-std"
 	assert "github.com/selyukovn/go-wm-assert"
@@ -13,7 +12,6 @@ import (
 // ---------------------------------------------------------------------------------------------------------------------
 
 type Command struct {
-	logger    components.LoggerInterface
 	cfmDomFac *domain_facades.CfmDomFac
 }
 
@@ -25,14 +23,11 @@ type Command struct {
 //
 // Паникует при нулевых аргументах.
 func NewCommand(
-	logger components.LoggerInterface,
 	cfmDomFac *domain_facades.CfmDomFac,
 ) *Command {
-	assert.NotNilDeepMust(logger)
 	assert.NotNilDeepMust(cfmDomFac)
 
 	return &Command{
-		logger:    logger,
 		cfmDomFac: cfmDomFac,
 	}
 }

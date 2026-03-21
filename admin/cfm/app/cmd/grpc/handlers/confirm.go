@@ -9,6 +9,7 @@ import (
 	"example/admin/cfm/internal/domain/cfm/code"
 	"example/admin/cfm/internal/opera/use_cases/confirm"
 	"github.com/selyukovn/go-std"
+	"github.com/selyukovn/go-std/logger"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -16,13 +17,13 @@ func NewConfirm(ctr *container.Container) func(ctx context.Context, req *pb.Conf
 	return func(ctx context.Context, req *pb.ConfirmRequest) (*pb.ConfirmResponse, error) {
 		cfmId, err := cfm.IdFromString(req.CfmId)
 		if err != nil {
-			ctr.Logger.CtxDebugFf(ctx, err.Error())
+			logger.DebugFf(ctx, err.Error())
 			return nil, helpers.ErrorInvalidArgument("кривой id")
 		}
 
 		cCode, err := code.CodeFromString(req.Code)
 		if err != nil {
-			ctr.Logger.CtxDebugFf(ctx, err.Error())
+			logger.DebugFf(ctx, err.Error())
 			return nil, helpers.ErrorInvalidArgument("кривой code")
 		}
 
@@ -46,7 +47,7 @@ func NewConfirm(ctr *container.Container) func(ctx context.Context, req *pb.Conf
 				CfmId: cfmId.String(),
 			})
 		case std.ErrorRuntime:
-			ctr.Logger.CtxErrorFf(ctx, err.Error())
+			logger.ErrorFf(ctx, err.Error())
 			return nil, helpers.ErrorInternal()
 		default:
 			panic(err)

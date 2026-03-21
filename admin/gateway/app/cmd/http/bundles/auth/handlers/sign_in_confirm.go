@@ -7,6 +7,7 @@ import (
 	"example/admin/gateway/cmd/http/container"
 	"example/admin/gateway/internal/infra/clients/auth"
 	"github.com/selyukovn/go-std"
+	"github.com/selyukovn/go-std/logger"
 	"net/http"
 	"time"
 )
@@ -50,7 +51,7 @@ func NewSignInConfirm(
 				Message: http.StatusText(http.StatusForbidden),
 			}, nil
 		case auth.ErrorSignInFinished:
-			ctr.Logger.CtxWarnFf(ctx, "Обращение к завершенному SignIn %q: %#v", signInId, vErr)
+			logger.WarnFf(ctx, "Обращение к завершенному SignIn %q: %#v", signInId, vErr)
 			if vErr.IsPassed {
 				return openapi.PutAuthSignInConfirm422JSONResponse{
 					Code:    http.StatusUnprocessableEntity,
@@ -71,7 +72,7 @@ func NewSignInConfirm(
 			}
 		case std.ErrorUnprocessable:
 			// todo : по логике это дубликат IsAsPassed случая cfm.ErrorFinished, но...
-			ctr.Logger.CtxWarnFf(ctx, "Обращение к завершенному SignIn %q с сессией: %#v", signInId, vErr)
+			logger.WarnFf(ctx, "Обращение к завершенному SignIn %q с сессией: %#v", signInId, vErr)
 			return openapi.PutAuthSignInConfirm422JSONResponse{
 				Code:    http.StatusUnprocessableEntity,
 				Message: "Уже есть сессия",

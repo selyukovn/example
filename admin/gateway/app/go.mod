@@ -6,7 +6,7 @@ require (
 	github.com/oapi-codegen/runtime v1.2.0
 	github.com/prometheus/client_golang v1.22.0
 	github.com/selyukovn/go-routiner v0.1.0
-	github.com/selyukovn/go-std v0.2.0
+	github.com/selyukovn/go-std v0.3.0
 	github.com/selyukovn/go-wm-assert v0.3.0
 	google.golang.org/grpc v1.71.3
 	google.golang.org/protobuf v1.36.5

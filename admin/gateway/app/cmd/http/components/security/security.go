@@ -7,6 +7,7 @@ import (
 	"example/admin/gateway/internal/infra/clients/auth"
 	"fmt"
 	"github.com/selyukovn/go-std"
+	"github.com/selyukovn/go-std/logger"
 	assert "github.com/selyukovn/go-wm-assert"
 	"net/http"
 	"strings"
@@ -63,7 +64,7 @@ func (s *Security) _middlewareAsGuest(
 	ctx = context.WithValue(ctx, ctxKeyUser, user)
 	r = r.WithContext(ctx)
 
-	s.ctr.Logger.CtxInfoFf(ctx, "Позвольтевотель не идетинфицирован")
+	logger.InfoFf(ctx, "Позвольтевотель не идетинфицирован")
 
 	next.ServeHTTP(w, r)
 }
@@ -108,7 +109,7 @@ func (s *Security) Middleware(next http.Handler) http.Handler {
 			// однако, 401-й код может быть неуместным, например, в обработчике,
 			// который делает перенаправление в зависимости от состояния аутентификации пользователя.
 			// Поэтому выбор кода ответа необходимо оставить на усмотрение обработчика.
-			s.ctr.Logger.CtxWarnFf(ctx, "неопознанная сессия %q: %s", std.MaskStrNotFirstLast(sessId), err)
+			logger.WarnFf(ctx, "неопознанная сессия %q: %s", std.MaskStrNotFirstLast(sessId), err)
 			s._middlewareAsGuest(w, r, next)
 			return // !!!
 		case auth.ErrorValidation:
@@ -122,11 +123,11 @@ func (s *Security) Middleware(next http.Handler) http.Handler {
 			// Если необходимость в различии все же появится, то можно использовать дополнительные флаги в User.
 			//
 			// Выбор кода ответа остается на усмотрение обработчика -- по аналогии с `case std.ErrorNotFound`.
-			s.ctr.Logger.CtxWarnFf(ctx, "обращение к закрытой сессии %q: %s", std.MaskStrNotFirstLast(sessId), err)
+			logger.WarnFf(ctx, "обращение к закрытой сессии %q: %s", std.MaskStrNotFirstLast(sessId), err)
 			s._middlewareAsGuest(w, r, next)
 			return // !!!
 		case std.ErrorRuntime:
-			s.ctr.Logger.CtxErrorFf(ctx, std.WrapErrorToRuntime(err, s, "Middleware").Error())
+			logger.ErrorFf(ctx, std.WrapErrorToRuntime(err, s, "Middleware").Error())
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return // !!!
 		default:
@@ -233,7 +234,7 @@ func (s *Security) UnAuthenticate(ctx context.Context, user *User) error {
 	case std.ErrorAlreadyDone:
 		// Наиболее вероятная ситуация -- нажатие кнопки выхода после истечения срока жизни сессии.
 		// Но теоретически может быть и скрытая ошибка, поэтому нужно обязательно записать предупреждение.
-		s.ctr.Logger.CtxWarnFf(ctx, "закрытие закрытой сессии %q: %s", std.MaskStrNotFirstLast(user.sessionId()), err)
+		logger.WarnFf(ctx, "закрытие закрытой сессии %q: %s", std.MaskStrNotFirstLast(user.sessionId()), err)
 	case auth.ErrorValidation,
 		std.ErrorNotFound,
 		auth.ErrorAccountAccessDenied,

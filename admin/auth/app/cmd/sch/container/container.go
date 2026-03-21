@@ -5,24 +5,21 @@ import (
 	"database/sql"
 	adapt_domain_event_storage "example/admin/auth/internal/adapt/domain/event_storage"
 	adapt_domain_session "example/admin/auth/internal/adapt/domain/session"
-	adapt_opera_components "example/admin/auth/internal/adapt/opera/components"
 	domain_event_storage "example/admin/auth/internal/domain/event_storage"
 	domain_session "example/admin/auth/internal/domain/session"
-	infra_logger "example/admin/auth/internal/infra/logger"
 	opera_domain_facades "example/admin/auth/internal/opera/domain_facades"
 	"example/admin/auth/internal/opera/use_cases/session_tick_time"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	goroutiner "github.com/selyukovn/go-routiner"
 	"github.com/selyukovn/go-std"
+	"github.com/selyukovn/go-std/logger"
 	"github.com/selyukovn/go-txr"
 	assert "github.com/selyukovn/go-wm-assert"
-	"io"
 	"time"
 )
 
 type Container struct {
-	Logger   *infra_logger.Logger
 	UseCases UseCases
 }
 
@@ -31,24 +28,13 @@ type UseCases = struct {
 }
 
 func New(
-	logIo io.Writer,
-	isDebug bool,
 	sqlDb *sql.DB,
 	sqlDbFnIsDeadlockError func(error) bool,
 	sqlDbFnIsDuplicateKeyError func(error) bool,
 ) *Container {
-	assert.NotNilDeepMust(logIo)
-	assert.NotNilDeepMust(logIo)
 	assert.NotNilDeepMust(sqlDb)
 	assert.NotNilDeepMust(sqlDbFnIsDeadlockError)
 	assert.NotNilDeepMust(sqlDbFnIsDuplicateKeyError)
-
-	// -----------------------------------------------------------------------------------------------------------------
-	// Infra
-	// -----------------------------------------------------------------------------------------------------------------
-
-	// logger
-	infraLogger := infra_logger.NewLogger(logIo, isDebug)
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// Domain
@@ -71,13 +57,10 @@ func New(
 	// txr
 	operaTxr := txr.NewTxrImplSql(sqlDb, 2, 50*time.Millisecond, sqlDbFnIsDeadlockError)
 
-	// logger
-	operaLogger := adapt_opera_components.NewLoggerImplInfraLogger(infraLogger)
-
 	// goroutiner
 	operaGrt := goroutiner.New(
 		goroutiner.MwPanicToError(func(panicValue any, debugStack []byte, ctx context.Context) error {
-			infraLogger.CtxPanicFf(ctx, panicValue, debugStack, "container.operaGrt.MwPanicToError")
+			logger.PanicFf(ctx, panicValue, debugStack, "container.operaGrt.MwPanicToError")
 			// --
 			var err error
 			switch pv := panicValue.(type) {
@@ -98,9 +81,8 @@ func New(
 	// -----------------------------------------------------------------------------------------------------------------
 
 	return &Container{
-		Logger: infraLogger,
 		UseCases: UseCases{
-			SessionTickTime: session_tick_time.NewCommand(operaLogger, operaGrt, sessDomFac),
+			SessionTickTime: session_tick_time.NewCommand(operaGrt, sessDomFac),
 		},
 	}
 }

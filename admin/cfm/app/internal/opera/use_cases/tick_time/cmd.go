@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"example/admin/cfm/internal/domain/cfm"
-	"example/admin/cfm/internal/opera/components"
 	"example/admin/cfm/internal/opera/domain_facades"
 	"fmt"
 	goroutiner "github.com/selyukovn/go-routiner"
 	"github.com/selyukovn/go-std"
+	"github.com/selyukovn/go-std/logger"
 	assert "github.com/selyukovn/go-wm-assert"
 	"strconv"
 )
@@ -18,7 +18,6 @@ import (
 // ---------------------------------------------------------------------------------------------------------------------
 
 type Command struct {
-	logger    components.LoggerInterface
 	grt       *goroutiner.Goroutiner
 	cfmDomFac *domain_facades.CfmDomFac
 }
@@ -31,16 +30,13 @@ type Command struct {
 //
 // Паникует при нулевых аргументах.
 func NewCommand(
-	logger components.LoggerInterface,
 	grt *goroutiner.Goroutiner,
 	cfmDomFac *domain_facades.CfmDomFac,
 ) *Command {
-	assert.NotNilDeepMust(logger)
 	assert.NotNilDeepMust(grt)
 	assert.NotNilDeepMust(cfmDomFac)
 
 	return &Command{
-		logger:    logger,
 		grt:       grt,
 		cfmDomFac: cfmDomFac,
 	}
@@ -73,7 +69,7 @@ func (c *Command) Execute(args Args) error {
 	default:
 		panic(err)
 	}
-	c.logger.InfoFf(ctx, "Конфирмации: %v", cfmIds)
+	logger.InfoFf(ctx, "Конфирмации: %v", cfmIds)
 
 	cfmIdsCount := len(cfmIds)
 	if cfmIdsCount == 0 {
@@ -89,9 +85,9 @@ func (c *Command) Execute(args Args) error {
 			from := i * 10
 			to := min(from+10, cfmIdsCount)
 			wCfmIds := cfmIds[from:to]
-			c.logger.DebugFf(ctx, "Конфирмации воркера #%d: %v", i, wCfmIds)
+			logger.DebugFf(ctx, "Конфирмации воркера #%d: %v", i, wCfmIds)
 			return func(ctx context.Context) error {
-				ctx = c.logger.AddExtraAttrToCtx(ctx, "worker", strconv.Itoa(i))
+				ctx = logger.AddAttrToCtx(ctx, "worker", strconv.Itoa(i))
 				return errors.Join(c.executeWorker(ctx, wCfmIds)...)
 			}, nil
 		}).
@@ -99,7 +95,7 @@ func (c *Command) Execute(args Args) error {
 
 	if err = errors.Join(errs...); err != nil {
 		err = std.WrapErrorToRuntime(err, c, "Execute")
-		c.logger.ErrorFf(ctx, "Ошибки: %v", err)
+		logger.ErrorFf(ctx, "Ошибки: %v", err)
 		return err
 	}
 

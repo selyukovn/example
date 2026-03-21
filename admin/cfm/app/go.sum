@@ -67,6 +67,8 @@ github.com/selyukovn/go-routiner v0.1.0 h1:VBFp3CMhohU4mfDUSj9NJsKtRq7ihftCJKe0r
 github.com/selyukovn/go-routiner v0.1.0/go.mod h1:2KV308gQQW02SElQGqu6nQiTj5/hSQJ9UGODB8r3YKI=
 github.com/selyukovn/go-std v0.2.0 h1:ckQR0K5dpbyHErPtrVt06hjbzcEh8Jw6zgoT1YQOdjM=
 github.com/selyukovn/go-std v0.2.0/go.mod h1:7iiqRrqKdWQlAmGgNqxirpXco2TAz3VBDG8WhZIonpU=
+github.com/selyukovn/go-std v0.3.0 h1:Qz9CNYsgoVhArhIqSpFdm9jezceCYGvkCqD7zmWZHxo=
+github.com/selyukovn/go-std v0.3.0/go.mod h1:b4TXWjeGxAGNY0GDhDqbsxysMvEvr5IUtMboUbngKUw=
 github.com/selyukovn/go-txr v0.5.0 h1:oJxJL9rmjPfu3aFcc7pVtwpFkW10xXvjtvourM+gX+8=
 github.com/selyukovn/go-txr v0.5.0/go.mod h1:U7V3eopiR3fvGQwzFNF6tzWEPBrROQIx2LYt7OQYur4=
 github.com/selyukovn/go-wm-assert v0.3.0 h1:GEnpM7kYMKeAFeyR/kTHTDHGCiOFVlFJ5Rw0VIeU10o=
