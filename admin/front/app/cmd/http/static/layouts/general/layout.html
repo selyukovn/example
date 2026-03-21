@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ template "TITLE" .Page }} | {{ .AppName }}</title>
+    <link rel="icon" href="/static/favicon.ico">
+    <link rel="stylesheet" href="/static/common.css"/>
+    <link rel="stylesheet" href="/static/layouts/general/layout.css"/>
+    {{ template "STYLES" .Page }}
+</head>
+<body>
+<div class="admin-layout">
+    <!-- Левое меню -->
+    <aside class="sidebar">
+        <div class="logo">
+            <h2>{{ .AppName }}</h2>
+        </div>
+        <nav class="menu">
+            <ul>
+                {{ range $i, $item := .MenuItems }}
+                    <li>
+                        <a href="" class="menu-link {{ if $item.IsActive }}active{{ end }}">
+                            <span class="icon">🏠</span>
+                            <span class="text">{{ $item.Name }}</span>
+                        </a>
+                    </li>
+                {{ end }}
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Основная область -->
+    <main class="main-content">
+        <header class="header">
+            <div class="user-info">
+                <img src="{{ .UserPic }}" class="user-pic" alt="{{ .UserName }}"/>
+                <span>{{ .UserName }}</span>
+            </div>
+            <button data-url="{{ .UrlSignOut }}" class="sign-out-btn">Выйти</button>
+        </header>
+        <div class="content-area">
+            {{ template "CONTENT" .Page }}
+        </div>
+    </main>
+</div>
+
+<script src="/static/common.js"></script>
+<script src="/static/layouts/general/layout.js"></script>
+{{ template "SCRIPTS" .Page }}
+
+</body>
+</html>

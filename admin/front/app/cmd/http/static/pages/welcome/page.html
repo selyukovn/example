@@ -1,0 +1,21 @@
+
+{{ define "TITLE" }}{{ .Title }}{{ end }}
+
+{{ define "STYLES" }}
+<link rel="stylesheet" href="/static/pages/welcome/page.css"/>
+{{ end }}
+
+{{ define "CONTENT" }}
+<div class="container">
+    <h1>Добро пожаловать!</h1>
+</div>
+
+<div class="container">
+    <blockquote class="quote">
+        <p>{{ .Quote }}</p>
+        <footer>— JSON Statham</footer>
+    </blockquote>
+</div>
+{{ end }}
+
+{{ define "SCRIPTS" }}{{ end }}
