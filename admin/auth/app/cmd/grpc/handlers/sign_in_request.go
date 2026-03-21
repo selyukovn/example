@@ -8,6 +8,7 @@ import (
 	"example/admin/auth/internal/domain/account"
 	"example/admin/auth/internal/opera/use_cases/sign_in_request"
 	"github.com/selyukovn/go-std"
+	"github.com/selyukovn/go-std/logger"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -15,13 +16,13 @@ func NewSignInRequest(ctr *container.Container) func(ctx context.Context, req *p
 	return func(ctx context.Context, req *pb.SignInRequestRequest) (*pb.SignInRequestResponse, error) {
 		cl, err := helpers.ParseClient(req.FromIp, req.FromUserAgent)
 		if err != nil {
-			ctr.Logger.CtxDebugFf(ctx, err.Error())
+			logger.DebugFf(ctx, err.Error())
 			return nil, helpers.ErrorInvalidArgument("кривой client")
 		}
 
 		email, err := std.EmailFromString(req.Email)
 		if err != nil {
-			ctr.Logger.CtxDebugFf(ctx, err.Error())
+			logger.DebugFf(ctx, err.Error())
 			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorValidationDetail{
 				Field:   "Email",
 				Message: err.Error(),
@@ -38,7 +39,7 @@ func NewSignInRequest(ctr *container.Container) func(ctx context.Context, req *p
 		case account.ErrorDeactivated, account.ErrorIpWhitelist:
 			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorAccountAccessDeniedDetail{})
 		case std.ErrorRuntime:
-			ctr.Logger.CtxErrorFf(ctx, err.Error())
+			logger.ErrorFf(ctx, err.Error())
 			return nil, helpers.ErrorInternal()
 		default:
 			panic(err)

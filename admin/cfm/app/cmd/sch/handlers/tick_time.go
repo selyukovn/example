@@ -5,6 +5,7 @@ import (
 	"example/admin/cfm/cmd/common/container"
 	"example/admin/cfm/internal/opera/use_cases/tick_time"
 	"github.com/selyukovn/go-std"
+	"github.com/selyukovn/go-std/logger"
 )
 
 func NewTickTime(ctr *container.Container) func(ctx context.Context) {
@@ -14,7 +15,7 @@ func NewTickTime(ctr *container.Container) func(ctx context.Context) {
 		case nil:
 		case std.ErrorRuntime:
 			err = std.WrapErrorToRuntime(err, "sch.handlers", "TickTime")
-			ctr.Logger.CtxErrorFf(ctx, err.Error())
+			logger.ErrorFf(ctx, err.Error())
 		default:
 			panic(err)
 		}

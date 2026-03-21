@@ -7,6 +7,7 @@ import (
 	"example/admin/gateway/cmd/http/container"
 	"example/admin/gateway/cmd/http/kernel"
 	"github.com/google/uuid"
+	"github.com/selyukovn/go-std/logger"
 	"net/http"
 	"runtime/debug"
 )
@@ -20,7 +21,7 @@ func registerRoutes(
 	middlewares := []func(http.Handler) http.Handler{
 		_boundaryMiddleware(ctr),
 		monitoring.MetricsMiddleware(),
-		_securityMiddleware(ctr, sec),
+		_securityMiddleware(sec),
 	}
 
 	auth.Register(mux, middlewares, ctr, sec)
@@ -45,6 +46,8 @@ func _boundaryMiddleware(ctr *container.Container) func(http.Handler) http.Handl
 	// Поэтому нужно также, как и в случае с grpc, обязательно перехватывать панику до попадания в сервер.
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+
 			fnResponseOnPanic := func(w http.ResponseWriter) {
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
@@ -58,7 +61,7 @@ func _boundaryMiddleware(ctr *container.Container) func(http.Handler) http.Handl
 
 			defer func() {
 				if pv := recover(); pv != nil {
-					ctr.Logger.GeneralPanicFf(pv, debug.Stack(), "http._boundaryMiddleware (резервный recover)")
+					logger.PanicFf(ctx, pv, debug.Stack(), "http._boundaryMiddleware (резервный recover)")
 					fnResponseOnPanic(w)
 				}
 			}()
@@ -88,8 +91,7 @@ func _boundaryMiddleware(ctr *container.Container) func(http.Handler) http.Handl
 			r.Header.Add("X-Trace-Id", traceId)
 			_ = kernel.TraceId
 
-			ctx := r.Context()
-			ctx = ctr.Logger.AddTraceIdToCtx(ctx, traceId)
+			ctx = logger.AddAttrToCtx(ctx, "trace_id", traceId)
 
 			r = r.WithContext(ctx)
 
@@ -97,11 +99,11 @@ func _boundaryMiddleware(ctr *container.Container) func(http.Handler) http.Handl
 			// Логирование запроса
 			// ---------------------------------------------------------------------------------------------------------
 
-			ctr.Logger.CtxInfoFf(ctx, "Запрос: %s %s", r.Method, r.URL.Path)
+			logger.InfoFf(ctx, "Запрос: %s %s", r.Method, r.URL.Path)
 
 			defer func() {
 				status := w.(*kernel.ResponseWriter).Status()
-				ctr.Logger.CtxInfoFf(ctx, "Ответ: %d", status)
+				logger.InfoFf(ctx, "Ответ: %d", status)
 			}()
 
 			// ---------------------------------------------------------------------------------------------------------
@@ -111,7 +113,7 @@ func _boundaryMiddleware(ctr *container.Container) func(http.Handler) http.Handl
 			defer func() {
 				if pv := recover(); pv != nil {
 					fnResponseOnPanic(w)
-					ctr.Logger.CtxPanicFf(ctx, pv, debug.Stack(), "http._boundaryMiddleware")
+					logger.PanicFf(ctx, pv, debug.Stack(), "http._boundaryMiddleware")
 				}
 			}()
 
@@ -122,7 +124,7 @@ func _boundaryMiddleware(ctr *container.Container) func(http.Handler) http.Handl
 	}
 }
 
-func _securityMiddleware(ctr *container.Container, sec *security.Security) func(http.Handler) http.Handler {
+func _securityMiddleware(sec *security.Security) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return sec.Middleware(
 			// Имеет смысл искать логи по аккаунту,
@@ -133,7 +135,7 @@ func _securityMiddleware(ctr *container.Container, sec *security.Security) func(
 
 				user := sec.AssociatedUser(ctx)
 				if user.IsAuthenticated() {
-					ctx = ctr.Logger.AddExtraAttrToCtx(ctx, "account_id", user.AccountId())
+					ctx = logger.AddAttrToCtx(ctx, "account_id", user.AccountId())
 				} else {
 					// todo : аналогично сделать для гостей с каким-то guest-id ???
 				}

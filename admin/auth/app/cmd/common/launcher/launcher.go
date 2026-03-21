@@ -3,9 +3,9 @@ package launcher
 import (
 	"context"
 	"errors"
-	infra_logger "example/admin/auth/internal/infra/logger"
 	"fmt"
 	goroutiner "github.com/selyukovn/go-routiner"
+	"github.com/selyukovn/go-std/logger"
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,12 +17,12 @@ type Server = struct {
 	FnStop  func(context.Context) error
 }
 
-func LaunchServers(infraLogger *infra_logger.Logger, servers []Server) {
+func LaunchServers(servers []Server) {
 	// "На старт..."
 	// --------------------------------
 
 	noPanicGrt := goroutiner.New(goroutiner.MwPanicToError(func(pv any, ds []byte, ctx context.Context) error {
-		infraLogger.CtxPanicFf(ctx, pv, ds, "launcher")
+		logger.PanicFf(ctx, pv, ds, "launcher")
 		return fmt.Errorf("panic: %#v; stack: %s", pv, ds)
 	}))
 
@@ -40,12 +40,12 @@ func LaunchServers(infraLogger *infra_logger.Logger, servers []Server) {
 				AddRange(len(servers), func(i int) (goroutiner.Goroutine, []goroutiner.Middleware) {
 					return func(ctx context.Context) error {
 						name := servers[i].Name
-						infraLogger.GeneralInfoFf("Запуск %s ...", name)
+						logger.InfoFf(ctx, "Запуск %s ...", name)
 						if err := servers[i].FnStart(ctx); err != nil {
-							infraLogger.GeneralErrorFf("Ошибка при запуске %s: %s - %#v", name, err, err)
+							logger.ErrorFf(ctx, "Ошибка при запуске %s: %s - %#v", name, err, err)
 							return err
 						}
-						infraLogger.GeneralInfoFf("%s больше не запушен!", name)
+						logger.InfoFf(ctx, "%s больше не запушен!", name)
 						return nil
 					}, nil
 				}).
@@ -63,18 +63,18 @@ func LaunchServers(infraLogger *infra_logger.Logger, servers []Server) {
 			AddRange(len(servers), func(i int) (goroutiner.Goroutine, []goroutiner.Middleware) {
 				return func(ctx context.Context) error {
 					name := servers[i].Name
-					infraLogger.GeneralInfoFf("Остановка %s ...", name)
+					logger.InfoFf(ctx, "Остановка %s ...", name)
 					if err := servers[i].FnStop(ctx); err != nil {
-						infraLogger.GeneralErrorFf("Ошибка при остановке %s: %s - %#v", name, err, err)
+						logger.ErrorFf(ctx, "Ошибка при остановке %s: %s - %#v", name, err, err)
 					}
-					infraLogger.GeneralInfoFf("%s остановлен!", name)
+					logger.InfoFf(ctx, "%s остановлен!", name)
 					return nil
 				}, nil
 			}).
 			Wait()
 
 		if err := errors.Join(errs...); err != nil {
-			infraLogger.GeneralErrorFf("Ошибки завершения: %s - %#v", err, err)
+			logger.ErrorFf(bgCtx, "Ошибки завершения: %s - %#v", err, err)
 		}
 	}
 
@@ -89,19 +89,19 @@ func LaunchServers(infraLogger *infra_logger.Logger, servers []Server) {
 			panic("Запуск серверов не заблокировал main, или сервера не вернули ошибки запуска!")
 		}
 
-		infraLogger.GeneralErrorFf("Ошибка запуска: %s - %#v", startErr, startErr)
+		logger.ErrorFf(bgCtx, "Ошибка запуска: %s - %#v", startErr, startErr)
 		// Старт валится при первой ошибке, а значит какие-то компоненты могут быть запущенными.
 		// Их нужно корректно остановить -- поэтому shutdown выполняется и в этом случае.
 		// Возможно, какой-то из упавших / незапущенных компонентов запаникует при попытке его остановить --
 		// в этом случае main не завалится из-за отдельных горутин с `goroutiner.MwPanicToError()`.
 		fnGracefulShutdown()
 	case stopSig := <-stopSigCh:
-		infraLogger.GeneralInfoFf("Получен стоп-сигнал %q", stopSig.String())
+		logger.InfoFf(bgCtx, "Получен стоп-сигнал %q", stopSig.String())
 		fnGracefulShutdown()
 	}
 
 	// "Финиш!"
 	// --------------------------------
 
-	infraLogger.GeneralInfoFf("Конец!")
+	logger.InfoFf(bgCtx, "Конец!")
 }

@@ -6,12 +6,10 @@ import (
 	"example/admin/front/cmd/http/pages/sign_in"
 	"example/admin/front/cmd/http/pages/welcome"
 	"example/admin/front/internal/infra/clients/gateway"
-	"example/admin/front/internal/infra/logger"
 	"net/http"
 )
 
 func registerRoutes(
-	logger *logger.Logger,
 	apiClient *gateway.ApiClient,
 	mux *http.ServeMux,
 	appName string,
@@ -20,7 +18,6 @@ func registerRoutes(
 	// -----------------------------------------------------------------------------------------------------------------
 
 	layout_general.Register(
-		logger,
 		apiClient,
 		mux,
 		appName,
@@ -40,7 +37,6 @@ func registerRoutes(
 	)
 
 	sign_in.Register(
-		logger,
 		apiClient,
 		mux,
 		appName,
@@ -48,7 +44,6 @@ func registerRoutes(
 	)
 
 	welcome.Register(
-		logger,
 		apiClient,
 		mux,
 		root.UrlRoot,

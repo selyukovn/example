@@ -3,7 +3,6 @@ package sign_out
 import (
 	"example/admin/auth/internal/domain/account"
 	"example/admin/auth/internal/domain/session"
-	"example/admin/auth/internal/opera/components"
 	"example/admin/auth/internal/opera/domain_facades"
 	"github.com/selyukovn/go-std"
 	assert "github.com/selyukovn/go-wm-assert"
@@ -14,7 +13,6 @@ import (
 // ---------------------------------------------------------------------------------------------------------------------
 
 type Command struct {
-	logger     components.LoggerInterface
 	accDomFac  *domain_facades.AccountDomFac
 	sessDomFac *domain_facades.SessionDomFac
 }
@@ -27,16 +25,13 @@ type Command struct {
 //
 // Паникует при нулевых аргументах.
 func NewCommand(
-	logger components.LoggerInterface,
 	accDomFac *domain_facades.AccountDomFac,
 	sessDomFac *domain_facades.SessionDomFac,
 ) *Command {
-	assert.Cmp[components.LoggerInterface]().NotEq(nil).Must(logger)
 	assert.Cmp[*domain_facades.AccountDomFac]().NotEq(nil).Must(accDomFac)
 	assert.Cmp[*domain_facades.SessionDomFac]().NotEq(nil).Must(sessDomFac)
 
 	return &Command{
-		logger:     logger,
 		accDomFac:  accDomFac,
 		sessDomFac: sessDomFac,
 	}

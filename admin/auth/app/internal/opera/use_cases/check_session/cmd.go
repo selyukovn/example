@@ -2,7 +2,6 @@ package check_session
 
 import (
 	"example/admin/auth/internal/domain/account"
-	"example/admin/auth/internal/opera/components"
 	"example/admin/auth/internal/opera/domain_facades"
 	"github.com/selyukovn/go-std"
 	assert "github.com/selyukovn/go-wm-assert"
@@ -13,7 +12,6 @@ import (
 // ---------------------------------------------------------------------------------------------------------------------
 
 type Command struct {
-	logger     components.LoggerInterface
 	accDomFac  *domain_facades.AccountDomFac
 	sessDomFac *domain_facades.SessionDomFac
 }
@@ -26,16 +24,13 @@ type Command struct {
 //
 // Паникует при нулевых аргументах.
 func NewCommand(
-	logger components.LoggerInterface,
 	accDomFac *domain_facades.AccountDomFac,
 	sessDomFac *domain_facades.SessionDomFac,
 ) *Command {
-	assert.NotNilDeepMust(logger)
 	assert.NotNilDeepMust(accDomFac)
 	assert.NotNilDeepMust(sessDomFac)
 
 	return &Command{
-		logger:     logger,
 		accDomFac:  accDomFac,
 		sessDomFac: sessDomFac,
 	}

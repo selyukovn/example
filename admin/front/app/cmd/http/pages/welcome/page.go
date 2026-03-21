@@ -4,7 +4,7 @@ import (
 	"example/admin/front/cmd/http/kernel"
 	"example/admin/front/cmd/http/layouts/general"
 	"example/admin/front/internal/infra/clients/gateway"
-	"example/admin/front/internal/infra/logger"
+	"github.com/selyukovn/go-std/logger"
 	"math/rand"
 	"net/http"
 )
@@ -17,13 +17,11 @@ const Url = "/welcome/"
 // ---------------------------------------------------------------------------------------------------------------------
 
 func Register(
-	logger *logger.Logger,
 	apiClient *gateway.ApiClient,
 	mux *http.ServeMux,
 	redirectUrlForGuests string,
 ) {
 	mux.Handle("GET "+Url+"{$}", newRenderer(
-		logger,
 		apiClient,
 		redirectUrlForGuests,
 	))
@@ -32,7 +30,6 @@ func Register(
 // ---------------------------------------------------------------------------------------------------------------------
 
 func newRenderer(
-	logger *logger.Logger,
 	apiClient *gateway.ApiClient,
 	redirectUrlForGuests string,
 ) http.Handler {
@@ -44,6 +41,8 @@ func newRenderer(
 			kernel.Redirect307(w, r, redirectUrlForGuests)
 			return
 		}
+
+		ctx := r.Context()
 
 		fromIp := kernel.ClientIp(r)
 		fromUag := kernel.ClientUag(r)
@@ -71,7 +70,7 @@ func newRenderer(
 			Title: Title,
 			Quote: quotes[rand.Intn(len(quotes))],
 		}); err != nil {
-			logger.GeneralErrorFf(err.Error())
+			logger.ErrorFf(ctx, err.Error())
 			kernel.Error500(w)
 		}
 	})

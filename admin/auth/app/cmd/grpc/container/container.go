@@ -3,20 +3,19 @@ package container
 import (
 	"context"
 	"database/sql"
+	"example/admin/auth/cmd/grpc/helpers"
 	adapt_domain_account "example/admin/auth/internal/adapt/domain/account"
 	adapt_domain_action_request "example/admin/auth/internal/adapt/domain/action_request"
 	adapt_domain_cfm "example/admin/auth/internal/adapt/domain/cfm"
 	adapt_domain_event_storage "example/admin/auth/internal/adapt/domain/event_storage"
 	adapt_domain_session "example/admin/auth/internal/adapt/domain/session"
 	adapt_infra_clients_cfm "example/admin/auth/internal/adapt/infra/clients/cfm"
-	adapt_opera_components "example/admin/auth/internal/adapt/opera/components"
 	domain_account "example/admin/auth/internal/domain/account"
 	domain_action_request "example/admin/auth/internal/domain/action_request"
 	domain_cfm "example/admin/auth/internal/domain/cfm"
 	domain_event_storage "example/admin/auth/internal/domain/event_storage"
 	domain_session "example/admin/auth/internal/domain/session"
 	infra_clients_cfm_grpc "example/admin/auth/internal/infra/clients/cfm/grpc"
-	infra_logger "example/admin/auth/internal/infra/logger"
 	opera_domain_facades "example/admin/auth/internal/opera/domain_facades"
 	"example/admin/auth/internal/opera/use_cases/check_session"
 	"example/admin/auth/internal/opera/use_cases/sign_in_confirm"
@@ -27,14 +26,13 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	goroutiner "github.com/selyukovn/go-routiner"
 	"github.com/selyukovn/go-std"
+	"github.com/selyukovn/go-std/logger"
 	"github.com/selyukovn/go-txr"
 	assert "github.com/selyukovn/go-wm-assert"
-	"io"
 	"time"
 )
 
 type Container struct {
-	Logger   *infra_logger.Logger
 	UseCases UseCases
 }
 
@@ -47,16 +45,12 @@ type UseCases = struct {
 }
 
 func New(
-	logIo io.Writer,
-	isDebug bool,
 	sqlDb *sql.DB,
 	sqlDbFnIsDeadlockError func(error) bool,
 	sqlDbFnIsDuplicateKeyError func(error) bool,
 	appCfmApiGrpcBaseUrl string,
 	appCfmApiGrpcApiKey string,
 ) *Container {
-	assert.NotNilDeepMust(logIo)
-	assert.NotNilDeepMust(logIo)
 	assert.NotNilDeepMust(sqlDb)
 	assert.NotNilDeepMust(sqlDbFnIsDeadlockError)
 	assert.NotNilDeepMust(sqlDbFnIsDuplicateKeyError)
@@ -67,13 +61,9 @@ func New(
 	// Infra
 	// -----------------------------------------------------------------------------------------------------------------
 
-	// logger
-	infraLogger := infra_logger.NewLogger(logIo, isDebug)
-
 	// clients - cfm
 	infraCfmGrpcClient := adapt_infra_clients_cfm.NewDecoratorLoggable(
 		infra_clients_cfm_grpc.NewClientGrpcMust(appCfmApiGrpcBaseUrl, appCfmApiGrpcApiKey),
-		infraLogger,
 	)
 
 	// -----------------------------------------------------------------------------------------------------------------
@@ -99,8 +89,7 @@ func New(
 	var cfmService domain_cfm.ServiceInterface = adapt_domain_cfm.NewServiceImplCfmService(
 		infraCfmGrpcClient,
 		func(ctx context.Context) string {
-			traceId, _ := infraLogger.GetTraceIdFromCtx(ctx)
-			return traceId
+			return helpers.TraceIdGet(ctx)
 		},
 	)
 
@@ -116,13 +105,10 @@ func New(
 	// txr
 	operaTxr := txr.NewTxrImplSql(sqlDb, 2, 50*time.Millisecond, sqlDbFnIsDeadlockError)
 
-	// logger
-	operaLogger := adapt_opera_components.NewLoggerImplInfraLogger(infraLogger)
-
 	// goroutiner
 	operaGrt := goroutiner.New(
 		goroutiner.MwPanicToError(func(panicValue any, debugStack []byte, ctx context.Context) error {
-			infraLogger.CtxPanicFf(ctx, panicValue, debugStack, "container.operaGrt.MwPanicToError")
+			logger.PanicFf(ctx, panicValue, debugStack, "container.operaGrt.MwPanicToError")
 			// --
 			var err error
 			switch pv := panicValue.(type) {
@@ -145,11 +131,9 @@ func New(
 	// -----------------------------------------------------------------------------------------------------------------
 
 	return &Container{
-		Logger: infraLogger,
 		UseCases: UseCases{
-			SignInRequest: sign_in_request.NewCommand(operaLogger, accDomFac, actReqDomFac, cfmService),
+			SignInRequest: sign_in_request.NewCommand(accDomFac, actReqDomFac, cfmService),
 			SignInRequestRetry: sign_in_request_retry.NewCommand(
-				operaLogger,
 				operaGrt,
 				accDomFac,
 				actReqDomFac,
@@ -157,15 +141,14 @@ func New(
 				sessDomFac,
 			),
 			SignInConfirm: sign_in_confirm.NewCommand(
-				operaLogger,
 				operaGrt,
 				accDomFac,
 				actReqDomFac,
 				cfmService,
 				sessDomFac,
 			),
-			SignOut:      sign_out.NewCommand(operaLogger, accDomFac, sessDomFac),
-			CheckSession: check_session.NewCommand(operaLogger, accDomFac, sessDomFac),
+			SignOut:      sign_out.NewCommand(accDomFac, sessDomFac),
+			CheckSession: check_session.NewCommand(accDomFac, sessDomFac),
 		},
 	}
 }

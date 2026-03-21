@@ -29,7 +29,7 @@ func NewServer(ctr *container.Container, apiKey string) *Server {
 	assert.Str().NotEmpty().Must(apiKey)
 
 	s := grpc.NewServer(grpc.ChainUnaryInterceptor(
-		interceptors.NewBoundary(ctr),
+		interceptors.NewBoundary(),
 		interceptors.NewAccessKey(apiKey),
 		interceptors.NewPrometheusMetrics(),
 	))

@@ -3,7 +3,6 @@ package request
 import (
 	"context"
 	"example/admin/cfm/internal/domain/cfm"
-	"example/admin/cfm/internal/opera/components"
 	"example/admin/cfm/internal/opera/domain_facades"
 	goroutiner "github.com/selyukovn/go-routiner"
 	"github.com/selyukovn/go-std"
@@ -15,7 +14,6 @@ import (
 // ---------------------------------------------------------------------------------------------------------------------
 
 type Command struct {
-	logger    components.LoggerInterface
 	grt       *goroutiner.Goroutiner
 	cfmDomFac *domain_facades.CfmDomFac
 }
@@ -28,16 +26,13 @@ type Command struct {
 //
 // Паникует при нулевых аргументах.
 func NewCommand(
-	logger components.LoggerInterface,
 	grt *goroutiner.Goroutiner,
 	cfmDomFac *domain_facades.CfmDomFac,
 ) *Command {
-	assert.NotNilDeepMust(logger)
 	assert.NotNilDeepMust(grt)
 	assert.NotNilDeepMust(cfmDomFac)
 
 	return &Command{
-		logger:    logger,
 		grt:       grt,
 		cfmDomFac: cfmDomFac,
 	}

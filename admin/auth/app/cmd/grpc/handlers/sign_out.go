@@ -9,19 +9,20 @@ import (
 	"example/admin/auth/internal/domain/session"
 	"example/admin/auth/internal/opera/use_cases/sign_out"
 	"github.com/selyukovn/go-std"
+	"github.com/selyukovn/go-std/logger"
 )
 
 func NewSignOut(ctr *container.Container) func(ctx context.Context, req *pb.SignOutRequest) (*pb.SignOutResponse, error) {
 	return func(ctx context.Context, req *pb.SignOutRequest) (*pb.SignOutResponse, error) {
 		cl, err := helpers.ParseClient(req.FromIp, req.FromUserAgent)
 		if err != nil {
-			ctr.Logger.CtxDebugFf(ctx, err.Error())
+			logger.DebugFf(ctx, err.Error())
 			return nil, helpers.ErrorInvalidArgument("кривой client")
 		}
 
 		sessId, err := session.IdFromString(req.SessionId)
 		if err != nil {
-			ctr.Logger.CtxDebugFf(ctx, err.Error())
+			logger.DebugFf(ctx, err.Error())
 			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorValidationDetail{
 				Field:   "sessionId",
 				Message: err.Error(),
@@ -40,7 +41,7 @@ func NewSignOut(ctr *container.Container) func(ctx context.Context, req *pb.Sign
 		case std.ErrorAlreadyDone:
 			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorAlreadyDoneDetail{})
 		case std.ErrorRuntime:
-			ctr.Logger.CtxErrorFf(ctx, err.Error())
+			logger.ErrorFf(ctx, err.Error())
 			return nil, helpers.ErrorInternal()
 		default:
 			panic(err)

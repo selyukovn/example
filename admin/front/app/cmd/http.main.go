@@ -5,8 +5,10 @@ import (
 	"example/admin/front/cmd/common/launcher"
 	"example/admin/front/cmd/http"
 	"example/admin/front/internal/infra/clients/gateway"
-	infra_logger "example/admin/front/internal/infra/logger"
 	"flag"
+	"github.com/selyukovn/go-std"
+	"github.com/selyukovn/go-std/logger"
+	"log/slog"
 	"os"
 )
 
@@ -20,10 +22,19 @@ func main() {
 	env := http.LoadEnv()
 
 	// -----------------------------------------------------------------------------------------------------------------
+	// Globals
+	// -----------------------------------------------------------------------------------------------------------------
+
+	xLogger := logger.NewSlogLogger(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
+		Level: std.Ternary(argDebug, slog.LevelDebug, slog.LevelInfo),
+	}))
+	logger.SetDefault(xLogger)
+	slog.SetDefault(xLogger.SlogLogger())
+
+	// -----------------------------------------------------------------------------------------------------------------
 	// Container
 	// -----------------------------------------------------------------------------------------------------------------
 
-	logger := infra_logger.NewLogger(os.Stderr, argDebug)
 	apiClient := gateway.NewApiClient(env.ApiBaseUrl)
 
 	// -----------------------------------------------------------------------------------------------------------------
@@ -31,14 +42,13 @@ func main() {
 	// -----------------------------------------------------------------------------------------------------------------
 
 	httpServer := http.NewServer(
-		logger,
 		apiClient,
 		env.AppName,
 		env.BaseUrl,
 		env.SessionCookieName,
 	)
 
-	launcher.LaunchServers(logger, []launcher.Server{
+	launcher.LaunchServers([]launcher.Server{
 		{
 			"HTTP-сервер",
 			func(context.Context) error { return httpServer.Start() },

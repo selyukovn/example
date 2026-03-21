@@ -9,7 +9,10 @@ import (
 	"example/admin/cfm/cmd/grpc"
 	"flag"
 	"fmt"
+	"github.com/selyukovn/go-std"
+	"github.com/selyukovn/go-std/logger"
 	"io"
+	"log/slog"
 )
 
 func main() {
@@ -48,12 +51,20 @@ func main() {
 	defer fnClose("mysql", mysql.Db)
 
 	// -----------------------------------------------------------------------------------------------------------------
+	// Globals
+	// -----------------------------------------------------------------------------------------------------------------
+
+	xLogger := logger.NewSlogLogger(slog.NewJSONHandler(logIo, &slog.HandlerOptions{
+		Level: std.Ternary(argDebug, slog.LevelDebug, slog.LevelInfo),
+	}))
+	logger.SetDefault(xLogger)
+	slog.SetDefault(xLogger.SlogLogger())
+
+	// -----------------------------------------------------------------------------------------------------------------
 	// Container
 	// -----------------------------------------------------------------------------------------------------------------
 
 	ctr := container.New(
-		logIo,
-		argDebug,
 		mysql.Db,
 		mysql.FnIsDeadlockError,
 		mysql.FnIsDuplicateKeyError,
@@ -66,7 +77,7 @@ func main() {
 	grpcServer := grpc.NewServer(ctr, env.ApiGrpcApiKey)
 	monServer := monitoring.NewMonitoringServer()
 
-	launcher.LaunchServers(ctr.Logger, []launcher.Server{
+	launcher.LaunchServers([]launcher.Server{
 		{
 			"GRPC-сервер",
 			func(context.Context) error { return grpcServer.Start() },

@@ -51,3 +51,20 @@ func GrpcMetadataKeyFirst(ctx context.Context, key string) (string, bool) {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+
+// TODO : TRACER, trace+path, ...
+
+const traceIdCtxKey = "traceId"
+
+func TraceIdSet(ctx context.Context, traceId string) context.Context {
+	assert.NotNilDeepMust(ctx)
+
+	return context.WithValue(ctx, traceIdCtxKey, traceId)
+}
+
+func TraceIdGet(ctx context.Context) string {
+	assert.NotNilDeepMust(ctx)
+	return ctx.Value(traceIdCtxKey).(string)
+}
+
+// ---------------------------------------------------------------------------------------------------------------------

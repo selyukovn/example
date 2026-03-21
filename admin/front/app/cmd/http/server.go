@@ -4,7 +4,6 @@ import (
 	"context"
 	"example/admin/front/cmd/http/kernel"
 	"example/admin/front/internal/infra/clients/gateway"
-	"example/admin/front/internal/infra/logger"
 	assert "github.com/selyukovn/go-wm-assert"
 	"net/http"
 )
@@ -25,7 +24,6 @@ type Server struct {
 //
 // Паникует при нулевых аргументах.
 func NewServer(
-	logger *logger.Logger,
 	apiClient *gateway.ApiClient,
 	appName string,
 	baseUrl string,
@@ -45,7 +43,6 @@ func NewServer(
 	)
 
 	registerRoutes(
-		logger,
 		apiClient,
 		mux,
 		appName,

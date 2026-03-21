@@ -2,8 +2,8 @@ package interceptors
 
 import (
 	"context"
-	"example/admin/auth/cmd/grpc/container"
 	"example/admin/auth/cmd/grpc/helpers"
+	"github.com/selyukovn/go-std/logger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -13,7 +13,7 @@ import (
 // NewBoundary
 //
 // Данный перехватчик должен быть самым внешним!
-func NewBoundary(ctr *container.Container) grpc.UnaryServerInterceptor {
+func NewBoundary() grpc.UnaryServerInterceptor {
 	// Все описанные в данном перехватчике действия слишком связаны между собой,
 	// чтобы выделить каждое в отдельный перехватчик.
 	// Например, логирование статуса ответа не имеет смысла без trace-id из обогащенного контекста,
@@ -52,7 +52,9 @@ func NewBoundary(ctr *container.Container) grpc.UnaryServerInterceptor {
 		if !ok || traceId == "" {
 			return nil, helpers.ErrorInvalidArgument("x-trace-id header not found")
 		}
-		ctx = ctr.Logger.AddTraceIdToCtx(ctx, traceId)
+
+		ctx = helpers.TraceIdSet(ctx, traceId)
+		ctx = logger.AddAttrToCtx(ctx, "trace_id", traceId)
 
 		// FullMethod
 		// ------------
@@ -63,7 +65,7 @@ func NewBoundary(ctr *container.Container) grpc.UnaryServerInterceptor {
 		// Логирование запроса
 		// -------------------------------------------------------------------------------------------------------------
 
-		ctr.Logger.CtxInfoFf(ctx, "Запрос: %q", helpers.GrpcFullMethod(ctx))
+		logger.InfoFf(ctx, "Запрос: %q", helpers.GrpcFullMethod(ctx))
 
 		defer func() {
 			code := codes.OK
@@ -74,7 +76,7 @@ func NewBoundary(ctr *container.Container) grpc.UnaryServerInterceptor {
 				msg = st.Message()
 			}
 
-			ctr.Logger.CtxInfoFf(ctx, "Ответ: %d %s", code, msg)
+			logger.InfoFf(ctx, "Ответ: %d %s", code, msg)
 		}()
 
 		// -------------------------------------------------------------------------------------------------------------
@@ -90,7 +92,7 @@ func NewBoundary(ctr *container.Container) grpc.UnaryServerInterceptor {
 				rRes = nil
 				rErr = rErrOnPanic
 
-				ctr.Logger.CtxPanicFf(ctx, pv, debug.Stack(), "grpc.interceptors.NewBoundary")
+				logger.PanicFf(ctx, pv, debug.Stack(), "grpc.interceptors.NewBoundary")
 			}
 		}()
 

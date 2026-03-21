@@ -3,8 +3,8 @@ package auth
 import (
 	"context"
 	"example/admin/gateway/internal/infra/clients/auth"
-	"example/admin/gateway/internal/infra/logger"
 	"github.com/selyukovn/go-std"
+	"github.com/selyukovn/go-std/logger"
 	assert "github.com/selyukovn/go-wm-assert"
 	"net/netip"
 )
@@ -17,7 +17,6 @@ var _ auth.ClientInterface = &DecoratorLoggable{}
 
 type DecoratorLoggable struct {
 	origin auth.ClientInterface
-	logger *logger.Logger
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -27,13 +26,11 @@ type DecoratorLoggable struct {
 // NewDecoratorLoggable
 //
 // Паникует при нулевых аргументах.
-func NewDecoratorLoggable(origin auth.ClientInterface, logger *logger.Logger) *DecoratorLoggable {
+func NewDecoratorLoggable(origin auth.ClientInterface) *DecoratorLoggable {
 	assert.NotNilDeepMust(origin)
-	assert.NotNilDeepMust(logger)
 
 	return &DecoratorLoggable{
 		origin: origin,
-		logger: logger,
 	}
 }
 
@@ -60,8 +57,8 @@ func (d *DecoratorLoggable) SignInRequest(
 	rRes auth.SignInRequestResult,
 	rErr error,
 ) {
-	d.logger.CtxInfoFf(ctx, "%T.%s - start(%q, %q, %q)", d, "SignInRequest", fromIp, fromUserAgent, email)
-	defer func() { d.logger.CtxInfoFf(ctx, "%T.%s - end(%#v, %#v = %s)", d, "SignInRequest", rRes, rErr, rErr) }()
+	logger.InfoFf(ctx, "%T.%s - start(%q, %q, %q)", d, "SignInRequest", fromIp, fromUserAgent, email)
+	defer func() { logger.InfoFf(ctx, "%T.%s - end(%#v, %#v = %s)", d, "SignInRequest", rRes, rErr, rErr) }()
 
 	return d.origin.SignInRequest(ctx, traceId, fromIp, fromUserAgent, email)
 }
@@ -89,9 +86,9 @@ func (d *DecoratorLoggable) SignInRequestRetry(
 	rRes auth.SignInRequestRetryResult,
 	rErr error,
 ) {
-	d.logger.CtxInfoFf(ctx, "%T.%s - start(%q, %q, %q)", d, "SignInRequestRetry", fromIp, fromUserAgent, signInId)
+	logger.InfoFf(ctx, "%T.%s - start(%q, %q, %q)", d, "SignInRequestRetry", fromIp, fromUserAgent, signInId)
 	defer func() {
-		d.logger.CtxInfoFf(ctx, "%T.%s - end(%#v, %#v = %s)", d, "SignInRequestRetry", rRes, rErr, rErr)
+		logger.InfoFf(ctx, "%T.%s - end(%#v, %#v = %s)", d, "SignInRequestRetry", rRes, rErr, rErr)
 	}()
 
 	return d.origin.SignInRequestRetry(ctx, traceId, fromIp, fromUserAgent, signInId)
@@ -119,7 +116,7 @@ func (d *DecoratorLoggable) SignInConfirm(
 	rRes auth.SignInConfirmResult,
 	rErr error,
 ) {
-	d.logger.CtxInfoFf(
+	logger.InfoFf(
 		ctx,
 		"%T.%s - start(%q, %q, %q, %q)",
 		d, "SignInConfirm", fromIp, fromUserAgent, signInId, std.MaskStrNotFirstLast(code),
@@ -127,7 +124,7 @@ func (d *DecoratorLoggable) SignInConfirm(
 	defer func() {
 		rResMasked := rRes
 		rResMasked.SessionId = std.MaskStrNotFirstLast(rResMasked.SessionId)
-		d.logger.CtxInfoFf(ctx, "%T.%s - end(%#v, %#v = %s)", d, "SignInConfirm", rResMasked, rErr, rErr)
+		logger.InfoFf(ctx, "%T.%s - end(%#v, %#v = %s)", d, "SignInConfirm", rResMasked, rErr, rErr)
 	}()
 
 	return d.origin.SignInConfirm(ctx, traceId, fromIp, fromUserAgent, signInId, code)
@@ -152,12 +149,12 @@ func (d *DecoratorLoggable) SignOut(
 ) (
 	rErr error,
 ) {
-	d.logger.CtxInfoFf(
+	logger.InfoFf(
 		ctx,
 		"%T.%s - start(%q, %q, %q)",
 		d, "SignOut", fromIp, fromUserAgent, std.MaskStrNotFirstLast(sessionId),
 	)
-	defer func() { d.logger.CtxInfoFf(ctx, "%T.%s - end(%#v = %s)", d, "SignOut", rErr, rErr) }()
+	defer func() { logger.InfoFf(ctx, "%T.%s - end(%#v = %s)", d, "SignOut", rErr, rErr) }()
 
 	return d.origin.SignOut(ctx, traceId, fromIp, fromUserAgent, sessionId)
 }
@@ -182,12 +179,12 @@ func (d *DecoratorLoggable) CheckSession(
 	rRes auth.CheckSessionResult,
 	rErr error,
 ) {
-	d.logger.CtxInfoFf(
+	logger.InfoFf(
 		ctx,
 		"%T.%s - start(%q, %q, %q)",
 		d, "CheckSession", fromIp, fromUserAgent, std.MaskStrNotFirstLast(sessionId),
 	)
-	defer d.logger.CtxInfoFf(ctx, "%T.%s - end(%#v, %#v = %s)", d, "CheckSession", rRes, rErr, rErr)
+	defer func() { logger.InfoFf(ctx, "%T.%s - end(%#v, %#v = %s)", d, "CheckSession", rRes, rErr, rErr) }()
 
 	return d.origin.CheckSession(ctx, traceId, fromIp, fromUserAgent, sessionId)
 }

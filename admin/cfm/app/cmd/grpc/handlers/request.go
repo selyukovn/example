@@ -8,6 +8,7 @@ import (
 	"example/admin/cfm/internal/domain/cfm"
 	"example/admin/cfm/internal/opera/use_cases/request"
 	"github.com/selyukovn/go-std"
+	"github.com/selyukovn/go-std/logger"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -15,7 +16,7 @@ func NewRequest(ctr *container.Container) func(ctx context.Context, req *pb.Requ
 	return func(ctx context.Context, req *pb.RequestRequest) (*pb.RequestResponse, error) {
 		cfmId, err := cfm.IdFromString(req.CfmId)
 		if err != nil {
-			ctr.Logger.CtxDebugFf(ctx, err.Error())
+			logger.DebugFf(ctx, err.Error())
 			return nil, helpers.ErrorInvalidArgument("кривой id")
 		}
 
@@ -45,7 +46,7 @@ func NewRequest(ctr *container.Container) func(ctx context.Context, req *pb.Requ
 				CanReqAfter:        timestamppb.New(vErr.CanReqAfter()),
 			})
 		case std.ErrorRuntime:
-			ctr.Logger.CtxErrorFf(ctx, err.Error())
+			logger.ErrorFf(ctx, err.Error())
 			return nil, helpers.ErrorInternal()
 		default:
 			panic(err)

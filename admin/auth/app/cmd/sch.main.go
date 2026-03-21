@@ -9,7 +9,10 @@ import (
 	"example/admin/auth/cmd/sch/container"
 	"flag"
 	"fmt"
+	"github.com/selyukovn/go-std"
+	"github.com/selyukovn/go-std/logger"
 	"io"
+	"log/slog"
 )
 
 func main() {
@@ -48,12 +51,20 @@ func main() {
 	defer fnClose("mysqlMaster", mysqlMaster.Db)
 
 	// -----------------------------------------------------------------------------------------------------------------
+	// Globals
+	// -----------------------------------------------------------------------------------------------------------------
+
+	xLogger := logger.NewSlogLogger(slog.NewJSONHandler(logIo, &slog.HandlerOptions{
+		Level: std.Ternary(argDebug, slog.LevelDebug, slog.LevelInfo),
+	}))
+	logger.SetDefault(xLogger)
+	slog.SetDefault(xLogger.SlogLogger())
+
+	// -----------------------------------------------------------------------------------------------------------------
 	// Container
 	// -----------------------------------------------------------------------------------------------------------------
 
 	ctr := container.New(
-		logIo,
-		argDebug,
 		mysqlMaster.Db,
 		mysqlMaster.FnIsDeadlockError,
 		mysqlMaster.FnIsDuplicateKeyError,
@@ -66,7 +77,7 @@ func main() {
 	scheduler := sch.NewScheduler(ctr)
 	monServer := monitoring.NewMonitoringServer()
 
-	launcher.LaunchServers(ctr.Logger, []launcher.Server{
+	launcher.LaunchServers([]launcher.Server{
 		{
 			"Scheduler",
 			func(context.Context) error { return scheduler.Start() },
