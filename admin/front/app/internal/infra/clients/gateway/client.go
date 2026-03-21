@@ -104,4 +104,18 @@ func (c *ApiClient) AuthSignInConfirm(
 	return resp, nil
 }
 
+func (c *ApiClient) AuthSignOut(
+	fromIp string,
+	fromUserAgent string,
+	sessId string,
+) (*auth.DeleteAuthSignOutResponse, error) {
+	resp, err := c.auth.DeleteAuthSignOutWithResponse(context.Background(), c.fnAddHeaders(fromIp, fromUserAgent, sessId))
+	if err != nil {
+		return nil, err
+	} else if sCode := resp.StatusCode(); sCode != http.StatusOK && sCode != http.StatusUnprocessableEntity {
+		return nil, std.WrapErrorToRuntime(fmt.Errorf("%d : %s", sCode, resp.Status()), c, "AuthSignOut")
+	}
+	return resp, nil
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
