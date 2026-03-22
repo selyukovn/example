@@ -1,6 +1,6 @@
 FROM golang:1.22.0-alpine
 
-ARG GRPC_API_SERVICE_NAME
+ARG SERVICE_NAME
 
 # <grpc>
 WORKDIR /protoc
@@ -20,7 +20,7 @@ RUN echo "protoc \\" > /protoc/generate_grpc_api.sh && \
     echo "--go_out=/app/cmd/grpc \\" >> /protoc/generate_grpc_api.sh && \
     echo "--go-grpc_out=/app/cmd/grpc \\" >> /protoc/generate_grpc_api.sh && \
     echo "--proto_path=/app/cmd/grpc/pb \\" >> /protoc/generate_grpc_api.sh && \
-    echo "/app/cmd/grpc/pb/${GRPC_API_SERVICE_NAME}.proto" >> /protoc/generate_grpc_api.sh && \
+    echo "/app/cmd/grpc/pb/${SERVICE_NAME}.proto" >> /protoc/generate_grpc_api.sh && \
     chmod +x /protoc/generate_grpc_api.sh
 # </grpc>
 

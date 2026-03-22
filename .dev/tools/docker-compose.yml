@@ -24,7 +24,7 @@ services:
     build:
       << : *dev-tools-go-build
       args:
-        GRPC_API_SERVICE_NAME: auth
+        SERVICE_NAME: auth
     volumes:
       - ../../admin/auth/app:/app
 
@@ -37,7 +37,7 @@ services:
     build:
       << : *dev-tools-go-build
       args:
-        GRPC_API_SERVICE_NAME: cfm
+        SERVICE_NAME: cfm
     volumes:
       - ../../admin/cfm/app:/app
 
@@ -50,7 +50,7 @@ services:
     build:
       << : *dev-tools-go-build
       args:
-        GRPC_API_SERVICE_NAME: front
+        SERVICE_NAME: front
     volumes:
       - ../../admin/front/app:/app
 
@@ -63,7 +63,7 @@ services:
     build:
       << : *dev-tools-go-build
       args:
-        GRPC_API_SERVICE_NAME: gateway
+        SERVICE_NAME: gateway
     volumes:
       - ../../admin/gateway/app:/app
 
