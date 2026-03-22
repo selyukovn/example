@@ -3,7 +3,8 @@ package handlers
 import (
 	"context"
 	"example/admin/auth/cmd/grpc/container"
-	"example/admin/auth/cmd/grpc/helpers"
+	"example/admin/auth/cmd/grpc/kernel"
+	"example/admin/auth/cmd/grpc/kernel_extra"
 	"example/admin/auth/cmd/grpc/pb"
 	"example/admin/auth/internal/domain/account"
 	"example/admin/auth/internal/opera/use_cases/sign_in_request"
@@ -14,16 +15,16 @@ import (
 
 func NewSignInRequest(ctr *container.Container) func(ctx context.Context, req *pb.SignInRequestRequest) (*pb.SignInRequestResponse, error) {
 	return func(ctx context.Context, req *pb.SignInRequestRequest) (*pb.SignInRequestResponse, error) {
-		cl, err := helpers.ParseClient(req.FromIp, req.FromUserAgent)
+		cl, err := kernel_extra.ParseClient(req.FromIp, req.FromUserAgent)
 		if err != nil {
 			logger.DebugFf(ctx, err.Error())
-			return nil, helpers.ErrorInvalidArgument("кривой client")
+			return nil, kernel.ErrorInvalidArgument("кривой client")
 		}
 
 		email, err := std.EmailFromString(req.Email)
 		if err != nil {
 			logger.DebugFf(ctx, err.Error())
-			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorValidationDetail{
+			return nil, kernel.ErrorFailedPrecondition(&pb.ErrorValidationDetail{
 				Field:   "Email",
 				Message: err.Error(),
 			})
@@ -35,12 +36,12 @@ func NewSignInRequest(ctr *container.Container) func(ctx context.Context, req *p
 		switch err.(type) {
 		case nil:
 		case std.ErrorNotFound:
-			return nil, helpers.ErrorNotFound()
+			return nil, kernel.ErrorNotFound()
 		case account.ErrorDeactivated, account.ErrorIpWhitelist:
-			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorAccountAccessDeniedDetail{})
+			return nil, kernel.ErrorFailedPrecondition(&pb.ErrorAccountAccessDeniedDetail{})
 		case std.ErrorRuntime:
 			logger.ErrorFf(ctx, err.Error())
-			return nil, helpers.ErrorInternal()
+			return nil, kernel.ErrorInternal()
 		default:
 			panic(err)
 		}

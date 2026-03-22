@@ -1,4 +1,4 @@
-package helpers
+package kernel_extra
 
 import (
 	"example/admin/auth/internal/domain/client"

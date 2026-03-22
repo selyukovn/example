@@ -3,7 +3,7 @@ package handlers
 import (
 	"context"
 	"example/admin/cfm/cmd/common/container"
-	"example/admin/cfm/cmd/grpc/helpers"
+	"example/admin/cfm/cmd/grpc/kernel"
 	"example/admin/cfm/cmd/grpc/pb"
 	"example/admin/cfm/internal/opera/use_cases/create_for_email"
 	"github.com/selyukovn/go-std"
@@ -16,7 +16,7 @@ func NewCreateForEmail(ctr *container.Container) func(ctx context.Context, req *
 		email, err := std.EmailFromString(req.Email)
 		if err != nil {
 			logger.DebugFf(ctx, err.Error())
-			return nil, helpers.ErrorInvalidArgument("кривой email")
+			return nil, kernel.ErrorInvalidArgument("кривой email")
 		}
 
 		// --
@@ -26,7 +26,7 @@ func NewCreateForEmail(ctr *container.Container) func(ctx context.Context, req *
 		case nil:
 		case std.ErrorRuntime:
 			logger.ErrorFf(ctx, err.Error())
-			return nil, helpers.ErrorInternal()
+			return nil, kernel.ErrorInternal()
 		default:
 			panic(err)
 		}

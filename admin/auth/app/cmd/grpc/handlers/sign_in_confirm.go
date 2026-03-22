@@ -3,7 +3,8 @@ package handlers
 import (
 	"context"
 	"example/admin/auth/cmd/grpc/container"
-	"example/admin/auth/cmd/grpc/helpers"
+	"example/admin/auth/cmd/grpc/kernel"
+	"example/admin/auth/cmd/grpc/kernel_extra"
 	"example/admin/auth/cmd/grpc/pb"
 	"example/admin/auth/internal/domain/account"
 	"example/admin/auth/internal/domain/action_request"
@@ -16,16 +17,16 @@ import (
 
 func NewSignInConfirm(ctr *container.Container) func(ctx context.Context, req *pb.SignInConfirmRequest) (*pb.SignInConfirmResponse, error) {
 	return func(ctx context.Context, req *pb.SignInConfirmRequest) (*pb.SignInConfirmResponse, error) {
-		cl, err := helpers.ParseClient(req.FromIp, req.FromUserAgent)
+		cl, err := kernel_extra.ParseClient(req.FromIp, req.FromUserAgent)
 		if err != nil {
 			logger.DebugFf(ctx, err.Error())
-			return nil, helpers.ErrorInvalidArgument("кривой client")
+			return nil, kernel.ErrorInvalidArgument("кривой client")
 		}
 
 		signInId, err := action_request.IdFromString(req.SignInId)
 		if err != nil {
 			logger.DebugFf(ctx, err.Error())
-			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorValidationDetail{
+			return nil, kernel.ErrorFailedPrecondition(&pb.ErrorValidationDetail{
 				Field:   "SignInId",
 				Message: err.Error(),
 			})
@@ -33,7 +34,7 @@ func NewSignInConfirm(ctr *container.Container) func(ctx context.Context, req *p
 		code, err := cfm.CodeFromString(req.Code)
 		if err != nil {
 			logger.DebugFf(ctx, err.Error())
-			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorValidationDetail{
+			return nil, kernel.ErrorFailedPrecondition(&pb.ErrorValidationDetail{
 				Field:   "Code",
 				Message: err.Error(),
 			})
@@ -45,11 +46,11 @@ func NewSignInConfirm(ctr *container.Container) func(ctx context.Context, req *p
 		switch vErr := err.(type) {
 		case nil:
 		case std.ErrorNotFound:
-			return nil, helpers.ErrorNotFound()
+			return nil, kernel.ErrorNotFound()
 		case account.ErrorDeactivated, account.ErrorIpWhitelist:
-			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorAccountAccessDeniedDetail{})
+			return nil, kernel.ErrorFailedPrecondition(&pb.ErrorAccountAccessDeniedDetail{})
 		case cfm.ErrorFinished:
-			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorSignInFinishedDetail{
+			return nil, kernel.ErrorFailedPrecondition(&pb.ErrorSignInFinishedDetail{
 				IsPassed:  vErr.IsAsPassed(),
 				IsFailed:  vErr.IsAsFailed(),
 				IsExpired: vErr.IsAsExpired(),
@@ -57,10 +58,10 @@ func NewSignInConfirm(ctr *container.Container) func(ctx context.Context, req *p
 		case std.ErrorUnprocessable:
 			// todo : по логике это дубликат IsAsPassed случая cfm.ErrorFinished, но...
 			logger.WarnFf(ctx, "%v обратился к завершенному SignIn %q: %#v", cl, signInId, vErr)
-			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorUnprocessableDetail{})
+			return nil, kernel.ErrorFailedPrecondition(&pb.ErrorUnprocessableDetail{})
 		case std.ErrorRuntime:
 			logger.ErrorFf(ctx, err.Error())
-			return nil, helpers.ErrorInternal()
+			return nil, kernel.ErrorInternal()
 		default:
 			panic(err)
 		}

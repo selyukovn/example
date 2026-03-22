@@ -3,7 +3,7 @@ package handlers
 import (
 	"context"
 	"example/admin/cfm/cmd/common/container"
-	"example/admin/cfm/cmd/grpc/helpers"
+	"example/admin/cfm/cmd/grpc/kernel"
 	"example/admin/cfm/cmd/grpc/pb"
 	"example/admin/cfm/internal/domain/cfm"
 	"example/admin/cfm/internal/domain/cfm/code"
@@ -18,13 +18,13 @@ func NewConfirm(ctr *container.Container) func(ctx context.Context, req *pb.Conf
 		cfmId, err := cfm.IdFromString(req.CfmId)
 		if err != nil {
 			logger.DebugFf(ctx, err.Error())
-			return nil, helpers.ErrorInvalidArgument("кривой id")
+			return nil, kernel.ErrorInvalidArgument("кривой id")
 		}
 
 		cCode, err := code.CodeFromString(req.Code)
 		if err != nil {
 			logger.DebugFf(ctx, err.Error())
-			return nil, helpers.ErrorInvalidArgument("кривой code")
+			return nil, kernel.ErrorInvalidArgument("кривой code")
 		}
 
 		// --
@@ -33,9 +33,9 @@ func NewConfirm(ctr *container.Container) func(ctx context.Context, req *pb.Conf
 		switch vErr := err.(type) {
 		case nil:
 		case std.ErrorNotFound:
-			return nil, helpers.ErrorNotFound()
+			return nil, kernel.ErrorNotFound()
 		case cfm.ErrorFinished:
-			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorFinishedDetail{
+			return nil, kernel.ErrorFailedPrecondition(&pb.ErrorFinishedDetail{
 				CfmId:       vErr.CfmId().String(),
 				FinishedAt:  timestamppb.New(vErr.FinishedAt()),
 				IsAsExpired: vErr.IsAsExpired(),
@@ -43,12 +43,12 @@ func NewConfirm(ctr *container.Container) func(ctx context.Context, req *pb.Conf
 				IsAsPassed:  vErr.IsAsPassed(),
 			})
 		case std.ErrorUnprocessable:
-			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorNotRequestedDetail{
+			return nil, kernel.ErrorFailedPrecondition(&pb.ErrorNotRequestedDetail{
 				CfmId: cfmId.String(),
 			})
 		case std.ErrorRuntime:
 			logger.ErrorFf(ctx, err.Error())
-			return nil, helpers.ErrorInternal()
+			return nil, kernel.ErrorInternal()
 		default:
 			panic(err)
 		}

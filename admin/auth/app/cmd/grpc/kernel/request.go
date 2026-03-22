@@ -1,6 +1,4 @@
-package helpers
-
-// todo : rename to "kernel" or so...
+package kernel
 
 import (
 	"context"
@@ -15,10 +13,10 @@ import (
 const grpcCtxUnaryServerInfoRequestIdKey = "grpc.UnaryServerInfo.requestId"
 const grpcCtxUnaryServerInfoFullMethodKey = "grpc.UnaryServerInfo.fullMethod"
 
-// AddGrpcInfoToCtx
+// EnrichCtx
 //
 // Паникует при нулевых аргументах.
-func AddGrpcInfoToCtx(ctx context.Context, requestId string, fullMethod string) context.Context {
+func EnrichCtx(ctx context.Context, requestId string, fullMethod string) context.Context {
 	assert.NotNilDeepMust(ctx)
 	assert.Str().NotEmpty().Must(requestId)
 	assert.Str().NotEmpty().Must(fullMethod)
@@ -34,39 +32,39 @@ func AddGrpcInfoToCtx(ctx context.Context, requestId string, fullMethod string) 
 // RequestId
 //
 // Паникует при нулевых аргументах.
-// Паникует, если контекст не обогащен через `helpers.AddGrpcInfoToCtx()`.
+// Паникует, если контекст не обогащен через `kernel.EnrichCtx()`.
 func RequestId(ctx context.Context) string {
 	assert.NotNilDeepMust(ctx)
 
 	v := ctx.Value(grpcCtxUnaryServerInfoRequestIdKey)
 
 	if v == nil {
-		panic("`helpers.RequestId`: похоже, `helpers.AddGrpcInfoToCtx` не был вызван")
+		panic("`kernel.RequestId`: похоже, `kernel.EnrichCtx` не был вызван")
 	}
 
 	return v.(string)
 }
 
-// GrpcFullMethod
+// FullMethod
 //
 // Паникует при нулевых аргументах.
-// Паникует, если контекст не обогащен через `helpers.AddGrpcInfoToCtx()`.
-func GrpcFullMethod(ctx context.Context) string {
+// Паникует, если контекст не обогащен через `kernel.EnrichCtx()`.
+func FullMethod(ctx context.Context) string {
 	assert.NotNilDeepMust(ctx)
 
 	v := ctx.Value(grpcCtxUnaryServerInfoFullMethodKey)
 
 	if v == nil {
-		panic("`helpers.GrpcFullMethod`: похоже, `helpers.AddGrpcInfoToCtx` не был вызван")
+		panic("`kernel.FullMethod`: похоже, `kernel.EnrichCtx` не был вызван")
 	}
 
 	return v.(string)
 }
 
-// GrpcMetadataKeyFirst
+// MetadataKeyFirst
 //
 // Паникует при нулевых аргументах.
-func GrpcMetadataKeyFirst(ctx context.Context, key string) (string, bool) {
+func MetadataKeyFirst(ctx context.Context, key string) (string, bool) {
 	assert.NotNilDeepMust(ctx)
 	assert.Str().NotEmpty().Must(key)
 

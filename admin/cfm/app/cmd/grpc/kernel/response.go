@@ -1,4 +1,4 @@
-package helpers
+package kernel
 
 import (
 	assert "github.com/selyukovn/go-wm-assert"
