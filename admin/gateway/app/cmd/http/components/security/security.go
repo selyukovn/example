@@ -55,7 +55,6 @@ func (s *Security) _middlewareAsGuest(
 	}
 
 	user := newUserGuest(
-		kernel.TraceId(r),
 		kernel.UserIp(r),
 		fromUag,
 	)
@@ -85,7 +84,6 @@ func (s *Security) Middleware(next http.Handler) http.Handler {
 
 		ctx := r.Context()
 
-		traceId := kernel.TraceId(r)
 		fromIp := kernel.UserIp(r)
 		fromUag := kernel.UserAgent(r)
 		if fromUag == "" {
@@ -97,7 +95,7 @@ func (s *Security) Middleware(next http.Handler) http.Handler {
 		// (например, при отсутствии связанного аккаунта или ошибки валидации).
 		// Однако, не стоит зависеть от предположений о работе клиента!
 		// Пусть клиент сам разбирается с ситуацией, исходя из кода ответа обработчика.
-		res, err := s.ctr.Services.Auth.CheckSession(ctx, traceId, fromIp, fromUag, sessId)
+		res, err := s.ctr.Services.Auth.CheckSession(ctx, fromIp, fromUag, sessId)
 		switch err.(type) {
 		case nil:
 		case std.ErrorNotFound:
@@ -135,7 +133,6 @@ func (s *Security) Middleware(next http.Handler) http.Handler {
 		}
 
 		user := newUserAuthorized(
-			traceId,
 			fromIp,
 			fromUag,
 			sessId,
@@ -192,7 +189,7 @@ func (s *Security) Authenticate(ctx context.Context, user *User, w http.Response
 
 	assert.TrueMust(user.IsGuest())
 
-	res, err := s.ctr.Services.Auth.CheckSession(ctx, user.TraceId(), user.Ip(), user.UserAgent(), sessId)
+	res, err := s.ctr.Services.Auth.CheckSession(ctx, user.Ip(), user.UserAgent(), sessId)
 	switch err.(type) {
 	case nil:
 	case std.ErrorNotFound,
@@ -228,7 +225,7 @@ func (s *Security) UnAuthenticate(ctx context.Context, user *User) error {
 
 	// Поскольку пользователь аутентифицирован, то он прошел аутентификацию с теми же данными,
 	// а значит все возможные ошибки клиента исключены -- любая ошибка, кроме `std.ErrorAlreadyDone`, есть бага.
-	err := s.ctr.Services.Auth.SignOut(ctx, user.TraceId(), user.Ip(), user.UserAgent(), user.sessionId())
+	err := s.ctr.Services.Auth.SignOut(ctx, user.Ip(), user.UserAgent(), user.sessionId())
 	switch err.(type) {
 	case nil:
 	case std.ErrorAlreadyDone:

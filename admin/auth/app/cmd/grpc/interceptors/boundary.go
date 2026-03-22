@@ -2,12 +2,15 @@ package interceptors
 
 import (
 	"context"
+	"example/admin/auth/cmd/common/components/processing"
 	"example/admin/auth/cmd/grpc/helpers"
+	"github.com/google/uuid"
 	"github.com/selyukovn/go-std/logger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"runtime/debug"
+	"strings"
 )
 
 // NewBoundary
@@ -16,7 +19,7 @@ import (
 func NewBoundary() grpc.UnaryServerInterceptor {
 	// Все описанные в данном перехватчике действия слишком связаны между собой,
 	// чтобы выделить каждое в отдельный перехватчик.
-	// Например, логирование статуса ответа не имеет смысла без trace-id из обогащенного контекста,
+	// Например, логирование статуса ответа не имеет смысла без operationId из обогащенного контекста,
 	// а значит обогащение контекста обязано происходить до логирования статуса ответа.
 	// Но статус ответа может быть изменен во внешних перехватчиках, что приведет к расхождению с уже записанными логами.
 	// Кроме того, перехват паники для корректного ее логирования потребует ретрансляции и двух точек обработки,
@@ -42,24 +45,23 @@ func NewBoundary() grpc.UnaryServerInterceptor {
 		}()
 
 		// -------------------------------------------------------------------------------------------------------------
-		// Обогащение контекста
+		// Обогащение
 		// -------------------------------------------------------------------------------------------------------------
 
-		// Trace Id
-		// ------------
-
-		traceId, ok := helpers.GrpcMetadataKeyFirst(ctx, "x-trace-id")
-		if !ok || traceId == "" {
-			return nil, helpers.ErrorInvalidArgument("x-trace-id header not found")
+		operationId, ok := helpers.GrpcMetadataKeyFirst(ctx, "x-operation-id")
+		if !ok || operationId == "" {
+			return nil, helpers.ErrorInvalidArgument("x-operation-id header not found")
 		}
+		ctx = processing.EnrichCtx(ctx, operationId)
+		ctx = logger.AddAttrToCtx(ctx, "processing.OperationId", operationId)
+		/* см. */ _ = processing.OperationId
 
-		ctx = helpers.TraceIdSet(ctx, traceId)
-		ctx = logger.AddAttrToCtx(ctx, "trace_id", traceId)
+		requestId := strings.Replace(uuid.Must(uuid.NewRandom()).String(), "-", "", -1)
+		ctx = helpers.AddGrpcInfoToCtx(ctx, requestId, info.FullMethod)
+		ctx = logger.AddAttrToCtx(ctx, "helpers.RequestId", operationId)
+		/* см. */ _ = helpers.RequestId
 
-		// FullMethod
-		// ------------
-
-		ctx = helpers.AddGrpcInfoToCtx(ctx, info.FullMethod)
+		// todo : trace... -- OpenTelemetry?
 
 		// -------------------------------------------------------------------------------------------------------------
 		// Логирование запроса

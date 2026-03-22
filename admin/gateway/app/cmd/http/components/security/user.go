@@ -11,7 +11,6 @@ import (
 // ---------------------------------------------------------------------------------------------------------------------
 
 type User struct {
-	traceId   string
 	ip        netip.Addr
 	userAgent string
 	sessId    string
@@ -23,27 +22,23 @@ type User struct {
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
-func newUserGuest(traceId string, ip netip.Addr, userAgent string) *User {
-	assert.Str().NotEmpty().Must(traceId)
+func newUserGuest(ip netip.Addr, userAgent string) *User {
 	assert.NotZeroMust(ip)
 	assert.Str().NotEmpty(userAgent)
 
 	return &User{
-		traceId:   traceId,
 		ip:        ip,
 		userAgent: userAgent,
 	}
 }
 
 func newUserAuthorized(
-	traceId string,
 	ip netip.Addr,
 	userAgent string,
 	sessId string,
 	sessExpAt time.Time,
 	accId string,
 ) *User {
-	assert.Str().NotEmpty().Must(traceId)
 	assert.NotZeroMust(ip)
 	assert.Str().NotEmpty(userAgent)
 	assert.Str().NotEmpty().Must(sessId)
@@ -51,7 +46,6 @@ func newUserAuthorized(
 	assert.Str().NotEmpty().Must(accId)
 
 	return &User{
-		traceId:   traceId,
 		ip:        ip,
 		userAgent: userAgent,
 		sessId:    sessId,
@@ -93,10 +87,6 @@ func (u *User) sessionId() string {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-
-func (u *User) TraceId() string {
-	return u.traceId
-}
 
 func (u *User) Ip() netip.Addr {
 	return u.ip

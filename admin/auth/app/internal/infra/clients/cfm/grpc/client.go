@@ -20,17 +20,23 @@ import (
 // ---------------------------------------------------------------------------------------------------------------------
 
 type ClientGrpc struct {
-	pbClient pb.CfmServiceClient
-	apiKey   string
+	pbClient         pb.CfmServiceClient
+	apiKey           string
+	fnGetOperationId func(context.Context) string
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
-func NewClientGrpc(baseUrl string, apiKey string) (*ClientGrpc, error) {
+func NewClientGrpc(
+	baseUrl string,
+	apiKey string,
+	fnGetOperationId func(context.Context) string,
+) (*ClientGrpc, error) {
 	assert.Str().NotEmpty().Must(baseUrl)
 	assert.Str().NotEmpty().Must(apiKey)
+	assert.NotNilDeepMust(fnGetOperationId)
 
 	grpcClient, err := grpc.NewClient(
 		baseUrl,
@@ -41,13 +47,18 @@ func NewClientGrpc(baseUrl string, apiKey string) (*ClientGrpc, error) {
 	}
 
 	return &ClientGrpc{
-		pbClient: pb.NewCfmServiceClient(grpcClient),
-		apiKey:   apiKey,
+		pbClient:         pb.NewCfmServiceClient(grpcClient),
+		apiKey:           apiKey,
+		fnGetOperationId: fnGetOperationId,
 	}, nil
 }
 
-func NewClientGrpcMust(baseUrl string, apiKey string) *ClientGrpc {
-	res, err := NewClientGrpc(baseUrl, apiKey)
+func NewClientGrpcMust(
+	baseUrl string,
+	apiKey string,
+	fnGetOperationId func(context.Context) string,
+) *ClientGrpc {
+	res, err := NewClientGrpc(baseUrl, apiKey, fnGetOperationId)
 	if err != nil {
 		panic(err)
 	}
@@ -58,10 +69,10 @@ func NewClientGrpcMust(baseUrl string, apiKey string) *ClientGrpc {
 // Actions
 // ---------------------------------------------------------------------------------------------------------------------
 
-func (c *ClientGrpc) prepareCtx(ctx context.Context, traceId string) context.Context {
+func (c *ClientGrpc) prepareCtx(ctx context.Context) context.Context {
 	mData := map[string]string{
-		"authorization": "Bearer " + c.apiKey,
-		"x-trace-id":    traceId,
+		"authorization":  "Bearer " + c.apiKey,
+		"x-operation-id": c.fnGetOperationId(ctx),
 	}
 
 	return metadata.NewOutgoingContext(ctx, metadata.New(mData))
@@ -73,12 +84,11 @@ func (c *ClientGrpc) prepareCtx(ctx context.Context, traceId string) context.Con
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (c *ClientGrpc) CreateForEmail(ctx context.Context, traceId string, email std.Email) (cfm.CreateForEmailResult, error) {
+func (c *ClientGrpc) CreateForEmail(ctx context.Context, email std.Email) (cfm.CreateForEmailResult, error) {
 	assert.NotNilDeepMust(ctx)
-	assert.Str().NotEmpty().Must(traceId)
 	assert.FalseMust(email.IsNil())
 
-	ctx = c.prepareCtx(ctx, traceId)
+	ctx = c.prepareCtx(ctx)
 	nilRes := cfm.CreateForEmailResult{}
 
 	pbRes, pbErr := c.pbClient.CreateForEmail(ctx, &pb.CreateForEmailRequest{
@@ -125,12 +135,11 @@ func (c *ClientGrpc) CreateForEmail(ctx context.Context, traceId string, email s
 //   - cfm.ErrorNoAttemptsLeft
 //   - cfm.ErrorRequestsFrequency
 //   - std.ErrorRuntime
-func (c *ClientGrpc) Request(ctx context.Context, traceId string, cfmId string) (cfm.RequestResult, error) {
+func (c *ClientGrpc) Request(ctx context.Context, cfmId string) (cfm.RequestResult, error) {
 	assert.NotNilDeepMust(ctx)
-	assert.Str().NotEmpty().Must(traceId)
 	assert.Str().NotEmpty().Must(cfmId)
 
-	ctx = c.prepareCtx(ctx, traceId)
+	ctx = c.prepareCtx(ctx)
 	nilRes := cfm.RequestResult{}
 
 	pbRes, pbErr := c.pbClient.Request(ctx, &pb.RequestRequest{
@@ -232,13 +241,12 @@ func (c *ClientGrpc) Request(ctx context.Context, traceId string, cfmId string) 
 //   - cfm.ErrorFinished
 //   - std.ErrorUnprocessable -- если не была запрошена
 //   - std.ErrorRuntime
-func (c *ClientGrpc) Confirm(ctx context.Context, traceId string, cfmId string, code string) (cfm.ConfirmResult, error) {
+func (c *ClientGrpc) Confirm(ctx context.Context, cfmId string, code string) (cfm.ConfirmResult, error) {
 	assert.NotNilDeepMust(ctx)
-	assert.Str().NotEmpty().Must(traceId)
 	assert.Str().NotEmpty().Must(cfmId)
 	assert.Str().NotEmpty().Must(code)
 
-	ctx = c.prepareCtx(ctx, traceId)
+	ctx = c.prepareCtx(ctx)
 	nilRes := cfm.ConfirmResult{}
 
 	pbRes, pbErr := c.pbClient.Confirm(ctx, &pb.ConfirmRequest{

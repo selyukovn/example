@@ -1,15 +1,19 @@
 package http
 
 import (
+	"context"
 	"example/admin/gateway/cmd/http/bundles/auth"
 	"example/admin/gateway/cmd/http/components/monitoring"
+	"example/admin/gateway/cmd/http/components/processing"
 	"example/admin/gateway/cmd/http/components/security"
 	"example/admin/gateway/cmd/http/container"
 	"example/admin/gateway/cmd/http/kernel"
 	"github.com/google/uuid"
+	"github.com/selyukovn/go-std"
 	"github.com/selyukovn/go-std/logger"
 	"net/http"
 	"runtime/debug"
+	"strings"
 )
 
 func registerRoutes(
@@ -35,7 +39,7 @@ func registerRoutes(
 func _boundaryMiddleware(ctr *container.Container) func(http.Handler) http.Handler {
 	// Все описанные в данном перехватчике действия слишком связаны между собой,
 	// чтобы выделить каждое в отдельный перехватчик.
-	// Например, логирование статуса ответа не имеет смысла без trace-id из обогащенного контекста,
+	// Например, логирование статуса ответа не имеет смысла без operationId из обогащенного контекста,
 	// а значит обогащение контекста обязано происходить до логирования статуса ответа.
 	// Но статус ответа может быть изменен во внешних перехватчиках, что приведет к расхождению с уже записанными логами.
 	// Кроме того, перехват паники для корректного ее логирования потребует ретрансляции и двух точек обработки,
@@ -46,7 +50,7 @@ func _boundaryMiddleware(ctr *container.Container) func(http.Handler) http.Handl
 	// Поэтому нужно также, как и в случае с grpc, обязательно перехватывать панику до попадания в сервер.
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := r.Context()
+			var fallbackPanicCtx *context.Context
 
 			fnResponseOnPanic := func(w http.ResponseWriter) {
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -61,39 +65,39 @@ func _boundaryMiddleware(ctr *container.Container) func(http.Handler) http.Handl
 
 			defer func() {
 				if pv := recover(); pv != nil {
-					logger.PanicFf(ctx, pv, debug.Stack(), "http._boundaryMiddleware (резервный recover)")
+					logger.PanicFf(*fallbackPanicCtx, pv, debug.Stack(), "http._boundaryMiddleware (резервный recover)")
 					fnResponseOnPanic(w)
 				}
 			}()
 
 			// ---------------------------------------------------------------------------------------------------------
-			// Обогащение writer'а
+			// Обогащение
 			// ---------------------------------------------------------------------------------------------------------
+
+			ctx := r.Context()
+			fallbackPanicCtx = &ctx
 
 			w = kernel.WrapResponseWriter(w)
 
-			// ---------------------------------------------------------------------------------------------------------
-			// Обогащение контекста
-			// ---------------------------------------------------------------------------------------------------------
+			requestId := strings.Replace(uuid.Must(uuid.NewRandom()).String(), "-", "", -1)
+			kernel.EnrichRequest(r, requestId)
+			ctx = logger.AddAttrToCtx(ctx, "kernel.RequestId", requestId)
+			/* см. */ _ = kernel.RequestId
 
-			// Trace Id
-			// ----------------
+			operationId := r.Header.Get("X-Operation-Id")
+			operationId = std.Ternary(
+				operationId == "",
+				strings.Replace(uuid.Must(uuid.NewRandom()).String(), "-", "", -1),
+				operationId,
+			)
+			ctx = processing.EnrichCtx(ctx, operationId)
+			ctx = logger.AddAttrToCtx(ctx, "processing.OperationId", operationId)
+			/* см. */ _ = processing.OperationId
 
-			traceId := func() string {
-				u, err := uuid.NewRandom()
-				if err != nil {
-					panic(err)
-				}
-				return u.String()
-			}()
-
-			// todo : костыль
-			r.Header.Add("X-Trace-Id", traceId)
-			_ = kernel.TraceId
-
-			ctx = logger.AddAttrToCtx(ctx, "trace_id", traceId)
+			// todo : trace... -- OpenTelemetry?
 
 			r = r.WithContext(ctx)
+			fallbackPanicCtx = &ctx
 
 			// ---------------------------------------------------------------------------------------------------------
 			// Логирование запроса

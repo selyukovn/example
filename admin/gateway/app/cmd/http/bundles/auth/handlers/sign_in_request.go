@@ -36,7 +36,7 @@ func NewSignInRequest(
 
 		// --
 
-		res, err := ctr.Services.Auth.SignInRequest(ctx, user.TraceId(), user.Ip(), user.UserAgent(), email)
+		res, err := ctr.Services.Auth.SignInRequest(ctx, user.Ip(), user.UserAgent(), email)
 		switch vErr := err.(type) {
 		case nil:
 		case auth.ErrorValidation:

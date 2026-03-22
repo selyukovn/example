@@ -32,7 +32,7 @@ func NewSignInConfirm(
 
 		// --
 
-		res, err := ctr.Services.Auth.SignInConfirm(ctx, user.TraceId(), user.Ip(), user.UserAgent(), signInId, code)
+		res, err := ctr.Services.Auth.SignInConfirm(ctx, user.Ip(), user.UserAgent(), signInId, code)
 		switch vErr := err.(type) {
 		case nil:
 		case auth.ErrorValidation:

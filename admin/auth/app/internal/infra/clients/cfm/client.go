@@ -12,7 +12,7 @@ type ClientInterface interface {
 	//
 	// Ошибки:
 	//   - std.ErrorRuntime
-	CreateForEmail(ctx context.Context, traceId string, email std.Email) (CreateForEmailResult, error)
+	CreateForEmail(ctx context.Context, email std.Email) (CreateForEmailResult, error)
 
 	// Request
 	//
@@ -24,7 +24,7 @@ type ClientInterface interface {
 	//   - ErrorNoAttemptsLeft
 	//   - ErrorRequestsFrequency
 	//   - std.ErrorRuntime
-	Request(ctx context.Context, traceId string, cfmId string) (RequestResult, error)
+	Request(ctx context.Context, cfmId string) (RequestResult, error)
 
 	// Confirm
 	//
@@ -35,5 +35,5 @@ type ClientInterface interface {
 	//   - ErrorFinished
 	//   - std.ErrorUnprocessable -- если не была запрошена
 	//   - std.ErrorRuntime
-	Confirm(ctx context.Context, traceId string, cfmId string, code string) (ConfirmResult, error)
+	Confirm(ctx context.Context, cfmId string, code string) (ConfirmResult, error)
 }
