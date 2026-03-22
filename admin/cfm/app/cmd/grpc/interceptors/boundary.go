@@ -4,7 +4,7 @@ import (
 	"context"
 	"example/admin/cfm/cmd/common/components/processing"
 	"example/admin/cfm/cmd/common/container"
-	"example/admin/cfm/cmd/grpc/helpers"
+	"example/admin/cfm/cmd/grpc/kernel"
 	"github.com/google/uuid"
 	"github.com/selyukovn/go-std/logger"
 	"google.golang.org/grpc"
@@ -49,18 +49,18 @@ func NewBoundary(ctr *container.Container) grpc.UnaryServerInterceptor {
 		// Обогащение
 		// -------------------------------------------------------------------------------------------------------------
 
-		operationId, ok := helpers.GrpcMetadataKeyFirst(ctx, "x-operation-id")
+		operationId, ok := kernel.MetadataKeyFirst(ctx, "x-operation-id")
 		if !ok || operationId == "" {
-			return nil, helpers.ErrorInvalidArgument("x-operation-id header not found")
+			return nil, kernel.ErrorInvalidArgument("x-operation-id header not found")
 		}
 		ctx = processing.EnrichCtx(ctx, operationId)
 		ctx = logger.AddAttrToCtx(ctx, "processing.OperationId", operationId)
 		/* см. */ _ = processing.OperationId
 
 		requestId := strings.Replace(uuid.Must(uuid.NewRandom()).String(), "-", "", -1)
-		ctx = helpers.AddGrpcInfoToCtx(ctx, requestId, info.FullMethod)
-		ctx = logger.AddAttrToCtx(ctx, "helpers.RequestId", operationId)
-		/* см. */ _ = helpers.RequestId
+		ctx = kernel.EnrichCtx(ctx, requestId, info.FullMethod)
+		ctx = logger.AddAttrToCtx(ctx, "kernel.RequestId", operationId)
+		/* см. */ _ = kernel.RequestId
 
 		// todo : trace... -- OpenTelemetry?
 
@@ -68,7 +68,7 @@ func NewBoundary(ctr *container.Container) grpc.UnaryServerInterceptor {
 		// Логирование запроса
 		// -------------------------------------------------------------------------------------------------------------
 
-		logger.InfoFf(ctx, "Запрос: %q", helpers.GrpcFullMethod(ctx))
+		logger.InfoFf(ctx, "Запрос: %q", kernel.FullMethod(ctx))
 
 		defer func() {
 			code := codes.OK

@@ -3,7 +3,8 @@ package handlers
 import (
 	"context"
 	"example/admin/auth/cmd/grpc/container"
-	"example/admin/auth/cmd/grpc/helpers"
+	"example/admin/auth/cmd/grpc/kernel"
+	"example/admin/auth/cmd/grpc/kernel_extra"
 	"example/admin/auth/cmd/grpc/pb"
 	"example/admin/auth/internal/domain/account"
 	"example/admin/auth/internal/domain/session"
@@ -14,16 +15,16 @@ import (
 
 func NewSignOut(ctr *container.Container) func(ctx context.Context, req *pb.SignOutRequest) (*pb.SignOutResponse, error) {
 	return func(ctx context.Context, req *pb.SignOutRequest) (*pb.SignOutResponse, error) {
-		cl, err := helpers.ParseClient(req.FromIp, req.FromUserAgent)
+		cl, err := kernel_extra.ParseClient(req.FromIp, req.FromUserAgent)
 		if err != nil {
 			logger.DebugFf(ctx, err.Error())
-			return nil, helpers.ErrorInvalidArgument("кривой client")
+			return nil, kernel.ErrorInvalidArgument("кривой client")
 		}
 
 		sessId, err := session.IdFromString(req.SessionId)
 		if err != nil {
 			logger.DebugFf(ctx, err.Error())
-			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorValidationDetail{
+			return nil, kernel.ErrorFailedPrecondition(&pb.ErrorValidationDetail{
 				Field:   "sessionId",
 				Message: err.Error(),
 			})
@@ -35,14 +36,14 @@ func NewSignOut(ctr *container.Container) func(ctx context.Context, req *pb.Sign
 		switch err.(type) {
 		case nil:
 		case std.ErrorNotFound:
-			return nil, helpers.ErrorNotFound()
+			return nil, kernel.ErrorNotFound()
 		case account.ErrorDeactivated, account.ErrorIpWhitelist:
-			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorAccountAccessDeniedDetail{})
+			return nil, kernel.ErrorFailedPrecondition(&pb.ErrorAccountAccessDeniedDetail{})
 		case std.ErrorAlreadyDone:
-			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorAlreadyDoneDetail{})
+			return nil, kernel.ErrorFailedPrecondition(&pb.ErrorAlreadyDoneDetail{})
 		case std.ErrorRuntime:
 			logger.ErrorFf(ctx, err.Error())
-			return nil, helpers.ErrorInternal()
+			return nil, kernel.ErrorInternal()
 		default:
 			panic(err)
 		}

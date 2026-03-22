@@ -3,7 +3,8 @@ package handlers
 import (
 	"context"
 	"example/admin/auth/cmd/grpc/container"
-	"example/admin/auth/cmd/grpc/helpers"
+	"example/admin/auth/cmd/grpc/kernel"
+	"example/admin/auth/cmd/grpc/kernel_extra"
 	"example/admin/auth/cmd/grpc/pb"
 	"example/admin/auth/internal/domain/account"
 	"example/admin/auth/internal/domain/session"
@@ -15,16 +16,16 @@ import (
 
 func NewCheckSession(ctr *container.Container) func(ctx context.Context, req *pb.CheckSessionRequest) (*pb.CheckSessionResponse, error) {
 	return func(ctx context.Context, req *pb.CheckSessionRequest) (*pb.CheckSessionResponse, error) {
-		cl, err := helpers.ParseClient(req.FromIp, req.FromUserAgent)
+		cl, err := kernel_extra.ParseClient(req.FromIp, req.FromUserAgent)
 		if err != nil {
 			logger.DebugFf(ctx, err.Error())
-			return nil, helpers.ErrorInvalidArgument("кривой client")
+			return nil, kernel.ErrorInvalidArgument("кривой client")
 		}
 
 		sessId, err := session.IdFromString(req.SessionId)
 		if err != nil {
 			logger.DebugFf(ctx, err.Error())
-			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorValidationDetail{
+			return nil, kernel.ErrorFailedPrecondition(&pb.ErrorValidationDetail{
 				Field:   "sessionId",
 				Message: err.Error(),
 			})
@@ -36,17 +37,17 @@ func NewCheckSession(ctr *container.Container) func(ctx context.Context, req *pb
 		switch vErr := err.(type) {
 		case nil:
 		case std.ErrorNotFound:
-			return nil, helpers.ErrorNotFound()
+			return nil, kernel.ErrorNotFound()
 		case account.ErrorDeactivated, account.ErrorIpWhitelist:
-			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorAccountAccessDeniedDetail{})
+			return nil, kernel.ErrorFailedPrecondition(&pb.ErrorAccountAccessDeniedDetail{})
 		case session.ErrorClosed:
-			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorSessionClosedDetail{
+			return nil, kernel.ErrorFailedPrecondition(&pb.ErrorSessionClosedDetail{
 				IsExpired: vErr.IsExpired(),
 				ClosedAt:  timestamppb.New(vErr.ClosedAt()),
 			})
 		case std.ErrorRuntime:
 			logger.ErrorFf(ctx, err.Error())
-			return nil, helpers.ErrorInternal()
+			return nil, kernel.ErrorInternal()
 		default:
 			panic(err)
 		}

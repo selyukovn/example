@@ -3,7 +3,7 @@ package handlers
 import (
 	"context"
 	"example/admin/cfm/cmd/common/container"
-	"example/admin/cfm/cmd/grpc/helpers"
+	"example/admin/cfm/cmd/grpc/kernel"
 	"example/admin/cfm/cmd/grpc/pb"
 	"example/admin/cfm/internal/domain/cfm"
 	"example/admin/cfm/internal/opera/use_cases/request"
@@ -17,7 +17,7 @@ func NewRequest(ctr *container.Container) func(ctx context.Context, req *pb.Requ
 		cfmId, err := cfm.IdFromString(req.CfmId)
 		if err != nil {
 			logger.DebugFf(ctx, err.Error())
-			return nil, helpers.ErrorInvalidArgument("кривой id")
+			return nil, kernel.ErrorInvalidArgument("кривой id")
 		}
 
 		// --
@@ -26,9 +26,9 @@ func NewRequest(ctr *container.Container) func(ctx context.Context, req *pb.Requ
 		switch vErr := err.(type) {
 		case nil:
 		case std.ErrorNotFound:
-			return nil, helpers.ErrorNotFound()
+			return nil, kernel.ErrorNotFound()
 		case cfm.ErrorFinished:
-			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorFinishedDetail{
+			return nil, kernel.ErrorFailedPrecondition(&pb.ErrorFinishedDetail{
 				CfmId:       vErr.CfmId().String(),
 				FinishedAt:  timestamppb.New(vErr.FinishedAt()),
 				IsAsExpired: vErr.IsAsExpired(),
@@ -36,18 +36,18 @@ func NewRequest(ctr *container.Container) func(ctx context.Context, req *pb.Requ
 				IsAsPassed:  vErr.IsAsPassed(),
 			})
 		case cfm.ErrorNoAttemptsLeft:
-			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorNoAttemptsLeftDetail{
+			return nil, kernel.ErrorFailedPrecondition(&pb.ErrorNoAttemptsLeftDetail{
 				CfmId: vErr.CfmId().String(),
 			})
 		case cfm.ErrorRequestsFrequency:
-			return nil, helpers.ErrorFailedPrecondition(&pb.ErrorRequestsFrequencyDetail{
+			return nil, kernel.ErrorFailedPrecondition(&pb.ErrorRequestsFrequencyDetail{
 				CfmId:              vErr.CfmId().String(),
 				CanReqAttemptsLeft: uint32(vErr.CanReqAttemptsLeft()),
 				CanReqAfter:        timestamppb.New(vErr.CanReqAfter()),
 			})
 		case std.ErrorRuntime:
 			logger.ErrorFf(ctx, err.Error())
-			return nil, helpers.ErrorInternal()
+			return nil, kernel.ErrorInternal()
 		default:
 			panic(err)
 		}
