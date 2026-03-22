@@ -2,6 +2,7 @@ package interceptors
 
 import (
 	"context"
+	"example/admin/cfm/cmd/common/components/processing"
 	"example/admin/cfm/cmd/common/container"
 	"github.com/google/uuid"
 	"github.com/selyukovn/go-std/logger"
@@ -31,21 +32,17 @@ func NewBoundary() func(func(context.Context), string, *container.Container) fun
 			}()
 
 			// ---------------------------------------------------------------------------------------------------------
-			// Обогащение контекста
+			// Обогащение
 			// ---------------------------------------------------------------------------------------------------------
 
-			// Trace Id
-			// ------------
+			operationId := strings.Replace(uuid.Must(uuid.NewRandom()).String(), "-", "", -1)
+			ctx = processing.EnrichCtx(ctx, operationId)
+			ctx = logger.AddAttrToCtx(ctx, "processing.OperationId", operationId)
+			/* см. */ _ = processing.OperationId
 
-			// Scheduler'у неоткуда брать traceId, поэтому генерим прямо тут.
-			traceUuid, err := uuid.NewRandom()
-			if err != nil {
-				panic(err)
-			}
-			traceId := traceUuid.String()
-			traceId = strings.Replace(traceId, "-", "", -1)
+			// todo : возможно, нужен аналог RequestId...
 
-			ctx = logger.AddAttrToCtx(ctx, "trace_id", traceId)
+			// todo : trace... -- OpenTelemetry?
 
 			// ---------------------------------------------------------------------------------------------------------
 			// Логирование

@@ -23,17 +23,23 @@ import (
 var _ auth.ClientInterface = &ClientImplGrpc{}
 
 type ClientImplGrpc struct {
-	pbClient pb.AuthServiceClient
-	apiKey   string
+	pbClient         pb.AuthServiceClient
+	apiKey           string
+	fnGetOperationId func(context.Context) string
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
-func NewClientGrpc(baseUrl string, apiKey string) (*ClientImplGrpc, error) {
+func NewClientGrpc(
+	baseUrl string,
+	apiKey string,
+	fnGetOperationId func(context.Context) string,
+) (*ClientImplGrpc, error) {
 	assert.Str().NotEmpty().Must(baseUrl)
 	assert.Str().NotEmpty().Must(apiKey)
+	assert.NotNilDeepMust(fnGetOperationId)
 
 	grpcClient, err := grpc.NewClient(
 		baseUrl,
@@ -44,13 +50,14 @@ func NewClientGrpc(baseUrl string, apiKey string) (*ClientImplGrpc, error) {
 	}
 
 	return &ClientImplGrpc{
-		pbClient: pb.NewAuthServiceClient(grpcClient),
-		apiKey:   apiKey,
+		pbClient:         pb.NewAuthServiceClient(grpcClient),
+		apiKey:           apiKey,
+		fnGetOperationId: fnGetOperationId,
 	}, nil
 }
 
-func NewClientGrpcMust(baseUrl string, apiKey string) *ClientImplGrpc {
-	res, err := NewClientGrpc(baseUrl, apiKey)
+func NewClientGrpcMust(baseUrl string, apiKey string, fnGetOperationId func(context.Context) string) *ClientImplGrpc {
+	res, err := NewClientGrpc(baseUrl, apiKey, fnGetOperationId)
 	if err != nil {
 		panic(err)
 	}
@@ -61,10 +68,10 @@ func NewClientGrpcMust(baseUrl string, apiKey string) *ClientImplGrpc {
 // Actions
 // ---------------------------------------------------------------------------------------------------------------------
 
-func (c *ClientImplGrpc) prepareCtx(ctx context.Context, traceId string) context.Context {
+func (c *ClientImplGrpc) prepareCtx(ctx context.Context) context.Context {
 	mData := map[string]string{
-		"authorization": "Bearer " + c.apiKey,
-		"x-trace-id":    traceId,
+		"authorization":  "Bearer " + c.apiKey,
+		"x-operation-id": c.fnGetOperationId(ctx),
 	}
 
 	return metadata.NewOutgoingContext(ctx, metadata.New(mData))
@@ -81,18 +88,16 @@ func (c *ClientImplGrpc) prepareCtx(ctx context.Context, traceId string) context
 //   - std.ErrorRuntime
 func (c *ClientImplGrpc) SignInRequest(
 	ctx context.Context,
-	traceId string,
 	fromIp netip.Addr,
 	fromUserAgent string,
 	email std.Email,
 ) (auth.SignInRequestResult, error) {
 	assert.NotNilDeepMust(ctx)
-	assert.Str().NotEmpty().Must(traceId)
 	assert.TrueMust(fromIp != netip.Addr{}, "fromIp")
 	assert.Str().NotEmpty().Must(fromUserAgent)
 	assert.TrueMust(email != std.EmailNil, "email")
 
-	ctx = c.prepareCtx(ctx, traceId)
+	ctx = c.prepareCtx(ctx)
 	nilRes := auth.SignInRequestResult{}
 
 	pbRes, pbErr := c.pbClient.SignInRequest(ctx, &pb.SignInRequestRequest{
@@ -169,18 +174,16 @@ func (c *ClientImplGrpc) SignInRequest(
 //   - std.ErrorRuntime
 func (c *ClientImplGrpc) SignInRequestRetry(
 	ctx context.Context,
-	traceId string,
 	fromIp netip.Addr,
 	fromUserAgent string,
 	signInId string,
 ) (auth.SignInRequestRetryResult, error) {
 	assert.NotNilDeepMust(ctx)
-	assert.Str().NotEmpty().Must(traceId)
 	assert.TrueMust(fromIp != netip.Addr{})
 	assert.Str().NotEmpty().Must(fromUserAgent)
 	assert.Str().NotEmpty().Must(signInId)
 
-	ctx = c.prepareCtx(ctx, traceId)
+	ctx = c.prepareCtx(ctx)
 	nilRes := auth.SignInRequestRetryResult{}
 
 	pbRes, pbErr := c.pbClient.SignInRequestRetry(ctx, &pb.SignInRequestRetryRequest{
@@ -269,20 +272,18 @@ func (c *ClientImplGrpc) SignInRequestRetry(
 //   - std.ErrorRuntime
 func (c *ClientImplGrpc) SignInConfirm(
 	ctx context.Context,
-	traceId string,
 	fromIp netip.Addr,
 	fromUserAgent string,
 	signInId string,
 	code string,
 ) (auth.SignInConfirmResult, error) {
 	assert.NotNilDeepMust(ctx)
-	assert.Str().NotEmpty().Must(traceId)
 	assert.TrueMust(fromIp != netip.Addr{})
 	assert.Str().NotEmpty().Must(fromUserAgent)
 	assert.Str().NotEmpty().Must(signInId)
 	assert.Str().NotEmpty().Must(code)
 
-	ctx = c.prepareCtx(ctx, traceId)
+	ctx = c.prepareCtx(ctx)
 	nilRes := auth.SignInConfirmResult{}
 
 	pbRes, pbErr := c.pbClient.SignInConfirm(ctx, &pb.SignInConfirmRequest{
@@ -360,18 +361,16 @@ func (c *ClientImplGrpc) SignInConfirm(
 //   - std.ErrorRuntime
 func (c *ClientImplGrpc) SignOut(
 	ctx context.Context,
-	traceId string,
 	fromIp netip.Addr,
 	fromUserAgent string,
 	sessionId string,
 ) error {
 	assert.NotNilDeepMust(ctx)
-	assert.Str().NotEmpty().Must(traceId)
 	assert.TrueMust(fromIp != netip.Addr{})
 	assert.Str().NotEmpty().Must(fromUserAgent)
 	assert.Str().NotEmpty().Must(sessionId)
 
-	ctx = c.prepareCtx(ctx, traceId)
+	ctx = c.prepareCtx(ctx)
 
 	_, pbErr := c.pbClient.SignOut(ctx, &pb.SignOutRequest{
 		FromIp:        fromIp.String(),
@@ -428,18 +427,16 @@ func (c *ClientImplGrpc) SignOut(
 //   - std.ErrorRuntime
 func (c *ClientImplGrpc) CheckSession(
 	ctx context.Context,
-	traceId string,
 	fromIp netip.Addr,
 	fromUserAgent string,
 	sessionId string,
 ) (auth.CheckSessionResult, error) {
 	assert.NotNilDeepMust(ctx)
-	assert.Str().NotEmpty().Must(traceId)
 	assert.TrueMust(fromIp != netip.Addr{})
 	assert.Str().NotEmpty().Must(fromUserAgent)
 	assert.Str().NotEmpty().Must(sessionId)
 
-	ctx = c.prepareCtx(ctx, traceId)
+	ctx = c.prepareCtx(ctx)
 	nilRes := auth.CheckSessionResult{}
 
 	pbRes, pbErr := c.pbClient.CheckSession(ctx, &pb.CheckSessionRequest{

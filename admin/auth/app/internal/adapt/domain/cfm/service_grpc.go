@@ -14,8 +14,7 @@ import (
 // ---------------------------------------------------------------------------------------------------------------------
 
 type ServiceImplCfmService struct {
-	client              infra_client_cfm.ClientInterface
-	fnGetTraceIdFromCtx func(ctx context.Context) string
+	client infra_client_cfm.ClientInterface
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -25,16 +24,11 @@ type ServiceImplCfmService struct {
 // NewServiceImplCfmService
 //
 // Паникует при нулевых аргументах.
-func NewServiceImplCfmService(
-	client infra_client_cfm.ClientInterface,
-	fnGetTraceIdFromCtx func(ctx context.Context) string,
-) *ServiceImplCfmService {
+func NewServiceImplCfmService(client infra_client_cfm.ClientInterface) *ServiceImplCfmService {
 	assert.NotNilDeepMust(client)
-	assert.NotNilDeepMust(fnGetTraceIdFromCtx)
 
 	return &ServiceImplCfmService{
-		client:              client,
-		fnGetTraceIdFromCtx: fnGetTraceIdFromCtx,
+		client: client,
 	}
 }
 
@@ -52,11 +46,9 @@ func (s *ServiceImplCfmService) CreateForEmail(ctx context.Context, email std.Em
 	assert.NotNilDeepMust(ctx)
 	assert.FalseMust(email.IsNil())
 
-	traceId := s.fnGetTraceIdFromCtx(ctx)
-
 	nilRes := cfm.ServiceResultCreateNil
 
-	clRes, clErr := s.client.CreateForEmail(ctx, traceId, email)
+	clRes, clErr := s.client.CreateForEmail(ctx, email)
 
 	// error
 	// ----------------
@@ -90,11 +82,9 @@ func (s *ServiceImplCfmService) Request(ctx context.Context, cfmId cfm.Id) (cfm.
 	assert.NotNilDeepMust(ctx)
 	assert.FalseMust(cfmId.IsNil())
 
-	traceId := s.fnGetTraceIdFromCtx(ctx)
-
 	nilRes := cfm.ServiceResultRequestNil
 
-	clRes, clErr := s.client.Request(ctx, traceId, cfmId.String())
+	clRes, clErr := s.client.Request(ctx, cfmId.String())
 	switch vErr := clErr.(type) {
 	case nil:
 	case std.ErrorNotFound:
@@ -149,11 +139,9 @@ func (s *ServiceImplCfmService) Confirm(ctx context.Context, cfmId cfm.Id, code 
 	assert.FalseMust(cfmId.IsNil())
 	assert.FalseMust(code.IsNil())
 
-	traceId := s.fnGetTraceIdFromCtx(ctx)
-
 	nilRes := cfm.ServiceResultConfirmNil
 
-	clRes, clErr := s.client.Confirm(ctx, traceId, cfmId.String(), code.String())
+	clRes, clErr := s.client.Confirm(ctx, cfmId.String(), code.String())
 	switch vErr := clErr.(type) {
 	case nil:
 	case std.ErrorNotFound:

@@ -18,7 +18,6 @@ type ClientInterface interface {
 	//   - std.ErrorRuntime
 	SignInRequest(
 		ctx context.Context,
-		traceId string,
 		fromIp netip.Addr,
 		fromUserAgent string,
 		email std.Email,
@@ -39,7 +38,6 @@ type ClientInterface interface {
 	//   - std.ErrorRuntime
 	SignInRequestRetry(
 		ctx context.Context,
-		traceId string,
 		fromIp netip.Addr,
 		fromUserAgent string,
 		signInId string,
@@ -58,7 +56,6 @@ type ClientInterface interface {
 	//   - std.ErrorRuntime
 	SignInConfirm(
 		ctx context.Context,
-		traceId string,
 		fromIp netip.Addr,
 		fromUserAgent string,
 		signInId string,
@@ -77,7 +74,6 @@ type ClientInterface interface {
 	//   - std.ErrorRuntime
 	SignOut(
 		ctx context.Context,
-		traceId string,
 		fromIp netip.Addr,
 		fromUserAgent string,
 		sessionId string,
@@ -95,7 +91,6 @@ type ClientInterface interface {
 	//   - std.ErrorRuntime
 	CheckSession(
 		ctx context.Context,
-		traceId string,
 		fromIp netip.Addr,
 		fromUserAgent string,
 		sessionId string,

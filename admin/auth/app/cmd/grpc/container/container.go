@@ -3,7 +3,7 @@ package container
 import (
 	"context"
 	"database/sql"
-	"example/admin/auth/cmd/grpc/helpers"
+	"example/admin/auth/cmd/common/components/processing"
 	adapt_domain_account "example/admin/auth/internal/adapt/domain/account"
 	adapt_domain_action_request "example/admin/auth/internal/adapt/domain/action_request"
 	adapt_domain_cfm "example/admin/auth/internal/adapt/domain/cfm"
@@ -63,7 +63,13 @@ func New(
 
 	// clients - cfm
 	infraCfmGrpcClient := adapt_infra_clients_cfm.NewDecoratorLoggable(
-		infra_clients_cfm_grpc.NewClientGrpcMust(appCfmApiGrpcBaseUrl, appCfmApiGrpcApiKey),
+		infra_clients_cfm_grpc.NewClientGrpcMust(
+			appCfmApiGrpcBaseUrl,
+			appCfmApiGrpcApiKey,
+			func(ctx context.Context) string {
+				return processing.OperationId(ctx)
+			},
+		),
 	)
 
 	// -----------------------------------------------------------------------------------------------------------------
@@ -86,12 +92,7 @@ func New(
 	actReqRepo := adapt_domain_action_request.NewRepositoryImplSql(sqlDbFnIsDuplicateKeyError)
 
 	// cfm
-	var cfmService domain_cfm.ServiceInterface = adapt_domain_cfm.NewServiceImplCfmService(
-		infraCfmGrpcClient,
-		func(ctx context.Context) string {
-			return helpers.TraceIdGet(ctx)
-		},
-	)
+	var cfmService domain_cfm.ServiceInterface = adapt_domain_cfm.NewServiceImplCfmService(infraCfmGrpcClient)
 
 	// session
 	sessIdGen := adapt_domain_session.NewIdGeneratorImplUniqueRandom()

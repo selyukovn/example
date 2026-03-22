@@ -49,7 +49,6 @@ func NewDecoratorLoggable(origin auth.ClientInterface) *DecoratorLoggable {
 //   - std.ErrorRuntime
 func (d *DecoratorLoggable) SignInRequest(
 	ctx context.Context,
-	traceId string,
 	fromIp netip.Addr,
 	fromUserAgent string,
 	email std.Email,
@@ -60,7 +59,7 @@ func (d *DecoratorLoggable) SignInRequest(
 	logger.InfoFf(ctx, "%T.%s - start(%q, %q, %q)", d, "SignInRequest", fromIp, fromUserAgent, email)
 	defer func() { logger.InfoFf(ctx, "%T.%s - end(%#v, %#v = %s)", d, "SignInRequest", rRes, rErr, rErr) }()
 
-	return d.origin.SignInRequest(ctx, traceId, fromIp, fromUserAgent, email)
+	return d.origin.SignInRequest(ctx, fromIp, fromUserAgent, email)
 }
 
 // SignInRequestRetry
@@ -78,7 +77,6 @@ func (d *DecoratorLoggable) SignInRequest(
 //   - std.ErrorRuntime
 func (d *DecoratorLoggable) SignInRequestRetry(
 	ctx context.Context,
-	traceId string,
 	fromIp netip.Addr,
 	fromUserAgent string,
 	signInId string,
@@ -91,7 +89,7 @@ func (d *DecoratorLoggable) SignInRequestRetry(
 		logger.InfoFf(ctx, "%T.%s - end(%#v, %#v = %s)", d, "SignInRequestRetry", rRes, rErr, rErr)
 	}()
 
-	return d.origin.SignInRequestRetry(ctx, traceId, fromIp, fromUserAgent, signInId)
+	return d.origin.SignInRequestRetry(ctx, fromIp, fromUserAgent, signInId)
 }
 
 // SignInConfirm
@@ -107,7 +105,6 @@ func (d *DecoratorLoggable) SignInRequestRetry(
 //   - std.ErrorRuntime
 func (d *DecoratorLoggable) SignInConfirm(
 	ctx context.Context,
-	traceId string,
 	fromIp netip.Addr,
 	fromUserAgent string,
 	signInId string,
@@ -127,7 +124,7 @@ func (d *DecoratorLoggable) SignInConfirm(
 		logger.InfoFf(ctx, "%T.%s - end(%#v, %#v = %s)", d, "SignInConfirm", rResMasked, rErr, rErr)
 	}()
 
-	return d.origin.SignInConfirm(ctx, traceId, fromIp, fromUserAgent, signInId, code)
+	return d.origin.SignInConfirm(ctx, fromIp, fromUserAgent, signInId, code)
 }
 
 // SignOut
@@ -142,7 +139,6 @@ func (d *DecoratorLoggable) SignInConfirm(
 //   - std.ErrorRuntime
 func (d *DecoratorLoggable) SignOut(
 	ctx context.Context,
-	traceId string,
 	fromIp netip.Addr,
 	fromUserAgent string,
 	sessionId string,
@@ -156,7 +152,7 @@ func (d *DecoratorLoggable) SignOut(
 	)
 	defer func() { logger.InfoFf(ctx, "%T.%s - end(%#v = %s)", d, "SignOut", rErr, rErr) }()
 
-	return d.origin.SignOut(ctx, traceId, fromIp, fromUserAgent, sessionId)
+	return d.origin.SignOut(ctx, fromIp, fromUserAgent, sessionId)
 }
 
 // CheckSession
@@ -171,7 +167,6 @@ func (d *DecoratorLoggable) SignOut(
 //   - std.ErrorRuntime
 func (d *DecoratorLoggable) CheckSession(
 	ctx context.Context,
-	traceId string,
 	fromIp netip.Addr,
 	fromUserAgent string,
 	sessionId string,
@@ -186,7 +181,7 @@ func (d *DecoratorLoggable) CheckSession(
 	)
 	defer func() { logger.InfoFf(ctx, "%T.%s - end(%#v, %#v = %s)", d, "CheckSession", rRes, rErr, rErr) }()
 
-	return d.origin.CheckSession(ctx, traceId, fromIp, fromUserAgent, sessionId)
+	return d.origin.CheckSession(ctx, fromIp, fromUserAgent, sessionId)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

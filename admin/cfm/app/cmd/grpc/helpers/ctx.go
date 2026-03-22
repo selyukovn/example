@@ -1,5 +1,7 @@
 package helpers
 
+// todo : rename to "kernel" or so...
+
 import (
 	"context"
 	assert "github.com/selyukovn/go-wm-assert"
@@ -10,15 +12,18 @@ import (
 // CTX
 // ---------------------------------------------------------------------------------------------------------------------
 
+const grpcCtxUnaryServerInfoRequestIdKey = "grpc.UnaryServerInfo.requestId"
 const grpcCtxUnaryServerInfoFullMethodKey = "grpc.UnaryServerInfo.fullMethod"
 
 // AddGrpcInfoToCtx
 //
 // Паникует при нулевых аргументах.
-func AddGrpcInfoToCtx(ctx context.Context, fullMethod string) context.Context {
+func AddGrpcInfoToCtx(ctx context.Context, requestId string, fullMethod string) context.Context {
 	assert.NotNilDeepMust(ctx)
+	assert.Str().NotEmpty().Must(requestId)
 	assert.Str().NotEmpty().Must(fullMethod)
 
+	ctx = context.WithValue(ctx, grpcCtxUnaryServerInfoRequestIdKey, requestId)
 	ctx = context.WithValue(ctx, grpcCtxUnaryServerInfoFullMethodKey, fullMethod)
 
 	return ctx
@@ -26,13 +31,36 @@ func AddGrpcInfoToCtx(ctx context.Context, fullMethod string) context.Context {
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-// GrpcInfoFullMethod
+// RequestId
 //
 // Паникует при нулевых аргументах.
-func GrpcInfoFullMethod(ctx context.Context) string {
+// Паникует, если контекст не обогащен через `helpers.AddGrpcInfoToCtx()`.
+func RequestId(ctx context.Context) string {
 	assert.NotNilDeepMust(ctx)
 
-	return ctx.Value(grpcCtxUnaryServerInfoFullMethodKey).(string)
+	v := ctx.Value(grpcCtxUnaryServerInfoRequestIdKey)
+
+	if v == nil {
+		panic("`helpers.RequestId`: похоже, `helpers.AddGrpcInfoToCtx` не был вызван")
+	}
+
+	return v.(string)
+}
+
+// GrpcFullMethod
+//
+// Паникует при нулевых аргументах.
+// Паникует, если контекст не обогащен через `helpers.AddGrpcInfoToCtx()`.
+func GrpcFullMethod(ctx context.Context) string {
+	assert.NotNilDeepMust(ctx)
+
+	v := ctx.Value(grpcCtxUnaryServerInfoFullMethodKey)
+
+	if v == nil {
+		panic("`helpers.GrpcFullMethod`: похоже, `helpers.AddGrpcInfoToCtx` не был вызван")
+	}
+
+	return v.(string)
 }
 
 // GrpcMetadataKeyFirst
