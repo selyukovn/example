@@ -129,7 +129,7 @@ func (c *Cfm) _makeErrorFinished(now time.Time) ErrorFinished {
 //   - можно ли еще запросить - если да, после какого момента времени
 func (c *Cfm) Request(
 	now time.Time,
-	factory *Factory,
+	factory Factory,
 	ctx context.Context,
 ) (
 	rCode code.Code,
@@ -139,12 +139,12 @@ func (c *Cfm) Request(
 	rCanReqAfter time.Time,
 	rErr error,
 ) {
-	// По поводу factory -- да, ссылочная непрозрачность.
+	// По поводу `factory` -- да, ссылочная непрозрачность.
 	// Но выносить проверки в какой-то "AssertCanRequest(now) error" метод перед генерацией
 	// или, вероятно, зря генерировать код с хешем до проверок, кмк, большее зло.
 
 	assert.FalseMust(now.IsZero())
-	assert.NotNilDeepMust(factory)
+	assert.Cmp[Factory]().NotEq(FactoryNil).Must(factory)
 	assert.NotNilDeepMust(ctx)
 
 	rCode = code.CodeNil

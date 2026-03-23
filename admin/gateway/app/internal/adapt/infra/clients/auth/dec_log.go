@@ -13,7 +13,7 @@ import (
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
-var _ auth.ClientInterface = &DecoratorLoggable{}
+var _ auth.ClientInterface = DecoratorLoggable{}
 
 type DecoratorLoggable struct {
 	origin auth.ClientInterface
@@ -26,10 +26,10 @@ type DecoratorLoggable struct {
 // NewDecoratorLoggable
 //
 // Паникует при нулевых аргументах.
-func NewDecoratorLoggable(origin auth.ClientInterface) *DecoratorLoggable {
+func NewDecoratorLoggable(origin auth.ClientInterface) DecoratorLoggable {
 	assert.NotNilDeepMust(origin)
 
-	return &DecoratorLoggable{
+	return DecoratorLoggable{
 		origin: origin,
 	}
 }
@@ -47,7 +47,7 @@ func NewDecoratorLoggable(origin auth.ClientInterface) *DecoratorLoggable {
 //   - auth.ErrorValidation
 //   - auth.ErrorAccountAccessDenied
 //   - std.ErrorRuntime
-func (d *DecoratorLoggable) SignInRequest(
+func (d DecoratorLoggable) SignInRequest(
 	ctx context.Context,
 	fromIp netip.Addr,
 	fromUserAgent string,
@@ -75,7 +75,7 @@ func (d *DecoratorLoggable) SignInRequest(
 //   - auth.ErrorRequestsFrequency
 //   - std.ErrorUnprocessable -- сессия уже существует
 //   - std.ErrorRuntime
-func (d *DecoratorLoggable) SignInRequestRetry(
+func (d DecoratorLoggable) SignInRequestRetry(
 	ctx context.Context,
 	fromIp netip.Addr,
 	fromUserAgent string,
@@ -103,7 +103,7 @@ func (d *DecoratorLoggable) SignInRequestRetry(
 //   - auth.ErrorSignInFinished
 //   - std.ErrorUnprocessable
 //   - std.ErrorRuntime
-func (d *DecoratorLoggable) SignInConfirm(
+func (d DecoratorLoggable) SignInConfirm(
 	ctx context.Context,
 	fromIp netip.Addr,
 	fromUserAgent string,
@@ -137,7 +137,7 @@ func (d *DecoratorLoggable) SignInConfirm(
 //   - auth.ErrorAccountAccessDenied
 //   - std.ErrorAlreadyDone
 //   - std.ErrorRuntime
-func (d *DecoratorLoggable) SignOut(
+func (d DecoratorLoggable) SignOut(
 	ctx context.Context,
 	fromIp netip.Addr,
 	fromUserAgent string,
@@ -165,7 +165,7 @@ func (d *DecoratorLoggable) SignOut(
 //   - auth.ErrorAccountAccessDenied
 //   - auth.ErrorSessionClosed
 //   - std.ErrorRuntime
-func (d *DecoratorLoggable) CheckSession(
+func (d DecoratorLoggable) CheckSession(
 	ctx context.Context,
 	fromIp netip.Addr,
 	fromUserAgent string,

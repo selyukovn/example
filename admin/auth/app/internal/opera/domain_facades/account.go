@@ -12,13 +12,19 @@ import (
 )
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Const
+// ---------------------------------------------------------------------------------------------------------------------
+
+var AccountDomFacNil = AccountDomFac{}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
 type AccountDomFac struct {
 	txr        txr.TxrInterface
-	es         *event_storage.Storage
-	accFactory *account.Factory
+	es         event_storage.Storage
+	accFactory account.Factory
 	accRepo    account.RepositoryInterface
 }
 
@@ -31,16 +37,16 @@ type AccountDomFac struct {
 // Паникует при нулевых аргументах.
 func NewAccountDomFac(
 	txr txr.TxrInterface,
-	es *event_storage.Storage,
-	accFactory *account.Factory,
+	es event_storage.Storage,
+	accFactory account.Factory,
 	accRepo account.RepositoryInterface,
-) *AccountDomFac {
+) AccountDomFac {
 	assert.NotNilDeepMust(txr)
-	assert.Cmp[*event_storage.Storage]().NotEq(nil).Must(es)
-	assert.Cmp[*account.Factory]().NotEq(nil).Must(accFactory)
+	assert.Cmp[event_storage.Storage]().NotEq(event_storage.StorageNil).Must(es)
+	assert.Cmp[account.Factory]().NotEq(account.FactoryNil).Must(accFactory)
 	assert.Cmp[account.RepositoryInterface]().NotEq(nil).Must(accRepo)
 
-	return &AccountDomFac{
+	return AccountDomFac{
 		txr:        txr,
 		es:         es,
 		accFactory: accFactory,
@@ -61,7 +67,7 @@ func NewAccountDomFac(
 //   - account.ErrorDeactivated
 //   - account.ErrorIpWhitelist
 //   - std.ErrorRuntime
-func (f *AccountDomFac) CanSignIn(ctx context.Context, cl client.Client, email std.Email) (account.Id, error) {
+func (f AccountDomFac) CanSignIn(ctx context.Context, cl client.Client, email std.Email) (account.Id, error) {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 	assert.Cmp[client.Client]().NotEq(client.ClientNil).Must(cl)
 	assert.Cmp[std.Email]().NotEq(std.EmailNil).Must(email)
@@ -96,7 +102,7 @@ func (f *AccountDomFac) CanSignIn(ctx context.Context, cl client.Client, email s
 //   - account.ErrorDeactivated
 //   - account.ErrorIpWhitelist
 //   - std.ErrorRuntime
-func (f *AccountDomFac) CheckAccess(ctx context.Context, cl client.Client, id account.Id) error {
+func (f AccountDomFac) CheckAccess(ctx context.Context, cl client.Client, id account.Id) error {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 	assert.Cmp[client.Client]().NotEq(client.ClientNil).Must(cl)
 	assert.Cmp[account.Id]().NotEq(account.IdNil).Must(id)

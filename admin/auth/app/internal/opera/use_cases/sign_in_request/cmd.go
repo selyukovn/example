@@ -13,8 +13,8 @@ import (
 // ---------------------------------------------------------------------------------------------------------------------
 
 type Command struct {
-	accDomFac    *domain_facades.AccountDomFac
-	actReqDomFac *domain_facades.ActionRequestDomFac
+	accDomFac    domain_facades.AccountDomFac
+	actReqDomFac domain_facades.ActionRequestDomFac
 	cfmService   cfm.ServiceInterface
 }
 
@@ -26,15 +26,15 @@ type Command struct {
 //
 // Паникует при нулевых аргументах.
 func NewCommand(
-	accDomFac *domain_facades.AccountDomFac,
-	actReqDomFac *domain_facades.ActionRequestDomFac,
+	accDomFac domain_facades.AccountDomFac,
+	actReqDomFac domain_facades.ActionRequestDomFac,
 	cfmService cfm.ServiceInterface,
-) *Command {
-	assert.NotNilDeepMust(accDomFac)
-	assert.NotNilDeepMust(actReqDomFac)
+) Command {
+	assert.Cmp[domain_facades.AccountDomFac]().NotEq(domain_facades.AccountDomFacNil).Must(accDomFac)
+	assert.Cmp[domain_facades.ActionRequestDomFac]().NotEq(domain_facades.ActionRequestDomFacNil).Must(actReqDomFac)
 	assert.NotNilDeepMust(cfmService)
 
-	return &Command{
+	return Command{
 		accDomFac:    accDomFac,
 		actReqDomFac: actReqDomFac,
 		cfmService:   cfmService,
@@ -54,7 +54,7 @@ func NewCommand(
 //   - account.ErrorDeactivated
 //   - account.ErrorIpWhitelist
 //   - std.ErrorRuntime
-func (c *Command) Execute(args Args) (Result, error) {
+func (c Command) Execute(args Args) (Result, error) {
 	assert.FalseMust(args.IsNil())
 
 	ctx := args.Ctx()

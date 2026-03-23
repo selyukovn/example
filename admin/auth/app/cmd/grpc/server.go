@@ -24,7 +24,7 @@ type Server struct {
 // NewServer
 //
 // Паникует при нулевых аргументах.
-func NewServer(ctr *container.Container, apiKey string) *Server {
+func NewServer(ctr *container.Container, apiKey string) Server {
 	assert.NotNilDeepMust(ctr)
 	assert.Str().NotEmpty().Must(apiKey)
 
@@ -35,14 +35,14 @@ func NewServer(ctr *container.Container, apiKey string) *Server {
 	))
 	pb.RegisterAuthServiceServer(s, newRouter(ctr))
 
-	return &Server{s: s}
+	return Server{s: s}
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Actions
 // ---------------------------------------------------------------------------------------------------------------------
 
-func (s *Server) Start() error {
+func (s Server) Start() error {
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		return err
@@ -51,7 +51,7 @@ func (s *Server) Start() error {
 	return s.s.Serve(lis)
 }
 
-func (s *Server) Stop() error {
+func (s Server) Stop() error {
 	s.s.GracefulStop()
 	return nil
 }

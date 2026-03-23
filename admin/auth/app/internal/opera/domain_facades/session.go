@@ -14,13 +14,19 @@ import (
 )
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Const
+// ---------------------------------------------------------------------------------------------------------------------
+
+var SessionDomFacNil = SessionDomFac{}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
 type SessionDomFac struct {
 	txr         txr.TxrInterface
-	es          *event_storage.Storage
-	sessFactory *session.Factory
+	es          event_storage.Storage
+	sessFactory session.Factory
 	sessRepo    session.RepositoryInterface
 }
 
@@ -33,16 +39,16 @@ type SessionDomFac struct {
 // Паникует при нулевых аргументах.
 func NewSessionDomFac(
 	txr txr.TxrInterface,
-	es *event_storage.Storage,
-	sessFactory *session.Factory,
+	es event_storage.Storage,
+	sessFactory session.Factory,
 	sessRepo session.RepositoryInterface,
-) *SessionDomFac {
+) SessionDomFac {
 	assert.NotNilDeepMust(txr)
-	assert.Cmp[*event_storage.Storage]().NotEq(nil).Must(es)
-	assert.Cmp[*session.Factory]().NotEq(nil).Must(sessFactory)
+	assert.Cmp[event_storage.Storage]().NotEq(event_storage.StorageNil).Must(es)
+	assert.Cmp[session.Factory]().NotEq(session.FactoryNil).Must(sessFactory)
 	assert.Cmp[session.RepositoryInterface]().NotEq(nil).Must(sessRepo)
 
-	return &SessionDomFac{
+	return SessionDomFac{
 		txr:         txr,
 		es:          es,
 		sessFactory: sessFactory,
@@ -61,7 +67,7 @@ func NewSessionDomFac(
 // Ошибки:
 //   - std.ErrorAlreadyDone
 //   - std.ErrorRuntime
-func (f *SessionDomFac) Create(
+func (f SessionDomFac) Create(
 	ctx context.Context,
 	cl client.Client,
 	accId account.Id,
@@ -101,7 +107,7 @@ func (f *SessionDomFac) Create(
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (f *SessionDomFac) HasBySignInRequest(ctx context.Context, signInId action_request.Id) (bool, error) {
+func (f SessionDomFac) HasBySignInRequest(ctx context.Context, signInId action_request.Id) (bool, error) {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 	assert.Cmp[action_request.Id]().NotEq(action_request.IdNil).Must(signInId)
 
@@ -122,7 +128,7 @@ func (f *SessionDomFac) HasBySignInRequest(ctx context.Context, signInId action_
 // Ошибки:
 //   - std.ErrorNotFound
 //   - std.ErrorRuntime
-func (f *SessionDomFac) GetAccId(ctx context.Context, sessId session.Id) (account.Id, error) {
+func (f SessionDomFac) GetAccId(ctx context.Context, sessId session.Id) (account.Id, error) {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 	assert.Cmp[session.Id]().NotEq(session.IdNil).Must(sessId)
 
@@ -142,7 +148,7 @@ func (f *SessionDomFac) GetAccId(ctx context.Context, sessId session.Id) (accoun
 // Ошибки:
 //   - std.ErrorNotFound
 //   - std.ErrorRuntime
-func (f *SessionDomFac) GetAccIdAndExpAt(ctx context.Context, sessId session.Id) (account.Id, time.Time, error) {
+func (f SessionDomFac) GetAccIdAndExpAt(ctx context.Context, sessId session.Id) (account.Id, time.Time, error) {
 	assert.NotNilDeepMust(ctx)
 	assert.FalseMust(sessId.IsNil())
 
@@ -163,7 +169,7 @@ func (f *SessionDomFac) GetAccIdAndExpAt(ctx context.Context, sessId session.Id)
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (f *SessionDomFac) GetIdsGoingToExpire(ctx context.Context, limit uint) ([]session.Id, error) {
+func (f SessionDomFac) GetIdsGoingToExpire(ctx context.Context, limit uint) ([]session.Id, error) {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 	assert.Num[uint]().Positive().Must(limit)
 
@@ -192,7 +198,7 @@ func (f *SessionDomFac) GetIdsGoingToExpire(ctx context.Context, limit uint) ([]
 //   - session.ErrorClosed -- закрытые сессии не обновляются
 //   - std.ErrorAlreadyDone -- когда нечего менять на данный момент
 //   - std.ErrorRuntime
-func (f *SessionDomFac) TickTime(ctx context.Context, sessId session.Id) error {
+func (f SessionDomFac) TickTime(ctx context.Context, sessId session.Id) error {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 	assert.Cmp[session.Id]().NotEq(session.IdNil).Must(sessId)
 
@@ -232,7 +238,7 @@ func (f *SessionDomFac) TickTime(ctx context.Context, sessId session.Id) error {
 //   - std.ErrorNotFound
 //   - session.ErrorClosed
 //   - std.ErrorRuntime
-func (f *SessionDomFac) Close(ctx context.Context, sessId session.Id) error {
+func (f SessionDomFac) Close(ctx context.Context, sessId session.Id) error {
 	return f.txr.Tx(ctx, func(ctx context.Context) error {
 		now := time.Now()
 		evs := event.NewCollection()

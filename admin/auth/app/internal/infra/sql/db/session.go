@@ -14,7 +14,7 @@ import (
 // ROW
 // #####################################################################################################################
 
-type SessionRow struct {
+type SessionRow = struct {
 	Id                     string
 	AccId                  string
 	SignInId               string

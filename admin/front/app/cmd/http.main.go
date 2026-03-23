@@ -8,20 +8,19 @@ import (
 	"flag"
 	"github.com/selyukovn/go-std"
 	"github.com/selyukovn/go-std/logger"
+	assert "github.com/selyukovn/go-wm-assert"
 	"log/slog"
 	"os"
 )
 
 func main() {
 	// -----------------------------------------------------------------------------------------------------------------
-	// Params
+	// Args
 	// -----------------------------------------------------------------------------------------------------------------
 
 	_argDebug := flag.Bool("debug", false, "")
 	flag.Parse()
 	argDebug := *_argDebug
-
-	env := http.LoadEnv()
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// Globals
@@ -37,7 +36,9 @@ func main() {
 	// Container
 	// -----------------------------------------------------------------------------------------------------------------
 
-	apiClient := gateway.NewApiClient(env.ApiBaseUrl)
+	apiClient := gateway.NewApiClient(
+		assert.Str().NotEmpty().MustGet(os.Getenv("API_BASEURL"), "env: API_BASEURL"),
+	)
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// Launch
@@ -45,9 +46,9 @@ func main() {
 
 	httpServer := http.NewServer(
 		apiClient,
-		env.AppName,
-		env.BaseUrl,
-		env.SessionCookieName,
+		assert.Str().NotEmpty().MustGet(os.Getenv("APP_NAME"), "env: APP_NAME"),
+		assert.Str().NotEmpty().MustGet(os.Getenv("BASE_URL"), "env: BASE_URL"),
+		assert.Str().NotEmpty().MustGet(os.Getenv("SESSION_COOKIE_NAME"), "env: SESSION_COOKIE_NAME"),
 	)
 
 	launcher.LaunchServers([]launcher.Server{

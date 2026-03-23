@@ -13,7 +13,7 @@ import (
 // ROW
 // #####################################################################################################################
 
-type AccountRow struct {
+type AccountRow = struct {
 	Id              string
 	Email           string
 	IsActive        bool

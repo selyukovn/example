@@ -9,7 +9,7 @@ import (
 )
 
 func NewRequestRetry(
-	apiClient *gateway.ApiClient,
+	apiClient gateway.ApiClient,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if kernel.CookieHasSessId(r) {

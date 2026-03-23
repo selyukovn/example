@@ -19,12 +19,12 @@ import (
 	"time"
 )
 
-type Container struct {
+type Container = struct {
 	UseCases UseCases
 }
 
 type UseCases = struct {
-	SessionTickTime *session_tick_time.Command
+	SessionTickTime session_tick_time.Command
 }
 
 func New(
@@ -80,6 +80,8 @@ func New(
 
 	// -----------------------------------------------------------------------------------------------------------------
 
+	// Контейнер -- структура потенциально "растущая" (будут добавляться новые сервисы и т.д.).
+	// Поэтому лучше сразу использовать контейнер через указатель.
 	return &Container{
 		UseCases: UseCases{
 			SessionTickTime: session_tick_time.NewCommand(operaGrt, sessDomFac),

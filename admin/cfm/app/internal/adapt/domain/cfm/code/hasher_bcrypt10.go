@@ -14,6 +14,9 @@ import (
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
+var _ code.HasherInterface = HasherImplBcrypt{}
+var _ code.HasherInterface = HasherImplBcrypt10{}
+
 // Значения хешей будут отличаться при разных cost'ах bcrypt'а,
 // а для клиента это будет выглядеть как использование другого алгоритма -- т.е. интуитивно другую реализацию.
 // Поэтому важно зафиксировать cost -- в данном случае достаточно default-сложности = 10
@@ -30,9 +33,9 @@ type HasherImplBcrypt10 struct {
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
-func NewHasherImplBcrypt10() *HasherImplBcrypt10 {
+func NewHasherImplBcrypt10() HasherImplBcrypt10 {
 	cost := 10 // !!!
-	return &HasherImplBcrypt10{HasherImplBcrypt{cost: cost}}
+	return HasherImplBcrypt10{HasherImplBcrypt{cost: cost}}
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -45,7 +48,7 @@ func NewHasherImplBcrypt10() *HasherImplBcrypt10 {
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (hr *HasherImplBcrypt) Hash(ctx context.Context, c code.Code) (code.Hash, error) {
+func (hr HasherImplBcrypt) Hash(ctx context.Context, c code.Code) (code.Hash, error) {
 	assert.NotNilDeepMust(ctx)
 
 	cValBytes := []byte(c.String())
@@ -73,7 +76,7 @@ func (hr *HasherImplBcrypt) Hash(ctx context.Context, c code.Code) (code.Hash, e
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (hr *HasherImplBcrypt) Compare(ctx context.Context, c code.Code, h code.Hash) (bool, error) {
+func (hr HasherImplBcrypt) Compare(ctx context.Context, c code.Code, h code.Hash) (bool, error) {
 	assert.NotNilDeepMust(ctx)
 	assert.FalseMust(c.IsNil())
 	assert.FalseMust(h.IsNil())

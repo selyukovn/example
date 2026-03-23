@@ -13,13 +13,19 @@ import (
 )
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Const
+// ---------------------------------------------------------------------------------------------------------------------
+
+var ActionRequestDomFacNil = ActionRequestDomFac{}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
 type ActionRequestDomFac struct {
 	txr           txr.TxrInterface
-	es            *event_storage.Storage
-	actReqFactory *action_request.Factory
+	es            event_storage.Storage
+	actReqFactory action_request.Factory
 	actReqRepo    action_request.RepositoryInterface
 }
 
@@ -29,16 +35,16 @@ type ActionRequestDomFac struct {
 
 func NewActionRequestDomFac(
 	txr txr.TxrInterface,
-	es *event_storage.Storage,
-	actReqFactory *action_request.Factory,
+	es event_storage.Storage,
+	actReqFactory action_request.Factory,
 	actReqRepo action_request.RepositoryInterface,
-) *ActionRequestDomFac {
+) ActionRequestDomFac {
 	assert.NotNilDeepMust(txr)
-	assert.Cmp[*event_storage.Storage]().NotEq(nil).Must(es)
-	assert.Cmp[*action_request.Factory]().NotEq(nil).Must(actReqFactory)
+	assert.Cmp[event_storage.Storage]().NotEq(event_storage.StorageNil).Must(es)
+	assert.Cmp[action_request.Factory]().NotEq(action_request.FactoryNil).Must(actReqFactory)
 	assert.Cmp[action_request.RepositoryInterface]().NotEq(nil).Must(actReqRepo)
 
-	return &ActionRequestDomFac{
+	return ActionRequestDomFac{
 		txr:           txr,
 		es:            es,
 		actReqFactory: actReqFactory,
@@ -56,7 +62,7 @@ func NewActionRequestDomFac(
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (f *ActionRequestDomFac) CreateSignIn(
+func (f ActionRequestDomFac) CreateSignIn(
 	ctx context.Context,
 	accId account.Id,
 	cfmId cfm.Id,
@@ -92,7 +98,7 @@ func (f *ActionRequestDomFac) CreateSignIn(
 // Ошибки:
 //   - std.ErrorNotFound
 //   - std.ErrorRuntime
-func (f *ActionRequestDomFac) CheckSignIn(ctx context.Context, signInId action_request.Id) (account.Id, cfm.Id, error) {
+func (f ActionRequestDomFac) CheckSignIn(ctx context.Context, signInId action_request.Id) (account.Id, cfm.Id, error) {
 	var accId account.Id
 	var cfmId cfm.Id
 	err := f.txr.Tx(ctx, func(ctx context.Context) error {

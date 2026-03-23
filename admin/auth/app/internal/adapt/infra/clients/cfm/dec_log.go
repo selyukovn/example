@@ -12,6 +12,8 @@ import (
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
+var _ cfm.ClientInterface = DecoratorLoggable{}
+
 type DecoratorLoggable struct {
 	origin cfm.ClientInterface
 }
@@ -23,10 +25,10 @@ type DecoratorLoggable struct {
 // NewDecoratorLoggable
 //
 // Паникует при нулевых аргументах.
-func NewDecoratorLoggable(origin cfm.ClientInterface) *DecoratorLoggable {
+func NewDecoratorLoggable(origin cfm.ClientInterface) DecoratorLoggable {
 	assert.NotNilDeepMust(origin)
 
-	return &DecoratorLoggable{
+	return DecoratorLoggable{
 		origin: origin,
 	}
 }
@@ -41,7 +43,7 @@ func NewDecoratorLoggable(origin cfm.ClientInterface) *DecoratorLoggable {
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (d *DecoratorLoggable) CreateForEmail(ctx context.Context, email std.Email) (
+func (d DecoratorLoggable) CreateForEmail(ctx context.Context, email std.Email) (
 	rRes cfm.CreateForEmailResult,
 	rErr error,
 ) {
@@ -61,7 +63,7 @@ func (d *DecoratorLoggable) CreateForEmail(ctx context.Context, email std.Email)
 //   - cfm.ErrorNoAttemptsLeft
 //   - cfm.ErrorRequestsFrequency
 //   - std.ErrorRuntime
-func (d *DecoratorLoggable) Request(ctx context.Context, cfmId string) (
+func (d DecoratorLoggable) Request(ctx context.Context, cfmId string) (
 	rRes cfm.RequestResult,
 	rErr error,
 ) {
@@ -80,7 +82,7 @@ func (d *DecoratorLoggable) Request(ctx context.Context, cfmId string) (
 //   - cfm.ErrorFinished
 //   - std.ErrorUnprocessable -- если не была запрошена
 //   - std.ErrorRuntime
-func (d *DecoratorLoggable) Confirm(ctx context.Context, cfmId string, code string) (
+func (d DecoratorLoggable) Confirm(ctx context.Context, cfmId string, code string) (
 	rRes cfm.ConfirmResult,
 	rErr error,
 ) {

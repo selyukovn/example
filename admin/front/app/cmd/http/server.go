@@ -24,11 +24,11 @@ type Server struct {
 //
 // Паникует при нулевых аргументах.
 func NewServer(
-	apiClient *gateway.ApiClient,
+	apiClient gateway.ApiClient,
 	appName string,
 	baseUrl string,
 	sessionCookieName string,
-) *Server {
+) Server {
 	assert.Str().NotEmpty().Must(appName)
 	assert.Str().NotEmpty().Must(baseUrl)
 	assert.Str().NotEmpty().Must(sessionCookieName)
@@ -55,7 +55,7 @@ func NewServer(
 		Handler: mux,
 	}
 
-	return &Server{
+	return Server{
 		s: s,
 	}
 }
@@ -64,11 +64,11 @@ func NewServer(
 // Actions
 // ---------------------------------------------------------------------------------------------------------------------
 
-func (s *Server) Start() error {
+func (s Server) Start() error {
 	return s.s.ListenAndServe()
 }
 
-func (s *Server) Stop() error {
+func (s Server) Stop() error {
 	// todo : возможно, есть смысл ограничить по времени
 	return s.s.Shutdown(context.Background())
 }

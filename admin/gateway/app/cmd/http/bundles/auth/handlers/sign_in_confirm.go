@@ -14,7 +14,7 @@ import (
 
 func NewSignInConfirm(
 	ctr *container.Container,
-	sec *security.Security,
+	sec security.Security,
 ) func(context.Context, openapi.PutAuthSignInConfirmRequestObject) (openapi.PutAuthSignInConfirmResponseObject, error) {
 	return func(ctx context.Context, r openapi.PutAuthSignInConfirmRequestObject) (openapi.PutAuthSignInConfirmResponseObject, error) {
 		user := sec.AssociatedUser(ctx)

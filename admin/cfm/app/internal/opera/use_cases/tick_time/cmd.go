@@ -18,8 +18,8 @@ import (
 // ---------------------------------------------------------------------------------------------------------------------
 
 type Command struct {
-	grt       *goroutiner.Goroutiner
-	cfmDomFac *domain_facades.CfmDomFac
+	grt       goroutiner.Goroutiner
+	cfmDomFac domain_facades.CfmDomFac
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -30,13 +30,13 @@ type Command struct {
 //
 // Паникует при нулевых аргументах.
 func NewCommand(
-	grt *goroutiner.Goroutiner,
-	cfmDomFac *domain_facades.CfmDomFac,
-) *Command {
-	assert.NotNilDeepMust(grt)
-	assert.NotNilDeepMust(cfmDomFac)
+	grt goroutiner.Goroutiner,
+	cfmDomFac domain_facades.CfmDomFac,
+) Command {
+	assert.NotZeroMust(grt)
+	assert.Cmp[domain_facades.CfmDomFac]().NotEq(domain_facades.CfmDomFacNil).Must(cfmDomFac)
 
-	return &Command{
+	return Command{
 		grt:       grt,
 		cfmDomFac: cfmDomFac,
 	}
@@ -52,7 +52,7 @@ func NewCommand(
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (c *Command) Execute(args Args) error {
+func (c Command) Execute(args Args) error {
 	assert.FalseMust(args.IsNil())
 
 	ctx := args.Ctx()
@@ -102,7 +102,7 @@ func (c *Command) Execute(args Args) error {
 	return nil
 }
 
-func (c *Command) executeWorker(ctx context.Context, wCfmIds []cfm.Id) []error {
+func (c Command) executeWorker(ctx context.Context, wCfmIds []cfm.Id) []error {
 	errs := make([]error, 0)
 	for _, cfmId := range wCfmIds {
 		err := c.cfmDomFac.TickTime(ctx, cfmId)

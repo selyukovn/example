@@ -18,10 +18,9 @@ import (
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
-var _ event_storage.RepositoryInterface = &RepositoryImplSql{}
+var _ event_storage.RepositoryInterface = RepositoryImplSql{}
 
-type RepositoryImplSql struct {
-}
+type RepositoryImplSql struct{}
 
 const (
 	EventTypeAccountCreated            = "account_created"
@@ -35,8 +34,8 @@ const (
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
-func NewRepositoryImplSql() *RepositoryImplSql {
-	return &RepositoryImplSql{}
+func NewRepositoryImplSql() RepositoryImplSql {
+	return RepositoryImplSql{}
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -49,7 +48,7 @@ func NewRepositoryImplSql() *RepositoryImplSql {
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) AddAccountCreated(ctx context.Context, e account.EventCreated) error {
+func (r RepositoryImplSql) AddAccountCreated(ctx context.Context, e account.EventCreated) error {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 	assert.Cmp[account.EventCreated]().NotEq(account.EventCreated{}).Must(e)
 
@@ -78,7 +77,7 @@ func (r *RepositoryImplSql) AddAccountCreated(ctx context.Context, e account.Eve
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) AddAccountDeactivated(ctx context.Context, e account.EventDeactivated) error {
+func (r RepositoryImplSql) AddAccountDeactivated(ctx context.Context, e account.EventDeactivated) error {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 	assert.Cmp[account.EventDeactivated]().NotEq(account.EventDeactivated{}).Must(e)
 
@@ -106,7 +105,7 @@ func (r *RepositoryImplSql) AddAccountDeactivated(ctx context.Context, e account
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) AddAccountIpWhitelistChanged(ctx context.Context, e account.EventIpWhitelistChanged) error {
+func (r RepositoryImplSql) AddAccountIpWhitelistChanged(ctx context.Context, e account.EventIpWhitelistChanged) error {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 	assert.Cmp[account.EventIpWhitelistChanged]().NotEq(account.EventIpWhitelistChanged{}).Must(e)
 
@@ -151,7 +150,7 @@ func (r *RepositoryImplSql) AddAccountIpWhitelistChanged(ctx context.Context, e 
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) AddSessionCreated(ctx context.Context, e session.EventCreated) error {
+func (r RepositoryImplSql) AddSessionCreated(ctx context.Context, e session.EventCreated) error {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 	assert.Cmp[session.EventCreated]().NotEq(session.EventCreated{}).Must(e)
 
@@ -180,7 +179,7 @@ func (r *RepositoryImplSql) AddSessionCreated(ctx context.Context, e session.Eve
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) AddSessionClosed(ctx context.Context, e session.EventClosed) error {
+func (r RepositoryImplSql) AddSessionClosed(ctx context.Context, e session.EventClosed) error {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 	assert.Cmp[session.EventClosed]().NotEq(session.EventClosed{}).Must(e)
 

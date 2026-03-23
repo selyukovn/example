@@ -9,7 +9,7 @@ import (
 )
 
 func NewSignOut(
-	apiClient *gateway.ApiClient,
+	apiClient gateway.ApiClient,
 	redirectUrlForGuests string,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

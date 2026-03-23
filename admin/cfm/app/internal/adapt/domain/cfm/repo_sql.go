@@ -17,6 +17,8 @@ import (
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
+var _ cfm.RepositoryInterface = RepositoryImplSql{}
+
 type RepositoryImplSql struct {
 	fnIsDuplicateKeyError func(error) bool
 }
@@ -28,10 +30,10 @@ type RepositoryImplSql struct {
 // NewRepositoryImplSql
 //
 // Паникует при нулевых аргументах.
-func NewRepositoryImplSql(fnIsDuplicateKeyError func(error) bool) *RepositoryImplSql {
+func NewRepositoryImplSql(fnIsDuplicateKeyError func(error) bool) RepositoryImplSql {
 	assert.NotNilDeepMust(fnIsDuplicateKeyError)
 
-	return &RepositoryImplSql{
+	return RepositoryImplSql{
 		fnIsDuplicateKeyError: fnIsDuplicateKeyError,
 	}
 }
@@ -40,7 +42,7 @@ func NewRepositoryImplSql(fnIsDuplicateKeyError func(error) bool) *RepositoryImp
 // Mapping
 // ---------------------------------------------------------------------------------------------------------------------
 
-func (r *RepositoryImplSql) mapCfmToDbRows(c *cfm.Cfm) (
+func (r RepositoryImplSql) mapCfmToDbRows(c *cfm.Cfm) (
 	*db.CfmRow,
 	[]*db.CfmRequestRow,
 ) {
@@ -76,7 +78,7 @@ func (r *RepositoryImplSql) mapCfmToDbRows(c *cfm.Cfm) (
 	return cDbRow, crDbRows
 }
 
-func (r *RepositoryImplSql) mapDbRowToCfm(
+func (r RepositoryImplSql) mapDbRowToCfm(
 	cDbRow *db.CfmRow,
 	crDbRows []*db.CfmRequestRow,
 ) (*cfm.Cfm, error) {
@@ -139,7 +141,7 @@ func (r *RepositoryImplSql) mapDbRowToCfm(
 // Ошибки:
 //   - std.ErrorAlreadyDone -- если с таким id уже существует
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) Add(ctx context.Context, c *cfm.Cfm) error {
+func (r RepositoryImplSql) Add(ctx context.Context, c *cfm.Cfm) error {
 	assert.NotNilDeepMust(ctx)
 	assert.NotNilDeepMust(c)
 
@@ -177,7 +179,7 @@ func (r *RepositoryImplSql) Add(ctx context.Context, c *cfm.Cfm) error {
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) Update(ctx context.Context, c *cfm.Cfm) error {
+func (r RepositoryImplSql) Update(ctx context.Context, c *cfm.Cfm) error {
 	assert.NotNilDeepMust(ctx)
 	assert.NotNilDeepMust(c)
 
@@ -222,7 +224,7 @@ func (r *RepositoryImplSql) Update(ctx context.Context, c *cfm.Cfm) error {
 // Ошибки:
 //   - std.ErrorNotFound
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) GetById(ctx context.Context, id cfm.Id) (*cfm.Cfm, error) {
+func (r RepositoryImplSql) GetById(ctx context.Context, id cfm.Id) (*cfm.Cfm, error) {
 	assert.NotNilDeepMust(ctx)
 	assert.FalseMust(id.IsNil())
 
@@ -256,7 +258,7 @@ func (r *RepositoryImplSql) GetById(ctx context.Context, id cfm.Id) (*cfm.Cfm, e
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) GetIdsOfGoingToExpire(
+func (r RepositoryImplSql) GetIdsOfGoingToExpire(
 	ctx context.Context,
 	now time.Time,
 	limit uint,
@@ -291,3 +293,5 @@ func (r *RepositoryImplSql) GetIdsOfGoingToExpire(
 
 	return ids, nil
 }
+
+// ---------------------------------------------------------------------------------------------------------------------

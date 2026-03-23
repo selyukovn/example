@@ -20,6 +20,8 @@ import (
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
+var _ session.RepositoryInterface = RepositoryImplSql{}
+
 type RepositoryImplSql struct {
 	fnIsDuplicateKeyError func(error) bool
 }
@@ -28,8 +30,8 @@ type RepositoryImplSql struct {
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
-func NewRepositoryImplSql(fnIsDuplicateKeyError func(error) bool) *RepositoryImplSql {
-	return &RepositoryImplSql{
+func NewRepositoryImplSql(fnIsDuplicateKeyError func(error) bool) RepositoryImplSql {
+	return RepositoryImplSql{
 		fnIsDuplicateKeyError: fnIsDuplicateKeyError,
 	}
 }
@@ -38,7 +40,7 @@ func NewRepositoryImplSql(fnIsDuplicateKeyError func(error) bool) *RepositoryImp
 // Mapping
 // ---------------------------------------------------------------------------------------------------------------------
 
-func (r *RepositoryImplSql) mapSessionToDbRow(s *session.Session) *db.SessionRow {
+func (r RepositoryImplSql) mapSessionToDbRow(s *session.Session) *db.SessionRow {
 	dbRow := &db.SessionRow{}
 
 	sId,
@@ -67,7 +69,7 @@ func (r *RepositoryImplSql) mapSessionToDbRow(s *session.Session) *db.SessionRow
 	return dbRow
 }
 
-func (r *RepositoryImplSql) mapDbRowToSession(dbRow *db.SessionRow) (*session.Session, error) {
+func (r RepositoryImplSql) mapDbRowToSession(dbRow *db.SessionRow) (*session.Session, error) {
 	var err error
 
 	sId, err := session.IdFromString(dbRow.Id)
@@ -124,7 +126,7 @@ func (r *RepositoryImplSql) mapDbRowToSession(dbRow *db.SessionRow) (*session.Se
 // Ошибки:
 //   - std.ErrorAlreadyDone -- если с таким id или signInRequestId уже существует
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) Add(ctx context.Context, s *session.Session) error {
+func (r RepositoryImplSql) Add(ctx context.Context, s *session.Session) error {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 	assert.Cmp[*session.Session]().NotEq(nil).Must(s)
 
@@ -158,7 +160,7 @@ func (r *RepositoryImplSql) Add(ctx context.Context, s *session.Session) error {
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) Update(ctx context.Context, s *session.Session) error {
+func (r RepositoryImplSql) Update(ctx context.Context, s *session.Session) error {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 	assert.Cmp[*session.Session]().NotEq(nil).Must(s)
 
@@ -188,7 +190,7 @@ func (r *RepositoryImplSql) Update(ctx context.Context, s *session.Session) erro
 // Ошибки:
 //   - std.ErrorNotFound
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) GetById(ctx context.Context, id session.Id) (*session.Session, error) {
+func (r RepositoryImplSql) GetById(ctx context.Context, id session.Id) (*session.Session, error) {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 	assert.Cmp[session.Id]().NotEq(session.IdNil).Must(id)
 
@@ -219,7 +221,7 @@ func (r *RepositoryImplSql) GetById(ctx context.Context, id session.Id) (*sessio
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) GetIdsOfGoingToExpire(ctx context.Context, now time.Time, limit uint) ([]session.Id, error) {
+func (r RepositoryImplSql) GetIdsOfGoingToExpire(ctx context.Context, now time.Time, limit uint) ([]session.Id, error) {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 
 	tx := txr.TxFromCtx(ctx).(*sql.Tx)
@@ -247,7 +249,7 @@ func (r *RepositoryImplSql) GetIdsOfGoingToExpire(ctx context.Context, now time.
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) HasBySignInRequest(ctx context.Context, signInRequestId action_request.Id) (bool, error) {
+func (r RepositoryImplSql) HasBySignInRequest(ctx context.Context, signInRequestId action_request.Id) (bool, error) {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 	assert.Cmp[action_request.Id]().NotEq(action_request.IdNil).Must(signInRequestId)
 
@@ -273,7 +275,7 @@ func (r *RepositoryImplSql) HasBySignInRequest(ctx context.Context, signInReques
 // Ошибки:
 //   - std.ErrorNotFound
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) GetAccIdById(ctx context.Context, id session.Id) (account.Id, error) {
+func (r RepositoryImplSql) GetAccIdById(ctx context.Context, id session.Id) (account.Id, error) {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 	assert.Cmp[session.Id]().NotEq(session.IdNil).Must(id)
 
@@ -302,7 +304,7 @@ func (r *RepositoryImplSql) GetAccIdById(ctx context.Context, id session.Id) (ac
 // Ошибки:
 //   - std.ErrorNotFound
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) GetAccIdAndExpAtById(ctx context.Context, id session.Id) (account.Id, time.Time, error) {
+func (r RepositoryImplSql) GetAccIdAndExpAtById(ctx context.Context, id session.Id) (account.Id, time.Time, error) {
 	assert.NotNilDeepMust(ctx)
 	assert.FalseMust(id.IsNil())
 

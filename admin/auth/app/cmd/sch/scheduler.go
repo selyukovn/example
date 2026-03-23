@@ -26,7 +26,7 @@ type Scheduler struct {
 //
 // Паникует при нулевых аргументах.
 // Паникует при ошибке регистрации задачи.
-func NewScheduler(ctr *container.Container) *Scheduler {
+func NewScheduler(ctr *container.Container) Scheduler {
 	assert.NotNilDeepMust(ctr)
 
 	c := cron.New()
@@ -56,7 +56,7 @@ func NewScheduler(ctr *container.Container) *Scheduler {
 		_ = cronEntryId
 	}
 
-	return &Scheduler{
+	return Scheduler{
 		c:  c,
 		wg: new(sync.WaitGroup),
 	}
@@ -66,14 +66,14 @@ func NewScheduler(ctr *container.Container) *Scheduler {
 // Actions
 // ---------------------------------------------------------------------------------------------------------------------
 
-func (s *Scheduler) Start() error {
+func (s Scheduler) Start() error {
 	s.c.Start()
 	s.wg.Add(1)
 	s.wg.Wait()
 	return nil
 }
 
-func (s *Scheduler) Stop() error {
+func (s Scheduler) Stop() error {
 	s.wg.Done()
 	<-s.c.Stop().Done()
 	return nil

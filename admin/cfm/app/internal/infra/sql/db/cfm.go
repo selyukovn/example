@@ -13,7 +13,7 @@ import (
 // ROW
 // #####################################################################################################################
 
-type CfmRow struct {
+type CfmRow = struct {
 	Id         string
 	Email      string
 	ExpireAt   time.Time

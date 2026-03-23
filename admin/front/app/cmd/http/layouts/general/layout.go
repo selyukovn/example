@@ -18,7 +18,7 @@ var config = struct {
 }{}
 
 func Register(
-	apiClient *gateway.ApiClient,
+	apiClient gateway.ApiClient,
 	mux *http.ServeMux,
 	appName string,
 	redirectUrlForGuests string,
@@ -42,7 +42,7 @@ func Register(
 func MakeView(
 	pathToPageTemplate string,
 	pathToPageTemplates ...string,
-) *View {
+) View {
 	assert.TrueMust(config.isSet)
 
 	paths := make([]string, 0, len(pathToPageTemplates)+2)
@@ -52,7 +52,7 @@ func MakeView(
 
 	tpl := template.Must(template.ParseFiles(paths...))
 
-	return &View{
+	return View{
 		tpl: tpl,
 	}
 }
@@ -61,7 +61,7 @@ type View struct {
 	tpl *template.Template
 }
 
-func (v *View) Render(w http.ResponseWriter, requestUrlPath string, pageData any) error {
+func (v View) Render(w http.ResponseWriter, requestUrlPath string, pageData any) error {
 	type MenuItem = struct {
 		IsActive bool
 		Name     string

@@ -9,6 +9,12 @@ import (
 )
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Const
+// ---------------------------------------------------------------------------------------------------------------------
+
+var FactoryNil = Factory{}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -23,10 +29,10 @@ type Factory struct {
 // NewFactory
 //
 // Паникует при нулевых аргументах.
-func NewFactory(idGenerator IdGeneratorInterface) *Factory {
+func NewFactory(idGenerator IdGeneratorInterface) Factory {
 	assert.NotNilDeepMust(idGenerator)
 
-	return &Factory{
+	return Factory{
 		idGenerator: idGenerator,
 	}
 }
@@ -45,7 +51,7 @@ func NewFactory(idGenerator IdGeneratorInterface) *Factory {
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (f *Factory) Create(
+func (f Factory) Create(
 	ctx context.Context,
 	email std.Email,
 	ipWhitelist IpWhitelist,

@@ -21,11 +21,11 @@ type ApiClient struct {
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
-func NewApiClient(baseUrl string) *ApiClient {
+func NewApiClient(baseUrl string) ApiClient {
 	authClient, err := auth.NewClientWithResponses(baseUrl)
 	assert.TrueMust(err == nil)
 
-	return &ApiClient{
+	return ApiClient{
 		auth: authClient,
 	}
 }
@@ -34,7 +34,7 @@ func NewApiClient(baseUrl string) *ApiClient {
 // Actions
 // ---------------------------------------------------------------------------------------------------------------------
 
-func (c *ApiClient) fnAddHeaders(
+func (c ApiClient) fnAddHeaders(
 	fromIp string,
 	fromUserAgent string,
 	sessionId string,
@@ -54,7 +54,7 @@ func (c *ApiClient) fnAddHeaders(
 // Auth
 // ---------------------------------------------------------------------------------------------------------------------
 
-func (c *ApiClient) AuthSignInRequest(
+func (c ApiClient) AuthSignInRequest(
 	fromIp string,
 	fromUserAgent string,
 	email string,
@@ -70,7 +70,7 @@ func (c *ApiClient) AuthSignInRequest(
 	return resp, nil
 }
 
-func (c *ApiClient) AuthSignInRequestRetry(
+func (c ApiClient) AuthSignInRequestRetry(
 	fromIp string,
 	fromUserAgent string,
 	signInId string,
@@ -86,7 +86,7 @@ func (c *ApiClient) AuthSignInRequestRetry(
 	return resp, nil
 }
 
-func (c *ApiClient) AuthSignInConfirm(
+func (c ApiClient) AuthSignInConfirm(
 	fromIp string,
 	fromUserAgent string,
 	signInId string,
@@ -104,7 +104,7 @@ func (c *ApiClient) AuthSignInConfirm(
 	return resp, nil
 }
 
-func (c *ApiClient) AuthSignOut(
+func (c ApiClient) AuthSignOut(
 	fromIp string,
 	fromUserAgent string,
 	sessId string,

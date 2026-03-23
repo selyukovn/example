@@ -18,6 +18,8 @@ import (
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
+var _ account.RepositoryInterface = RepositoryImplSql{}
+
 type RepositoryImplSql struct {
 	fnIsDuplicateKeyError func(error) bool
 }
@@ -26,8 +28,8 @@ type RepositoryImplSql struct {
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
-func NewRepositoryImplSql(fnIsDuplicateKeyError func(error) bool) *RepositoryImplSql {
-	return &RepositoryImplSql{
+func NewRepositoryImplSql(fnIsDuplicateKeyError func(error) bool) RepositoryImplSql {
+	return RepositoryImplSql{
 		fnIsDuplicateKeyError: fnIsDuplicateKeyError,
 	}
 }
@@ -39,7 +41,7 @@ func NewRepositoryImplSql(fnIsDuplicateKeyError func(error) bool) *RepositoryImp
 // mapAccountToDbRow
 //
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) mapAccountToDbRow(a *account.Account) (*db.AccountRow, error) {
+func (r RepositoryImplSql) mapAccountToDbRow(a *account.Account) (*db.AccountRow, error) {
 	var err error
 	dbRow := &db.AccountRow{}
 
@@ -76,7 +78,7 @@ func (r *RepositoryImplSql) mapAccountToDbRow(a *account.Account) (*db.AccountRo
 // mapDbRowToAccount
 //
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) mapDbRowToAccount(dbRow *db.AccountRow) (*account.Account, error) {
+func (r RepositoryImplSql) mapDbRowToAccount(dbRow *db.AccountRow) (*account.Account, error) {
 	var err error
 
 	id, err := account.IdFromString(dbRow.Id)
@@ -135,7 +137,7 @@ func (r *RepositoryImplSql) mapDbRowToAccount(dbRow *db.AccountRow) (*account.Ac
 // Ошибки:
 //   - std.ErrorAlreadyDone -- если с таким id или email уже существует
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) Add(ctx context.Context, a *account.Account) error {
+func (r RepositoryImplSql) Add(ctx context.Context, a *account.Account) error {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 	assert.Cmp[*account.Account]().NotEq(nil).Must(a)
 
@@ -167,7 +169,7 @@ func (r *RepositoryImplSql) Add(ctx context.Context, a *account.Account) error {
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) Update(ctx context.Context, a *account.Account) error {
+func (r RepositoryImplSql) Update(ctx context.Context, a *account.Account) error {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 	assert.Cmp[*account.Account]().NotEq(nil).Must(a)
 
@@ -200,7 +202,7 @@ func (r *RepositoryImplSql) Update(ctx context.Context, a *account.Account) erro
 // Ошибки:
 //   - std.ErrorNotFound
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) GetById(ctx context.Context, id account.Id) (*account.Account, error) {
+func (r RepositoryImplSql) GetById(ctx context.Context, id account.Id) (*account.Account, error) {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 	assert.Cmp[account.Id]().NotEq(account.IdNil).Must(id)
 
@@ -229,7 +231,7 @@ func (r *RepositoryImplSql) GetById(ctx context.Context, id account.Id) (*accoun
 // Ошибки:
 //   - std.ErrorNotFound
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) GetByEmail(ctx context.Context, email std.Email) (*account.Account, error) {
+func (r RepositoryImplSql) GetByEmail(ctx context.Context, email std.Email) (*account.Account, error) {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 	assert.Cmp[std.Email]().NotEq(std.EmailNil).Must(email)
 
@@ -258,7 +260,7 @@ func (r *RepositoryImplSql) GetByEmail(ctx context.Context, email std.Email) (*a
 // Ошибки:
 //   - std.ErrorNotFound
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) GetEmailById(ctx context.Context, id account.Id) (std.Email, error) {
+func (r RepositoryImplSql) GetEmailById(ctx context.Context, id account.Id) (std.Email, error) {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 	assert.Cmp[account.Id]().NotEq(account.IdNil).Must(id)
 

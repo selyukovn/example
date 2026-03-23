@@ -19,15 +19,15 @@ func Register(
 	mux *http.ServeMux,
 	middlewares []func(http.Handler) http.Handler,
 	ctr *container.Container,
-	sec *security.Security,
+	sec security.Security,
 ) {
-	var xRouter openapi.StrictServerInterface = &router{
+	var xRouter openapi.StrictServerInterface = router{
 		signInRequest:      handlers.NewSignInRequest(ctr, sec),
 		signInRequestRetry: handlers.NewSignInRequestRetry(ctr, sec),
 		signInConfirm:      handlers.NewSignInConfirm(ctr, sec),
 		signOut:            handlers.NewSignOut(sec),
 	}
-	xRouter = &routerLogRequestResponseData{
+	xRouter = routerLogRequestResponseData{
 		StrictServerInterface: xRouter,
 	}
 
@@ -60,7 +60,7 @@ func Register(
 // DEFAULT
 // ---------------------------------------------------------------------------------------------------------------------
 
-var _ openapi.StrictServerInterface = (*router)(nil)
+var _ openapi.StrictServerInterface = router{}
 
 type router struct {
 	signInRequest      func(context.Context, openapi.PostAuthSignInRequestRequestObject) (openapi.PostAuthSignInRequestResponseObject, error)
@@ -69,19 +69,19 @@ type router struct {
 	signOut            func(context.Context, openapi.DeleteAuthSignOutRequestObject) (openapi.DeleteAuthSignOutResponseObject, error)
 }
 
-func (r *router) PostAuthSignInRequest(ctx context.Context, request openapi.PostAuthSignInRequestRequestObject) (openapi.PostAuthSignInRequestResponseObject, error) {
+func (r router) PostAuthSignInRequest(ctx context.Context, request openapi.PostAuthSignInRequestRequestObject) (openapi.PostAuthSignInRequestResponseObject, error) {
 	return r.signInRequest(ctx, request)
 }
 
-func (r *router) PutAuthSignInRequestRetry(ctx context.Context, request openapi.PutAuthSignInRequestRetryRequestObject) (openapi.PutAuthSignInRequestRetryResponseObject, error) {
+func (r router) PutAuthSignInRequestRetry(ctx context.Context, request openapi.PutAuthSignInRequestRetryRequestObject) (openapi.PutAuthSignInRequestRetryResponseObject, error) {
 	return r.signInRequestRetry(ctx, request)
 }
 
-func (r *router) PutAuthSignInConfirm(ctx context.Context, request openapi.PutAuthSignInConfirmRequestObject) (openapi.PutAuthSignInConfirmResponseObject, error) {
+func (r router) PutAuthSignInConfirm(ctx context.Context, request openapi.PutAuthSignInConfirmRequestObject) (openapi.PutAuthSignInConfirmResponseObject, error) {
 	return r.signInConfirm(ctx, request)
 }
 
-func (r *router) DeleteAuthSignOut(ctx context.Context, request openapi.DeleteAuthSignOutRequestObject) (openapi.DeleteAuthSignOutResponseObject, error) {
+func (r router) DeleteAuthSignOut(ctx context.Context, request openapi.DeleteAuthSignOutRequestObject) (openapi.DeleteAuthSignOutResponseObject, error) {
 	return r.signOut(ctx, request)
 }
 
@@ -89,13 +89,13 @@ func (r *router) DeleteAuthSignOut(ctx context.Context, request openapi.DeleteAu
 // LOGGABLE
 // ---------------------------------------------------------------------------------------------------------------------
 
-var _ openapi.StrictServerInterface = (*routerLogRequestResponseData)(nil)
+var _ openapi.StrictServerInterface = routerLogRequestResponseData{}
 
 type routerLogRequestResponseData struct {
 	openapi.StrictServerInterface
 }
 
-func (r *routerLogRequestResponseData) PostAuthSignInRequest(ctx context.Context, request openapi.PostAuthSignInRequestRequestObject) (openapi.PostAuthSignInRequestResponseObject, error) {
+func (r routerLogRequestResponseData) PostAuthSignInRequest(ctx context.Context, request openapi.PostAuthSignInRequestRequestObject) (openapi.PostAuthSignInRequestResponseObject, error) {
 	logger.InfoFf(ctx, "%T: %+v", request, struct {
 		Email string
 	}{
@@ -124,7 +124,7 @@ func (r *routerLogRequestResponseData) PostAuthSignInRequest(ctx context.Context
 	return resp, err
 }
 
-func (r *routerLogRequestResponseData) PutAuthSignInRequestRetry(ctx context.Context, request openapi.PutAuthSignInRequestRetryRequestObject) (openapi.PutAuthSignInRequestRetryResponseObject, error) {
+func (r routerLogRequestResponseData) PutAuthSignInRequestRetry(ctx context.Context, request openapi.PutAuthSignInRequestRetryRequestObject) (openapi.PutAuthSignInRequestRetryResponseObject, error) {
 	logger.InfoFf(ctx, "%T: %+v", request, struct {
 		SignInId string
 	}{
@@ -151,7 +151,7 @@ func (r *routerLogRequestResponseData) PutAuthSignInRequestRetry(ctx context.Con
 	return resp, err
 }
 
-func (r *routerLogRequestResponseData) PutAuthSignInConfirm(ctx context.Context, request openapi.PutAuthSignInConfirmRequestObject) (openapi.PutAuthSignInConfirmResponseObject, error) {
+func (r routerLogRequestResponseData) PutAuthSignInConfirm(ctx context.Context, request openapi.PutAuthSignInConfirmRequestObject) (openapi.PutAuthSignInConfirmResponseObject, error) {
 	logger.InfoFf(ctx, "%T: %+v", request, struct {
 		SignInId string
 		Code     string

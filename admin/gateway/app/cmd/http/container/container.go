@@ -9,7 +9,7 @@ import (
 	assert "github.com/selyukovn/go-wm-assert"
 )
 
-type Container struct {
+type Container = struct {
 	Services Services
 }
 
@@ -21,8 +21,8 @@ func New(
 	appCfmApiGrpcBaseUrl string,
 	appCfmApiGrpcApiKey string,
 ) *Container {
-	assert.NotNilDeepMust(appCfmApiGrpcBaseUrl)
-	assert.NotNilDeepMust(appCfmApiGrpcApiKey)
+	assert.Str().NotEmpty().Must(appCfmApiGrpcBaseUrl)
+	assert.Str().NotEmpty().Must(appCfmApiGrpcApiKey)
 
 	// -----------------------------------------------------------------------------------------------------------------
 
@@ -39,6 +39,8 @@ func New(
 
 	// -----------------------------------------------------------------------------------------------------------------
 
+	// Контейнер -- структура потенциально "растущая" (будут добавляться новые сервисы и т.д.).
+	// Поэтому лучше сразу использовать контейнер через указатель.
 	return &Container{
 		Services: Services{
 			Auth: sAuth,

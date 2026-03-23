@@ -13,7 +13,7 @@ import (
 
 func NewSignInRequest(
 	ctr *container.Container,
-	sec *security.Security,
+	sec security.Security,
 ) func(context.Context, openapi.PostAuthSignInRequestRequestObject) (openapi.PostAuthSignInRequestResponseObject, error) {
 	return func(ctx context.Context, r openapi.PostAuthSignInRequestRequestObject) (openapi.PostAuthSignInRequestResponseObject, error) {
 		user := sec.AssociatedUser(ctx)

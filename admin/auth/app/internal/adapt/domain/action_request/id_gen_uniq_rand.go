@@ -12,18 +12,16 @@ import (
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
-type IdGeneratorImplUniqueRandom struct {
-	internal *like_uuid.IdGeneratorUniqueRandom
-}
+var _ action_request.IdGeneratorInterface = IdGeneratorImplUniqueRandom{}
+
+type IdGeneratorImplUniqueRandom struct{}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
-func NewIdGeneratorImplUniqueRandom() *IdGeneratorImplUniqueRandom {
-	return &IdGeneratorImplUniqueRandom{
-		internal: like_uuid.NewIdGeneratorUniqueRandom(),
-	}
+func NewIdGeneratorImplUniqueRandom() IdGeneratorImplUniqueRandom {
+	return IdGeneratorImplUniqueRandom{}
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -36,10 +34,10 @@ func NewIdGeneratorImplUniqueRandom() *IdGeneratorImplUniqueRandom {
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (g *IdGeneratorImplUniqueRandom) Generate(ctx context.Context) (action_request.Id, error) {
+func (g IdGeneratorImplUniqueRandom) Generate(ctx context.Context) (action_request.Id, error) {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 
-	id, err := g.internal.Generate()
+	id, err := like_uuid.GenerateUniqueRandom()
 
 	if err != nil {
 		return action_request.IdNil, std.WrapErrorToRuntime(err, g, "Generate")

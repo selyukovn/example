@@ -14,8 +14,8 @@ import (
 // ---------------------------------------------------------------------------------------------------------------------
 
 type Command struct {
-	grt       *goroutiner.Goroutiner
-	cfmDomFac *domain_facades.CfmDomFac
+	grt       goroutiner.Goroutiner
+	cfmDomFac domain_facades.CfmDomFac
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -26,13 +26,13 @@ type Command struct {
 //
 // Паникует при нулевых аргументах.
 func NewCommand(
-	grt *goroutiner.Goroutiner,
-	cfmDomFac *domain_facades.CfmDomFac,
-) *Command {
-	assert.NotNilDeepMust(grt)
-	assert.NotNilDeepMust(cfmDomFac)
+	grt goroutiner.Goroutiner,
+	cfmDomFac domain_facades.CfmDomFac,
+) Command {
+	assert.NotZeroMust(grt)
+	assert.Cmp[domain_facades.CfmDomFac]().NotEq(domain_facades.CfmDomFacNil).Must(cfmDomFac)
 
-	return &Command{
+	return Command{
 		grt:       grt,
 		cfmDomFac: cfmDomFac,
 	}
@@ -52,7 +52,7 @@ func NewCommand(
 //   - cfm.ErrorNoAttemptsLeft
 //   - cfm.ErrorRequestsFrequency
 //   - std.ErrorRuntime
-func (c *Command) Execute(args Args) (Result, error) {
+func (c Command) Execute(args Args) (Result, error) {
 	assert.FalseMust(args.IsNil())
 
 	ctx := args.Ctx()

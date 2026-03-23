@@ -13,7 +13,7 @@ import (
 // ROW
 // #####################################################################################################################
 
-type ActionRequestRow struct {
+type ActionRequestRow = struct {
 	Id          string
 	Type        uint
 	AccId       string

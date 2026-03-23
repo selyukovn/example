@@ -16,8 +16,16 @@ import (
 )
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Const
+// ---------------------------------------------------------------------------------------------------------------------
+
+var ClientGrpcNil = ClientGrpc{}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
+
+var _ cfm.ClientInterface = ClientGrpc{}
 
 type ClientGrpc struct {
 	pbClient         pb.CfmServiceClient
@@ -33,7 +41,7 @@ func NewClientGrpc(
 	baseUrl string,
 	apiKey string,
 	fnGetOperationId func(context.Context) string,
-) (*ClientGrpc, error) {
+) (ClientGrpc, error) {
 	assert.Str().NotEmpty().Must(baseUrl)
 	assert.Str().NotEmpty().Must(apiKey)
 	assert.NotNilDeepMust(fnGetOperationId)
@@ -43,10 +51,10 @@ func NewClientGrpc(
 		grpc.WithTransportCredentials(insecure.NewCredentials()), // todo : TLS
 	)
 	if err != nil {
-		return nil, err
+		return ClientGrpcNil, err
 	}
 
-	return &ClientGrpc{
+	return ClientGrpc{
 		pbClient:         pb.NewCfmServiceClient(grpcClient),
 		apiKey:           apiKey,
 		fnGetOperationId: fnGetOperationId,
@@ -57,7 +65,7 @@ func NewClientGrpcMust(
 	baseUrl string,
 	apiKey string,
 	fnGetOperationId func(context.Context) string,
-) *ClientGrpc {
+) ClientGrpc {
 	res, err := NewClientGrpc(baseUrl, apiKey, fnGetOperationId)
 	if err != nil {
 		panic(err)
@@ -69,7 +77,7 @@ func NewClientGrpcMust(
 // Actions
 // ---------------------------------------------------------------------------------------------------------------------
 
-func (c *ClientGrpc) prepareCtx(ctx context.Context) context.Context {
+func (c ClientGrpc) prepareCtx(ctx context.Context) context.Context {
 	mData := map[string]string{
 		"authorization":  "Bearer " + c.apiKey,
 		"x-operation-id": c.fnGetOperationId(ctx),
@@ -84,7 +92,7 @@ func (c *ClientGrpc) prepareCtx(ctx context.Context) context.Context {
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (c *ClientGrpc) CreateForEmail(ctx context.Context, email std.Email) (cfm.CreateForEmailResult, error) {
+func (c ClientGrpc) CreateForEmail(ctx context.Context, email std.Email) (cfm.CreateForEmailResult, error) {
 	assert.NotNilDeepMust(ctx)
 	assert.FalseMust(email.IsNil())
 
@@ -135,7 +143,7 @@ func (c *ClientGrpc) CreateForEmail(ctx context.Context, email std.Email) (cfm.C
 //   - cfm.ErrorNoAttemptsLeft
 //   - cfm.ErrorRequestsFrequency
 //   - std.ErrorRuntime
-func (c *ClientGrpc) Request(ctx context.Context, cfmId string) (cfm.RequestResult, error) {
+func (c ClientGrpc) Request(ctx context.Context, cfmId string) (cfm.RequestResult, error) {
 	assert.NotNilDeepMust(ctx)
 	assert.Str().NotEmpty().Must(cfmId)
 
@@ -241,7 +249,7 @@ func (c *ClientGrpc) Request(ctx context.Context, cfmId string) (cfm.RequestResu
 //   - cfm.ErrorFinished
 //   - std.ErrorUnprocessable -- если не была запрошена
 //   - std.ErrorRuntime
-func (c *ClientGrpc) Confirm(ctx context.Context, cfmId string, code string) (cfm.ConfirmResult, error) {
+func (c ClientGrpc) Confirm(ctx context.Context, cfmId string, code string) (cfm.ConfirmResult, error) {
 	assert.NotNilDeepMust(ctx)
 	assert.Str().NotEmpty().Must(cfmId)
 	assert.Str().NotEmpty().Must(code)

@@ -9,7 +9,7 @@ import (
 )
 
 func NewSignOut(
-	sec *security.Security,
+	sec security.Security,
 ) func(context.Context, openapi.DeleteAuthSignOutRequestObject) (openapi.DeleteAuthSignOutResponseObject, error) {
 	return func(ctx context.Context, r openapi.DeleteAuthSignOutRequestObject) (openapi.DeleteAuthSignOutResponseObject, error) {
 		user := sec.AssociatedUser(ctx)

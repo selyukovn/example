@@ -10,10 +10,10 @@ require (
 	github.com/prometheus/client_golang v1.22.0
 	github.com/robfig/cron/v3 v3.0.0
 	github.com/selyukovn/go-events v0.3.0
-	github.com/selyukovn/go-id v0.2.0
-	github.com/selyukovn/go-routiner v0.1.0
+	github.com/selyukovn/go-id v0.3.0
+	github.com/selyukovn/go-routiner v0.2.0
 	github.com/selyukovn/go-std v0.3.0
-	github.com/selyukovn/go-txr v0.5.0
+	github.com/selyukovn/go-txr v0.6.0
 	github.com/selyukovn/go-wm-assert v0.3.0
 	github.com/stretchr/testify v1.11.1
 	google.golang.org/grpc v1.71.3
