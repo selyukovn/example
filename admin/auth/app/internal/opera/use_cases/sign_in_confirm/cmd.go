@@ -16,11 +16,11 @@ import (
 // ---------------------------------------------------------------------------------------------------------------------
 
 type Command struct {
-	grt          *goroutiner.Goroutiner
-	accDomFac    *domain_facades.AccountDomFac
-	actReqDomFac *domain_facades.ActionRequestDomFac
+	grt          goroutiner.Goroutiner
+	accDomFac    domain_facades.AccountDomFac
+	actReqDomFac domain_facades.ActionRequestDomFac
 	cfmService   cfm.ServiceInterface
-	sessDomFac   *domain_facades.SessionDomFac
+	sessDomFac   domain_facades.SessionDomFac
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -31,19 +31,19 @@ type Command struct {
 //
 // Паникует при нулевых аргументах.
 func NewCommand(
-	grt *goroutiner.Goroutiner,
-	accDomFac *domain_facades.AccountDomFac,
-	actReqDomFac *domain_facades.ActionRequestDomFac,
+	grt goroutiner.Goroutiner,
+	accDomFac domain_facades.AccountDomFac,
+	actReqDomFac domain_facades.ActionRequestDomFac,
 	cfmService cfm.ServiceInterface,
-	sessDomFac *domain_facades.SessionDomFac,
-) *Command {
-	assert.NotNilDeepMust(grt)
-	assert.NotNilDeepMust(accDomFac)
-	assert.NotNilDeepMust(actReqDomFac)
+	sessDomFac domain_facades.SessionDomFac,
+) Command {
+	assert.NotZeroMust(grt)
+	assert.Cmp[domain_facades.AccountDomFac]().NotEq(domain_facades.AccountDomFacNil).Must(accDomFac)
+	assert.Cmp[domain_facades.ActionRequestDomFac]().NotEq(domain_facades.ActionRequestDomFacNil).Must(actReqDomFac)
 	assert.NotNilDeepMust(cfmService)
-	assert.NotNilDeepMust(sessDomFac)
+	assert.Cmp[domain_facades.SessionDomFac]().NotEq(domain_facades.SessionDomFacNil).Must(sessDomFac)
 
-	return &Command{
+	return Command{
 		grt:          grt,
 		accDomFac:    accDomFac,
 		actReqDomFac: actReqDomFac,
@@ -67,7 +67,7 @@ func NewCommand(
 //   - cfm.ErrorFinished
 //   - std.ErrorUnprocessable -- если уже есть сессия
 //   - std.ErrorRuntime
-func (c *Command) Execute(args Args) (Result, error) {
+func (c Command) Execute(args Args) (Result, error) {
 	assert.FalseMust(args.IsNil())
 
 	ctx := args.Ctx()

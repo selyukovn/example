@@ -13,13 +13,19 @@ import (
 )
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Const
+// ---------------------------------------------------------------------------------------------------------------------
+
+var CfmDomFacNil = CfmDomFac{}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
 type CfmDomFac struct {
 	txr        txr.TxrInterface
-	es         *event_storage.Storage
-	cfmFactory *cfm.Factory
+	es         event_storage.Storage
+	cfmFactory cfm.Factory
 	cfmRepo    cfm.RepositoryInterface
 	codeSender code.SenderInterface
 	codeHasher code.HasherInterface
@@ -31,13 +37,20 @@ type CfmDomFac struct {
 
 func NewCfmDomFac(
 	txr txr.TxrInterface,
-	es *event_storage.Storage,
-	cfmFactory *cfm.Factory,
+	es event_storage.Storage,
+	cfmFactory cfm.Factory,
 	cfmRepo cfm.RepositoryInterface,
 	codeSender code.SenderInterface,
 	codeHasher code.HasherInterface,
-) *CfmDomFac {
-	return &CfmDomFac{
+) CfmDomFac {
+	assert.NotNilDeepMust(txr)
+	assert.Cmp[event_storage.Storage]().NotEq(event_storage.StorageNil).Must(es)
+	assert.Cmp[cfm.Factory]().NotEq(cfm.FactoryNil).Must(cfmFactory)
+	assert.NotNilDeepMust(cfmRepo)
+	assert.NotNilDeepMust(codeSender)
+	assert.NotNilDeepMust(codeHasher)
+
+	return CfmDomFac{
 		txr:        txr,
 		es:         es,
 		cfmFactory: cfmFactory,
@@ -61,7 +74,7 @@ func NewCfmDomFac(
 // Результат:
 //   - Id
 //   - ExpireAt
-func (f *CfmDomFac) CreateForEmail(ctx context.Context, email std.Email) (cfm.Id, time.Time, error) {
+func (f CfmDomFac) CreateForEmail(ctx context.Context, email std.Email) (cfm.Id, time.Time, error) {
 	assert.NotNilDeepMust(ctx)
 	assert.FalseMust(email.IsNil())
 
@@ -112,7 +125,7 @@ func (f *CfmDomFac) CreateForEmail(ctx context.Context, email std.Email) (cfm.Id
 //   - можно ли еще запросить
 //   - можно ли еще запросить - если да, сколько раз
 //   - можно ли еще запросить - если да, после какого момента времени
-func (f *CfmDomFac) Request(
+func (f CfmDomFac) Request(
 	ctx context.Context,
 	id cfm.Id,
 ) (
@@ -166,7 +179,7 @@ func (f *CfmDomFac) Request(
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (f *CfmDomFac) SendToEmail(ctx context.Context, cCode code.Code, email std.Email) error {
+func (f CfmDomFac) SendToEmail(ctx context.Context, cCode code.Code, email std.Email) error {
 	assert.NotNilDeepMust(ctx)
 	assert.FalseMust(cCode.IsNil())
 	assert.FalseMust(email.IsNil())
@@ -188,7 +201,7 @@ func (f *CfmDomFac) SendToEmail(ctx context.Context, cCode code.Code, email std.
 //   - если вызов завершил конфирмацию, время завершения
 //   - если вызов завершил конфирмацию, успешно ли
 //   - если вызов не завершил конфирмацию, сколько осталось попыток
-func (f *CfmDomFac) Confirm(
+func (f CfmDomFac) Confirm(
 	ctx context.Context,
 	id cfm.Id,
 	cCode code.Code,
@@ -246,7 +259,7 @@ func (f *CfmDomFac) Confirm(
 //   - cfm.ErrorFinished -- завершенные не обновляются
 //   - std.ErrorAlreadyDone -- когда нечего менять на данный момент
 //   - std.ErrorRuntime
-func (f *CfmDomFac) TickTime(ctx context.Context, id cfm.Id) error {
+func (f CfmDomFac) TickTime(ctx context.Context, id cfm.Id) error {
 	assert.NotNilDeepMust(ctx)
 	assert.FalseMust(id.IsNil())
 
@@ -288,7 +301,7 @@ func (f *CfmDomFac) TickTime(ctx context.Context, id cfm.Id) error {
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (f *CfmDomFac) GetIdsGoingToExpire(ctx context.Context, limit uint) ([]cfm.Id, error) {
+func (f CfmDomFac) GetIdsGoingToExpire(ctx context.Context, limit uint) ([]cfm.Id, error) {
 	assert.NotNilDeepMust(ctx)
 	assert.Num[uint]().Positive().Must(limit)
 

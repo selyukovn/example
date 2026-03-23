@@ -13,8 +13,8 @@ import (
 // ---------------------------------------------------------------------------------------------------------------------
 
 type Command struct {
-	accDomFac  *domain_facades.AccountDomFac
-	sessDomFac *domain_facades.SessionDomFac
+	accDomFac  domain_facades.AccountDomFac
+	sessDomFac domain_facades.SessionDomFac
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -25,13 +25,13 @@ type Command struct {
 //
 // Паникует при нулевых аргументах.
 func NewCommand(
-	accDomFac *domain_facades.AccountDomFac,
-	sessDomFac *domain_facades.SessionDomFac,
-) *Command {
-	assert.Cmp[*domain_facades.AccountDomFac]().NotEq(nil).Must(accDomFac)
-	assert.Cmp[*domain_facades.SessionDomFac]().NotEq(nil).Must(sessDomFac)
+	accDomFac domain_facades.AccountDomFac,
+	sessDomFac domain_facades.SessionDomFac,
+) Command {
+	assert.Cmp[domain_facades.AccountDomFac]().NotEq(domain_facades.AccountDomFacNil).Must(accDomFac)
+	assert.Cmp[domain_facades.SessionDomFac]().NotEq(domain_facades.SessionDomFacNil).Must(sessDomFac)
 
-	return &Command{
+	return Command{
 		accDomFac:  accDomFac,
 		sessDomFac: sessDomFac,
 	}
@@ -51,7 +51,7 @@ func NewCommand(
 //   - account.ErrorIpWhitelist
 //   - std.ErrorAlreadyDone -- если уже закрыта
 //   - std.ErrorRuntime
-func (c *Command) Execute(args Args) error {
+func (c Command) Execute(args Args) error {
 	assert.FalseMust(args.IsNil())
 
 	ctx := args.Ctx()

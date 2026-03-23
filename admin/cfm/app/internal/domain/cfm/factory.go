@@ -11,6 +11,12 @@ import (
 )
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Const
+// ---------------------------------------------------------------------------------------------------------------------
+
+var FactoryNil = Factory{}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -31,12 +37,12 @@ func NewFactory(
 	idGenerator IdGeneratorInterface,
 	codeGenerator code.GeneratorInterface,
 	codeHasher code.HasherInterface,
-) *Factory {
+) Factory {
 	assert.NotNilDeepMust(idGenerator)
 	assert.NotNilDeepMust(codeGenerator)
 	assert.NotNilDeepMust(codeHasher)
 
-	return &Factory{
+	return Factory{
 		idGenerator:   idGenerator,
 		codeGenerator: codeGenerator,
 		codeHasher:    codeHasher,
@@ -53,7 +59,7 @@ func NewFactory(
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (f *Factory) CreateEmailCfm(ctx context.Context, email std.Email, now time.Time) (*Cfm, error) {
+func (f Factory) CreateEmailCfm(ctx context.Context, email std.Email, now time.Time) (*Cfm, error) {
 	assert.NotNilDeepMust(ctx)
 	assert.FalseMust(email.IsNil())
 	assert.FalseMust(now.IsZero())
@@ -91,7 +97,7 @@ func (f *Factory) CreateEmailCfm(ctx context.Context, email std.Email, now time.
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (f *Factory) GenerateCodeAndHash(ctx context.Context) (code.Code, code.Hash, error) {
+func (f Factory) GenerateCodeAndHash(ctx context.Context) (code.Code, code.Hash, error) {
 	assert.NotNilDeepMust(ctx)
 
 	// todo : возможно, есть смысл объединить генерацию и хеширование в каком-то другом объекте,

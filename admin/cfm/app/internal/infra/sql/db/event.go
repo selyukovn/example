@@ -12,7 +12,7 @@ import (
 // ROW
 // #####################################################################################################################
 
-type EventRow struct {
+type EventRow = struct {
 	OccurredAt      time.Time
 	Type            string
 	Version         uint

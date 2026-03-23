@@ -7,13 +7,11 @@ import (
 	"example/admin/cfm/cmd/grpc/pb"
 )
 
-func newRouter(ctr *container.Container) *router {
-	return &router{
-		createForEmail: handlers.NewCreateForEmail(ctr),
-		request:        handlers.NewRequest(ctr),
-		confirm:        handlers.NewConfirm(ctr),
-	}
-}
+// ---------------------------------------------------------------------------------------------------------------------
+// Struct
+// ---------------------------------------------------------------------------------------------------------------------
+
+var _ pb.CfmServiceServer = router{}
 
 type router struct {
 	pb.UnimplementedCfmServiceServer
@@ -22,14 +20,32 @@ type router struct {
 	confirm        func(ctx context.Context, req *pb.ConfirmRequest) (*pb.ConfirmResponse, error)
 }
 
-func (r *router) CreateForEmail(ctx context.Context, req *pb.CreateForEmailRequest) (*pb.CreateForEmailResponse, error) {
+// ---------------------------------------------------------------------------------------------------------------------
+// Create
+// ---------------------------------------------------------------------------------------------------------------------
+
+func newRouter(ctr *container.Container) router {
+	return router{
+		createForEmail: handlers.NewCreateForEmail(ctr),
+		request:        handlers.NewRequest(ctr),
+		confirm:        handlers.NewConfirm(ctr),
+	}
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Actions
+// ---------------------------------------------------------------------------------------------------------------------
+
+func (r router) CreateForEmail(ctx context.Context, req *pb.CreateForEmailRequest) (*pb.CreateForEmailResponse, error) {
 	return r.createForEmail(ctx, req)
 }
 
-func (r *router) Request(ctx context.Context, req *pb.RequestRequest) (*pb.RequestResponse, error) {
+func (r router) Request(ctx context.Context, req *pb.RequestRequest) (*pb.RequestResponse, error) {
 	return r.request(ctx, req)
 }
 
-func (r *router) Confirm(ctx context.Context, req *pb.ConfirmRequest) (*pb.ConfirmResponse, error) {
+func (r router) Confirm(ctx context.Context, req *pb.ConfirmRequest) (*pb.ConfirmResponse, error) {
 	return r.confirm(ctx, req)
 }
+
+// ---------------------------------------------------------------------------------------------------------------------

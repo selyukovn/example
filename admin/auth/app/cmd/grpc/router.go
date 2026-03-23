@@ -8,18 +8,10 @@ import (
 )
 
 // ---------------------------------------------------------------------------------------------------------------------
-
-func newRouter(ctr *container.Container) *router {
-	return &router{
-		signInRequest:      handlers.NewSignInRequest(ctr),
-		signInRequestRetry: handlers.NewSignInRequestRetry(ctr),
-		signInConfirm:      handlers.NewSignInConfirm(ctr),
-		signOut:            handlers.NewSignOut(ctr),
-		checkSession:       handlers.NewCheckSession(ctr),
-	}
-}
-
+// Struct
 // ---------------------------------------------------------------------------------------------------------------------
+
+var _ pb.AuthServiceServer = router{}
 
 type router struct {
 	pb.UnimplementedAuthServiceServer
@@ -30,23 +22,41 @@ type router struct {
 	checkSession       func(context.Context, *pb.CheckSessionRequest) (*pb.CheckSessionResponse, error)
 }
 
-func (r *router) SignInRequest(ctx context.Context, req *pb.SignInRequestRequest) (*pb.SignInRequestResponse, error) {
+// ---------------------------------------------------------------------------------------------------------------------
+// Create
+// ---------------------------------------------------------------------------------------------------------------------
+
+func newRouter(ctr *container.Container) router {
+	return router{
+		signInRequest:      handlers.NewSignInRequest(ctr),
+		signInRequestRetry: handlers.NewSignInRequestRetry(ctr),
+		signInConfirm:      handlers.NewSignInConfirm(ctr),
+		signOut:            handlers.NewSignOut(ctr),
+		checkSession:       handlers.NewCheckSession(ctr),
+	}
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Actions
+// ---------------------------------------------------------------------------------------------------------------------
+
+func (r router) SignInRequest(ctx context.Context, req *pb.SignInRequestRequest) (*pb.SignInRequestResponse, error) {
 	return r.signInRequest(ctx, req)
 }
 
-func (r *router) SignInRequestRetry(ctx context.Context, req *pb.SignInRequestRetryRequest) (*pb.SignInRequestRetryResponse, error) {
+func (r router) SignInRequestRetry(ctx context.Context, req *pb.SignInRequestRetryRequest) (*pb.SignInRequestRetryResponse, error) {
 	return r.signInRequestRetry(ctx, req)
 }
 
-func (r *router) SignInConfirm(ctx context.Context, req *pb.SignInConfirmRequest) (*pb.SignInConfirmResponse, error) {
+func (r router) SignInConfirm(ctx context.Context, req *pb.SignInConfirmRequest) (*pb.SignInConfirmResponse, error) {
 	return r.signInConfirm(ctx, req)
 }
 
-func (r *router) SignOut(ctx context.Context, req *pb.SignOutRequest) (*pb.SignOutResponse, error) {
+func (r router) SignOut(ctx context.Context, req *pb.SignOutRequest) (*pb.SignOutResponse, error) {
 	return r.signOut(ctx, req)
 }
 
-func (r *router) CheckSession(ctx context.Context, req *pb.CheckSessionRequest) (*pb.CheckSessionResponse, error) {
+func (r router) CheckSession(ctx context.Context, req *pb.CheckSessionRequest) (*pb.CheckSessionResponse, error) {
 	return r.checkSession(ctx, req)
 }
 

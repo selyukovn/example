@@ -13,7 +13,7 @@ import (
 // ROW
 // #####################################################################################################################
 
-type CfmRequestRow struct {
+type CfmRequestRow = struct {
 	CfmId       string
 	Number      uint
 	CodeHash    string

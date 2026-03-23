@@ -11,19 +11,19 @@ import (
 	"fmt"
 	"github.com/selyukovn/go-std"
 	"github.com/selyukovn/go-std/logger"
+	assert "github.com/selyukovn/go-wm-assert"
 	"io"
 	"log/slog"
+	"os"
 )
 
 func main() {
 	// -----------------------------------------------------------------------------------------------------------------
-	// Params
+	// Args
 	// -----------------------------------------------------------------------------------------------------------------
 
 	argDebug := *flag.Bool("debug", false, "")
 	argLogFile := *flag.String("log-file", "/state/app.log", "путь к log-файлу")
-
-	env := http.LoadEnv()
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// Resources
@@ -56,8 +56,8 @@ func main() {
 	// -----------------------------------------------------------------------------------------------------------------
 
 	ctr := container.New(
-		env.ServiceAuthApiGrpcBaseUrl,
-		env.ServiceAuthApiGrpcApiKey,
+		assert.Str().NotEmpty().MustGet(os.Getenv("SERVICE_AUTH_API_GRPC_BASEURL"), "env: SERVICE_AUTH_API_GRPC_BASEURL"),
+		assert.Str().NotEmpty().MustGet(os.Getenv("SERVICE_AUTH_API_GRPC_APIKEY"), "env: SERVICE_AUTH_API_GRPC_APIKEY"),
 	)
 
 	// -----------------------------------------------------------------------------------------------------------------

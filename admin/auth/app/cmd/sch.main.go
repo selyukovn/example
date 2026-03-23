@@ -11,19 +11,19 @@ import (
 	"fmt"
 	"github.com/selyukovn/go-std"
 	"github.com/selyukovn/go-std/logger"
+	assert "github.com/selyukovn/go-wm-assert"
 	"io"
 	"log/slog"
+	"os"
 )
 
 func main() {
 	// -----------------------------------------------------------------------------------------------------------------
-	// Params
+	// Args
 	// -----------------------------------------------------------------------------------------------------------------
 
 	argDebug := *flag.Bool("debug", false, "")
 	argLogFile := *flag.String("log-file", "/state/app.log", "путь к log-файлу")
-
-	env := sch.LoadEnv()
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// Resources
@@ -43,10 +43,10 @@ func main() {
 
 	// mysql - master
 	mysqlMaster := resources.OpenMysql(
-		env.MysqlHostMaster,
-		env.MysqlUser,
-		env.MysqlPassword,
-		env.MysqlDb,
+		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_HOST_MASTER"), "env: MYSQL_HOST_MASTER"),
+		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_USER"), "env: MYSQL_USER"),
+		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_PASSWORD"), "env: MYSQL_PASSWORD"),
+		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_DB"), "env: MYSQL_DB"),
 	)
 	defer fnClose("mysqlMaster", mysqlMaster.Db)
 

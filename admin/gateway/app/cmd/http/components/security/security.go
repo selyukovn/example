@@ -27,15 +27,15 @@ type Security struct {
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
-func New(ctr *container.Container) *Security {
+func New(ctr *container.Container) Security {
 	assert.NotNilDeepMust(ctr)
 
-	return &Security{
+	return Security{
 		ctr: ctr,
 	}
 }
 
-func (s *Security) getSessId(r *http.Request) string {
+func (s Security) getSessId(r *http.Request) string {
 	return strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
 }
 
@@ -43,7 +43,7 @@ func (s *Security) getSessId(r *http.Request) string {
 // Actions
 // ---------------------------------------------------------------------------------------------------------------------
 
-func (s *Security) _middlewareAsGuest(
+func (s Security) _middlewareAsGuest(
 	w http.ResponseWriter,
 	r *http.Request,
 	next http.Handler,
@@ -68,7 +68,7 @@ func (s *Security) _middlewareAsGuest(
 	next.ServeHTTP(w, r)
 }
 
-func (s *Security) Middleware(next http.Handler) http.Handler {
+func (s Security) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// todo : некий guest-id ???
 
@@ -153,7 +153,7 @@ func (s *Security) Middleware(next http.Handler) http.Handler {
 //
 // Паникует при нулевых аргументах.
 // Паникует, если обработчик запроса не был обернут в Middleware.
-func (s *Security) AssociatedUser(ctx context.Context) *User {
+func (s Security) AssociatedUser(ctx context.Context) *User {
 	assert.NotNilDeepMust(ctx)
 
 	vUser := ctx.Value(ctxKeyUser)
@@ -178,7 +178,7 @@ func (s *Security) AssociatedUser(ctx context.Context) *User {
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (s *Security) Authenticate(ctx context.Context, user *User, w http.ResponseWriter, sessId string) error {
+func (s Security) Authenticate(ctx context.Context, user *User, w http.ResponseWriter, sessId string) error {
 	/* Может показаться, что один из аргументов `ctx` и `user` лишний, поскольку есть */ _ = s.AssociatedUser /**/
 	// Это как минимум ухудшило бы интерфейс метода --> Authenticate(ctx, sessId, w) -- что тут аутентифицируется?
 
@@ -214,7 +214,7 @@ func (s *Security) Authenticate(ctx context.Context, user *User, w http.Response
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (s *Security) UnAuthenticate(ctx context.Context, user *User) error {
+func (s Security) UnAuthenticate(ctx context.Context, user *User) error {
 	/* Может показаться, что один из аргументов `ctx` и `user` лишний, поскольку есть */ _ = s.AssociatedUser /**/
 	// Это как минимум ухудшило бы интерфейс метода --> Authenticate(ctx, sessId, w) -- что тут аутентифицируется?
 

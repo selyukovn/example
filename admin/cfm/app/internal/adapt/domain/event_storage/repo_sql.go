@@ -16,7 +16,7 @@ import (
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
-var _ event_storage.RepositoryInterface = &RepositoryImplSql{}
+var _ event_storage.RepositoryInterface = RepositoryImplSql{}
 
 type RepositoryImplSql struct{}
 
@@ -28,8 +28,8 @@ const (
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
-func NewRepositoryImplSql() *RepositoryImplSql {
-	return &RepositoryImplSql{}
+func NewRepositoryImplSql() RepositoryImplSql {
+	return RepositoryImplSql{}
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -42,7 +42,7 @@ func NewRepositoryImplSql() *RepositoryImplSql {
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) AddCfmFinished(ctx context.Context, e cfm.EventFinished) error {
+func (r RepositoryImplSql) AddCfmFinished(ctx context.Context, e cfm.EventFinished) error {
 	assert.NotNilDeepMust(ctx)
 	assert.Cmp[cfm.EventFinished]().NotEq(cfm.EventFinished{}).Must(e)
 

@@ -17,10 +17,16 @@ import (
 )
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Const
+// ---------------------------------------------------------------------------------------------------------------------
+
+var ClientImplGrpcNil = ClientImplGrpc{}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
-var _ auth.ClientInterface = &ClientImplGrpc{}
+var _ auth.ClientInterface = ClientImplGrpc{}
 
 type ClientImplGrpc struct {
 	pbClient         pb.AuthServiceClient
@@ -36,7 +42,7 @@ func NewClientGrpc(
 	baseUrl string,
 	apiKey string,
 	fnGetOperationId func(context.Context) string,
-) (*ClientImplGrpc, error) {
+) (ClientImplGrpc, error) {
 	assert.Str().NotEmpty().Must(baseUrl)
 	assert.Str().NotEmpty().Must(apiKey)
 	assert.NotNilDeepMust(fnGetOperationId)
@@ -46,17 +52,17 @@ func NewClientGrpc(
 		grpc.WithTransportCredentials(insecure.NewCredentials()), // todo : TLS
 	)
 	if err != nil {
-		return nil, err
+		return ClientImplGrpcNil, err
 	}
 
-	return &ClientImplGrpc{
+	return ClientImplGrpc{
 		pbClient:         pb.NewAuthServiceClient(grpcClient),
 		apiKey:           apiKey,
 		fnGetOperationId: fnGetOperationId,
 	}, nil
 }
 
-func NewClientGrpcMust(baseUrl string, apiKey string, fnGetOperationId func(context.Context) string) *ClientImplGrpc {
+func NewClientGrpcMust(baseUrl string, apiKey string, fnGetOperationId func(context.Context) string) ClientImplGrpc {
 	res, err := NewClientGrpc(baseUrl, apiKey, fnGetOperationId)
 	if err != nil {
 		panic(err)
@@ -68,7 +74,7 @@ func NewClientGrpcMust(baseUrl string, apiKey string, fnGetOperationId func(cont
 // Actions
 // ---------------------------------------------------------------------------------------------------------------------
 
-func (c *ClientImplGrpc) prepareCtx(ctx context.Context) context.Context {
+func (c ClientImplGrpc) prepareCtx(ctx context.Context) context.Context {
 	mData := map[string]string{
 		"authorization":  "Bearer " + c.apiKey,
 		"x-operation-id": c.fnGetOperationId(ctx),
@@ -86,7 +92,7 @@ func (c *ClientImplGrpc) prepareCtx(ctx context.Context) context.Context {
 //   - auth.ErrorValidation
 //   - auth.ErrorAccountAccessDenied
 //   - std.ErrorRuntime
-func (c *ClientImplGrpc) SignInRequest(
+func (c ClientImplGrpc) SignInRequest(
 	ctx context.Context,
 	fromIp netip.Addr,
 	fromUserAgent string,
@@ -172,7 +178,7 @@ func (c *ClientImplGrpc) SignInRequest(
 //   - auth.ErrorRequestsFrequency
 //   - std.ErrorUnprocessable -- сессия уже существует
 //   - std.ErrorRuntime
-func (c *ClientImplGrpc) SignInRequestRetry(
+func (c ClientImplGrpc) SignInRequestRetry(
 	ctx context.Context,
 	fromIp netip.Addr,
 	fromUserAgent string,
@@ -270,7 +276,7 @@ func (c *ClientImplGrpc) SignInRequestRetry(
 //   - auth.ErrorSignInFinished
 //   - std.ErrorUnprocessable
 //   - std.ErrorRuntime
-func (c *ClientImplGrpc) SignInConfirm(
+func (c ClientImplGrpc) SignInConfirm(
 	ctx context.Context,
 	fromIp netip.Addr,
 	fromUserAgent string,
@@ -359,7 +365,7 @@ func (c *ClientImplGrpc) SignInConfirm(
 //   - auth.ErrorAccountAccessDenied
 //   - std.ErrorAlreadyDone
 //   - std.ErrorRuntime
-func (c *ClientImplGrpc) SignOut(
+func (c ClientImplGrpc) SignOut(
 	ctx context.Context,
 	fromIp netip.Addr,
 	fromUserAgent string,
@@ -425,7 +431,7 @@ func (c *ClientImplGrpc) SignOut(
 //   - auth.ErrorAccountAccessDenied
 //   - auth.ErrorSessionClosed
 //   - std.ErrorRuntime
-func (c *ClientImplGrpc) CheckSession(
+func (c ClientImplGrpc) CheckSession(
 	ctx context.Context,
 	fromIp netip.Addr,
 	fromUserAgent string,
@@ -488,3 +494,5 @@ func (c *ClientImplGrpc) CheckSession(
 		SessionExpireAt: pbRes.SessionExpireAt.AsTime(),
 	}, nil
 }
+
+// ---------------------------------------------------------------------------------------------------------------------

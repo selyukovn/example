@@ -11,19 +11,19 @@ import (
 	"fmt"
 	"github.com/selyukovn/go-std"
 	"github.com/selyukovn/go-std/logger"
+	assert "github.com/selyukovn/go-wm-assert"
 	"io"
 	"log/slog"
+	"os"
 )
 
 func main() {
 	// -----------------------------------------------------------------------------------------------------------------
-	// Params
+	// Args
 	// -----------------------------------------------------------------------------------------------------------------
 
 	argDebug := *flag.Bool("debug", false, "")
 	argLogFile := *flag.String("log-file", "/state/app.log", "путь к log-файлу")
-
-	env := grpc.LoadEnv()
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// Resources
@@ -43,12 +43,14 @@ func main() {
 
 	// mysql - master
 	mysqlMaster := resources.OpenMysql(
-		env.MysqlHostMaster,
-		env.MysqlUser,
-		env.MysqlPassword,
-		env.MysqlDb,
+		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_HOST_MASTER"), "env: MYSQL_HOST_MASTER"),
+		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_USER"), "env: MYSQL_USER"),
+		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_PASSWORD"), "env: MYSQL_PASSWORD"),
+		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_DB"), "env: MYSQL_DB"),
 	)
 	defer fnClose("mysqlMaster", mysqlMaster.Db)
+
+	// todo : MYSQL_HOST_REPLICA
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// Globals
@@ -68,15 +70,18 @@ func main() {
 		mysqlMaster.Db,
 		mysqlMaster.FnIsDeadlockError,
 		mysqlMaster.FnIsDuplicateKeyError,
-		env.ServiceCfmApiGrpcBaseUrl,
-		env.ServiceCfmApiGrpcApiKey,
+		assert.Str().NotEmpty().MustGet(os.Getenv("SERVICE_CFM_API_GRPC_BASEURL"), "env: SERVICE_CFM_API_GRPC_BASEURL"),
+		assert.Str().NotEmpty().MustGet(os.Getenv("SERVICE_CFM_API_GRPC_APIKEY"), "env: SERVICE_CFM_API_GRPC_APIKEY"),
 	)
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// Launch
 	// -----------------------------------------------------------------------------------------------------------------
 
-	grpcServer := grpc.NewServer(ctr, env.ApiGrpcApiKey)
+	grpcServer := grpc.NewServer(
+		ctr,
+		assert.Str().NotEmpty().MustGet(os.Getenv("API_GRPC_APIKEY"), "env: API_GRPC_APIKEY"),
+	)
 	monServer := monitoring.NewMonitoringServer()
 
 	launcher.LaunchServers([]launcher.Server{

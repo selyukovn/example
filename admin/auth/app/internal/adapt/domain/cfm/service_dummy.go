@@ -13,14 +13,16 @@ import (
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
+var _ cfm.ServiceInterface = ServiceImplDummy{}
+
 type ServiceImplDummy struct{}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
-func NewServiceImplDummy() *ServiceImplDummy {
-	return &ServiceImplDummy{}
+func NewServiceImplDummy() ServiceImplDummy {
+	return ServiceImplDummy{}
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -33,11 +35,11 @@ func NewServiceImplDummy() *ServiceImplDummy {
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (s *ServiceImplDummy) CreateForEmail(ctx context.Context, email std.Email) (cfm.ServiceResultCreate, error) {
+func (s ServiceImplDummy) CreateForEmail(ctx context.Context, email std.Email) (cfm.ServiceResultCreate, error) {
 	assert.NotNilDeepMust(ctx)
 	assert.FalseMust(email.IsNil())
 
-	idV, err := like_uuid.NewIdGeneratorUniqueRandom().Generate()
+	idV, err := like_uuid.GenerateUniqueRandom()
 	if err != nil {
 		return cfm.ServiceResultCreateNil, std.WrapErrorToRuntime(err, s, "CreateForEmail")
 	}
@@ -59,7 +61,7 @@ func (s *ServiceImplDummy) CreateForEmail(ctx context.Context, email std.Email) 
 //   - cfm.ErrorNoAttemptsLeft
 //   - cfm.ErrorRequestsFrequency
 //   - std.ErrorRuntime
-func (s *ServiceImplDummy) Request(ctx context.Context, cfmId cfm.Id) (cfm.ServiceResultRequest, error) {
+func (s ServiceImplDummy) Request(ctx context.Context, cfmId cfm.Id) (cfm.ServiceResultRequest, error) {
 	assert.NotNilDeepMust(ctx)
 	assert.FalseMust(cfmId.IsNil())
 
@@ -79,7 +81,7 @@ func (s *ServiceImplDummy) Request(ctx context.Context, cfmId cfm.Id) (cfm.Servi
 //   - cfm.ErrorFinished
 //   - std.ErrorUnprocessable -- если не была запрошена
 //   - std.ErrorRuntime
-func (s *ServiceImplDummy) Confirm(ctx context.Context, cfmId cfm.Id, code cfm.Code) (cfm.ServiceResultConfirm, error) {
+func (s ServiceImplDummy) Confirm(ctx context.Context, cfmId cfm.Id, code cfm.Code) (cfm.ServiceResultConfirm, error) {
 	assert.NotNilDeepMust(ctx)
 	assert.FalseMust(cfmId.IsNil())
 	assert.FalseMust(code.IsNil())

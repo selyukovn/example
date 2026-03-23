@@ -16,7 +16,7 @@ const Url = "/sign-in/"
 // ---------------------------------------------------------------------------------------------------------------------
 
 func Register(
-	apiClient *gateway.ApiClient,
+	apiClient gateway.ApiClient,
 	mux *http.ServeMux,
 	appName string,
 	redirectUrlForAuthorized string,

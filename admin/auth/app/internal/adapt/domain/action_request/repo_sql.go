@@ -20,6 +20,8 @@ import (
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
+var _ action_request.RepositoryInterface = RepositoryImplSql{}
+
 type RepositoryImplSql struct {
 	fnIsDuplicateKeyError func(error) bool
 }
@@ -28,8 +30,8 @@ type RepositoryImplSql struct {
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
-func NewRepositoryImplSql(fnIsDuplicateKeyError func(error) bool) *RepositoryImplSql {
-	return &RepositoryImplSql{
+func NewRepositoryImplSql(fnIsDuplicateKeyError func(error) bool) RepositoryImplSql {
+	return RepositoryImplSql{
 		fnIsDuplicateKeyError: fnIsDuplicateKeyError,
 	}
 }
@@ -42,7 +44,7 @@ const (
 	rowTypeSignIn uint = 1
 )
 
-func (r *RepositoryImplSql) mapSignInToDbRow(signIn *action_request.SignIn) *db.ActionRequestRow {
+func (r RepositoryImplSql) mapSignInToDbRow(signIn *action_request.SignIn) *db.ActionRequestRow {
 	dbRow := &db.ActionRequestRow{}
 
 	sId, sAccId, sCfmId, sReqAt := action_request.ReflectExtract(signIn)
@@ -56,7 +58,7 @@ func (r *RepositoryImplSql) mapSignInToDbRow(signIn *action_request.SignIn) *db.
 	return dbRow
 }
 
-func (r *RepositoryImplSql) mapDbRowToSignIn(dbRow *db.ActionRequestRow) (*action_request.SignIn, error) {
+func (r RepositoryImplSql) mapDbRowToSignIn(dbRow *db.ActionRequestRow) (*action_request.SignIn, error) {
 	var err error
 
 	sId, err := action_request.IdFromString(dbRow.Id)
@@ -94,7 +96,7 @@ func (r *RepositoryImplSql) mapDbRowToSignIn(dbRow *db.ActionRequestRow) (*actio
 // Ошибки:
 //   - std.ErrorAlreadyDone -- если с таким id уже существует
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) Add(ctx context.Context, actReq any) error {
+func (r RepositoryImplSql) Add(ctx context.Context, actReq any) error {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 
 	var dbRow *db.ActionRequestRow
@@ -137,7 +139,7 @@ func (r *RepositoryImplSql) Add(ctx context.Context, actReq any) error {
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) Update(ctx context.Context, actReq any) error {
+func (r RepositoryImplSql) Update(ctx context.Context, actReq any) error {
 	var dbRow *db.ActionRequestRow
 
 	switch actReq.(type) {
@@ -178,7 +180,7 @@ func (r *RepositoryImplSql) Update(ctx context.Context, actReq any) error {
 // Ошибки:
 //   - std.ErrorNotFound
 //   - std.ErrorRuntime
-func (r *RepositoryImplSql) GetSignIn(ctx context.Context, actReqId action_request.Id) (*action_request.SignIn, error) {
+func (r RepositoryImplSql) GetSignIn(ctx context.Context, actReqId action_request.Id) (*action_request.SignIn, error) {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 	assert.Cmp[action_request.Id]().NotEq(action_request.IdNil).Must(actReqId)
 

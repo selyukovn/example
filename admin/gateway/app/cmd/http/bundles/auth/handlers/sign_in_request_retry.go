@@ -14,7 +14,7 @@ import (
 
 func NewSignInRequestRetry(
 	ctr *container.Container,
-	sec *security.Security,
+	sec security.Security,
 ) func(context.Context, openapi.PutAuthSignInRequestRetryRequestObject) (openapi.PutAuthSignInRequestRetryResponseObject, error) {
 	return func(ctx context.Context, r openapi.PutAuthSignInRequestRetryRequestObject) (openapi.PutAuthSignInRequestRetryResponseObject, error) {
 		user := sec.AssociatedUser(ctx)

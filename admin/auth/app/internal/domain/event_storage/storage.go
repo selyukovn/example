@@ -10,6 +10,12 @@ import (
 )
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Const
+// ---------------------------------------------------------------------------------------------------------------------
+
+var StorageNil = Storage{}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -24,10 +30,10 @@ type Storage struct {
 // NewStorage
 //
 // Паникует при нулевых аргументах.
-func NewStorage(repo RepositoryInterface) *Storage {
+func NewStorage(repo RepositoryInterface) Storage {
 	assert.Cmp[RepositoryInterface]().NotEq(nil).Must(repo)
 
-	return &Storage{repo: repo}
+	return Storage{repo: repo}
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -40,7 +46,7 @@ func NewStorage(repo RepositoryInterface) *Storage {
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (s *Storage) Store(ctx context.Context, evs *event.Collection) error {
+func (s Storage) Store(ctx context.Context, evs *event.Collection) error {
 	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
 	assert.Cmp[*event.Collection]().NotEq(nil).Must(evs)
 

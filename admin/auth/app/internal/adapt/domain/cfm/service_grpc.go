@@ -13,6 +13,8 @@ import (
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
+var _ cfm.ServiceInterface = ServiceImplCfmService{}
+
 type ServiceImplCfmService struct {
 	client infra_client_cfm.ClientInterface
 }
@@ -24,10 +26,10 @@ type ServiceImplCfmService struct {
 // NewServiceImplCfmService
 //
 // Паникует при нулевых аргументах.
-func NewServiceImplCfmService(client infra_client_cfm.ClientInterface) *ServiceImplCfmService {
+func NewServiceImplCfmService(client infra_client_cfm.ClientInterface) ServiceImplCfmService {
 	assert.NotNilDeepMust(client)
 
-	return &ServiceImplCfmService{
+	return ServiceImplCfmService{
 		client: client,
 	}
 }
@@ -42,7 +44,7 @@ func NewServiceImplCfmService(client infra_client_cfm.ClientInterface) *ServiceI
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (s *ServiceImplCfmService) CreateForEmail(ctx context.Context, email std.Email) (cfm.ServiceResultCreate, error) {
+func (s ServiceImplCfmService) CreateForEmail(ctx context.Context, email std.Email) (cfm.ServiceResultCreate, error) {
 	assert.NotNilDeepMust(ctx)
 	assert.FalseMust(email.IsNil())
 
@@ -78,7 +80,7 @@ func (s *ServiceImplCfmService) CreateForEmail(ctx context.Context, email std.Em
 //   - cfm.ErrorNoAttemptsLeft
 //   - cfm.ErrorRequestsFrequency
 //   - std.ErrorRuntime
-func (s *ServiceImplCfmService) Request(ctx context.Context, cfmId cfm.Id) (cfm.ServiceResultRequest, error) {
+func (s ServiceImplCfmService) Request(ctx context.Context, cfmId cfm.Id) (cfm.ServiceResultRequest, error) {
 	assert.NotNilDeepMust(ctx)
 	assert.FalseMust(cfmId.IsNil())
 
@@ -134,7 +136,7 @@ func (s *ServiceImplCfmService) Request(ctx context.Context, cfmId cfm.Id) (cfm.
 //   - cfm.ErrorFinished
 //   - std.ErrorUnprocessable -- если не была запрошена
 //   - std.ErrorRuntime
-func (s *ServiceImplCfmService) Confirm(ctx context.Context, cfmId cfm.Id, code cfm.Code) (cfm.ServiceResultConfirm, error) {
+func (s ServiceImplCfmService) Confirm(ctx context.Context, cfmId cfm.Id, code cfm.Code) (cfm.ServiceResultConfirm, error) {
 	assert.NotNilDeepMust(ctx)
 	assert.FalseMust(cfmId.IsNil())
 	assert.FalseMust(code.IsNil())

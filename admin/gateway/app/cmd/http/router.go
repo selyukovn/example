@@ -128,7 +128,7 @@ func _boundaryMiddleware(ctr *container.Container) func(http.Handler) http.Handl
 	}
 }
 
-func _securityMiddleware(sec *security.Security) func(http.Handler) http.Handler {
+func _securityMiddleware(sec security.Security) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return sec.Middleware(
 			// Имеет смысл искать логи по аккаунту,

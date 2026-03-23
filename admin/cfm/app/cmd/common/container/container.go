@@ -22,15 +22,15 @@ import (
 	"time"
 )
 
-type Container struct {
+type Container = struct {
 	UseCases UseCases
 }
 
 type UseCases = struct {
-	CreateForEmail *create_for_email.Command
-	Request        *request.Command
-	Confirm        *confirm.Command
-	TickTime       *tick_time.Command
+	CreateForEmail create_for_email.Command
+	Request        request.Command
+	Confirm        confirm.Command
+	TickTime       tick_time.Command
 }
 
 func New(
@@ -96,6 +96,8 @@ func New(
 
 	// -----------------------------------------------------------------------------------------------------------------
 
+	// Контейнер -- структура потенциально "растущая" (будут добавляться новые сервисы и т.д.).
+	// Поэтому лучше сразу использовать контейнер через указатель.
 	return &Container{
 		UseCases: UseCases{
 			CreateForEmail: create_for_email.NewCommand(cfmDomFac),

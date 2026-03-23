@@ -18,7 +18,7 @@ type Server struct {
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
-func NewMonitoringServer() *Server {
+func NewMonitoringServer() Server {
 	mux := http.NewServeMux()
 
 	mux.Handle("/prometheus-metrics", promhttp.Handler())
@@ -28,7 +28,7 @@ func NewMonitoringServer() *Server {
 		Handler: mux,
 	}
 
-	return &Server{
+	return Server{
 		s: s,
 	}
 }
@@ -37,11 +37,11 @@ func NewMonitoringServer() *Server {
 // Actions
 // ---------------------------------------------------------------------------------------------------------------------
 
-func (s *Server) Start() error {
+func (s Server) Start() error {
 	return s.s.ListenAndServe()
 }
 
-func (s *Server) Stop() error {
+func (s Server) Stop() error {
 	// todo : возможно, есть смысл ограничить по времени
 	return s.s.Shutdown(context.Background())
 }

@@ -12,7 +12,7 @@ import (
 // ---------------------------------------------------------------------------------------------------------------------
 
 type Command struct {
-	cfmDomFac *domain_facades.CfmDomFac
+	cfmDomFac domain_facades.CfmDomFac
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -23,11 +23,11 @@ type Command struct {
 //
 // Паникует при нулевых аргументах.
 func NewCommand(
-	cfmDomFac *domain_facades.CfmDomFac,
-) *Command {
-	assert.NotNilDeepMust(cfmDomFac)
+	cfmDomFac domain_facades.CfmDomFac,
+) Command {
+	assert.Cmp[domain_facades.CfmDomFac]().NotEq(domain_facades.CfmDomFacNil).Must(cfmDomFac)
 
-	return &Command{
+	return Command{
 		cfmDomFac: cfmDomFac,
 	}
 }
@@ -45,7 +45,7 @@ func NewCommand(
 //   - cfm.ErrorFinished
 //   - std.ErrorUnprocessable -- если еще не запрашивалась (request.NewCommand)
 //   - std.ErrorRuntime
-func (c *Command) Execute(args Args) (Result, error) {
+func (c Command) Execute(args Args) (Result, error) {
 	assert.FalseMust(args.IsNil())
 
 	ctx := args.Ctx()

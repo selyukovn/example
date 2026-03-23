@@ -14,6 +14,8 @@ import (
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
+var _ code.GeneratorInterface = GeneratorImplUintRand1{}
+
 // GeneratorImplUintRand1
 //
 // Rand 1 -- одним случайным значением.
@@ -23,8 +25,8 @@ type GeneratorImplUintRand1 struct{}
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
-func NewGeneratorImplUintRand1() *GeneratorImplUintRand1 {
-	return &GeneratorImplUintRand1{}
+func NewGeneratorImplUintRand1() GeneratorImplUintRand1 {
+	return GeneratorImplUintRand1{}
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -37,7 +39,7 @@ func NewGeneratorImplUintRand1() *GeneratorImplUintRand1 {
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (g *GeneratorImplUintRand1) Generate(ctx context.Context) (code.Code, error) {
+func (g GeneratorImplUintRand1) Generate(ctx context.Context) (code.Code, error) {
 	assert.NotNilDeepMust(ctx)
 
 	var rMin uint32 = 0

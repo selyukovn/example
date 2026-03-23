@@ -32,16 +32,16 @@ import (
 	"time"
 )
 
-type Container struct {
+type Container = struct {
 	UseCases UseCases
 }
 
 type UseCases = struct {
-	SignInRequest      *sign_in_request.Command
-	SignInRequestRetry *sign_in_request_retry.Command
-	SignInConfirm      *sign_in_confirm.Command
-	SignOut            *sign_out.Command
-	CheckSession       *check_session.Command
+	SignInRequest      sign_in_request.Command
+	SignInRequestRetry sign_in_request_retry.Command
+	SignInConfirm      sign_in_confirm.Command
+	SignOut            sign_out.Command
+	CheckSession       check_session.Command
 }
 
 func New(
@@ -131,6 +131,8 @@ func New(
 
 	// -----------------------------------------------------------------------------------------------------------------
 
+	// Контейнер -- структура потенциально "растущая" (будут добавляться новые сервисы и т.д.).
+	// Поэтому лучше сразу использовать контейнер через указатель.
 	return &Container{
 		UseCases: UseCases{
 			SignInRequest: sign_in_request.NewCommand(accDomFac, actReqDomFac, cfmService),

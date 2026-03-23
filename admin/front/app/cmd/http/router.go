@@ -10,7 +10,7 @@ import (
 )
 
 func registerRoutes(
-	apiClient *gateway.ApiClient,
+	apiClient gateway.ApiClient,
 	mux *http.ServeMux,
 	appName string,
 ) {

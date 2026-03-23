@@ -15,11 +15,13 @@ import (
 // Const
 // ---------------------------------------------------------------------------------------------------------------------
 
-const sessionTtl = time.Hour * 24 * 7
+var FactoryNil = Factory{}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
+
+const sessionTtl = time.Hour * 24 * 7
 
 type Factory struct {
 	idGenerator IdGeneratorInterface
@@ -32,10 +34,10 @@ type Factory struct {
 // NewFactory
 //
 // Паникует при нулевых аргументах.
-func NewFactory(idGenerator IdGeneratorInterface) *Factory {
+func NewFactory(idGenerator IdGeneratorInterface) Factory {
 	assert.Cmp[IdGeneratorInterface]().NotEq(nil).Must(idGenerator)
 
-	return &Factory{
+	return Factory{
 		idGenerator: idGenerator,
 	}
 }
@@ -50,7 +52,7 @@ func NewFactory(idGenerator IdGeneratorInterface) *Factory {
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (f *Factory) Create(
+func (f Factory) Create(
 	ctx context.Context,
 	accId account.Id,
 	signInId action_request.Id,

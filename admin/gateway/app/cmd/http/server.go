@@ -22,7 +22,7 @@ type Server struct {
 // NewServer
 //
 // Паникует при нулевых аргументах.
-func NewServer(ctr *container.Container) *Server {
+func NewServer(ctr *container.Container) Server {
 	assert.NotNilDeepMust(ctr)
 
 	mux := http.NewServeMux()
@@ -38,7 +38,7 @@ func NewServer(ctr *container.Container) *Server {
 		Handler: mux,
 	}
 
-	return &Server{
+	return Server{
 		s: s,
 	}
 }
@@ -47,11 +47,11 @@ func NewServer(ctr *container.Container) *Server {
 // Actions
 // ---------------------------------------------------------------------------------------------------------------------
 
-func (s *Server) Start() error {
+func (s Server) Start() error {
 	return s.s.ListenAndServe()
 }
 
-func (s *Server) Stop() error {
+func (s Server) Stop() error {
 	// todo : возможно, есть смысл ограничить по времени
 	return s.s.Shutdown(context.Background())
 }

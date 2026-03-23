@@ -17,14 +17,16 @@ import (
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
+var _ code.SenderInterface = SenderImplDummy{}
+
 type SenderImplDummy struct{}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
-func NewSenderImplDummy() *SenderImplDummy {
-	return &SenderImplDummy{}
+func NewSenderImplDummy() SenderImplDummy {
+	return SenderImplDummy{}
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -37,7 +39,7 @@ func NewSenderImplDummy() *SenderImplDummy {
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (s *SenderImplDummy) Send(ctx context.Context, code code.Code, email std.Email) error {
+func (s SenderImplDummy) Send(ctx context.Context, code code.Code, email std.Email) error {
 	assert.NotNilDeepMust(ctx)
 	assert.FalseMust(code.IsNil())
 	assert.FalseMust(email.IsNil())

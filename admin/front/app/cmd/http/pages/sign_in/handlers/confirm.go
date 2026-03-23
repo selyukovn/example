@@ -10,7 +10,7 @@ import (
 )
 
 func NewConfirm(
-	apiClient *gateway.ApiClient,
+	apiClient gateway.ApiClient,
 	redirectUrlForAuthorized string,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

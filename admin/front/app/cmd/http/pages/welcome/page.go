@@ -17,7 +17,7 @@ const Url = "/welcome/"
 // ---------------------------------------------------------------------------------------------------------------------
 
 func Register(
-	apiClient *gateway.ApiClient,
+	apiClient gateway.ApiClient,
 	mux *http.ServeMux,
 	redirectUrlForGuests string,
 ) {
@@ -30,7 +30,7 @@ func Register(
 // ---------------------------------------------------------------------------------------------------------------------
 
 func newRenderer(
-	apiClient *gateway.ApiClient,
+	apiClient gateway.ApiClient,
 	redirectUrlForGuests string,
 ) http.Handler {
 	view := general.MakeView("static/pages/welcome/page.html")
