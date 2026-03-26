@@ -34,8 +34,8 @@ github.com/prometheus/procfs v0.15.1 h1:YagwOFzUgYfKKHX6Dr+sHT7km/hxC76UB0leargg
 github.com/prometheus/procfs v0.15.1/go.mod h1:fB45yRUv8NstnjriLhBQLuOUt+WW4BsoGhij/e3PBqk=
 github.com/selyukovn/go-routiner v0.2.0 h1:GpOy5q0a2VC9Pmw0pPVWEy9N/QSZsCtNkydjwAeqvns=
 github.com/selyukovn/go-routiner v0.2.0/go.mod h1:2KV308gQQW02SElQGqu6nQiTj5/hSQJ9UGODB8r3YKI=
-github.com/selyukovn/go-std v0.3.0 h1:Qz9CNYsgoVhArhIqSpFdm9jezceCYGvkCqD7zmWZHxo=
-github.com/selyukovn/go-std v0.3.0/go.mod h1:b4TXWjeGxAGNY0GDhDqbsxysMvEvr5IUtMboUbngKUw=
+github.com/selyukovn/go-std v0.4.0 h1:tejgFtoLaD6fv3h2iKVksrp0mBynHgTMIE64mAT2tKQ=
+github.com/selyukovn/go-std v0.4.0/go.mod h1:b4TXWjeGxAGNY0GDhDqbsxysMvEvr5IUtMboUbngKUw=
 github.com/selyukovn/go-wm-assert v0.3.0 h1:GEnpM7kYMKeAFeyR/kTHTDHGCiOFVlFJ5Rw0VIeU10o=
 github.com/selyukovn/go-wm-assert v0.3.0/go.mod h1:EWaJjrITgnQ3PCa66s1S5XO54S8pAaShTWlwROnoQR4=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
