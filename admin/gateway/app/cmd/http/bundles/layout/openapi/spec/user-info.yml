@@ -1,0 +1,19 @@
+get:
+  security:
+    - sessId: [ ]
+
+  responses:
+    "200":
+      description: success
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              username:
+                type: string
+              avatar_url:
+                type: string
+                example: https://example.com/avatars/username.jpg
+    "422":
+      $ref: "./common/expected-error.yml"

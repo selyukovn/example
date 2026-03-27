@@ -1,8 +1,10 @@
 package general
 
 import (
+	"example/admin/front/cmd/http/kernel"
 	"example/admin/front/cmd/http/layouts/general/handlers"
 	"example/admin/front/internal/infra/clients/gateway"
+	"github.com/selyukovn/go-std"
 	assert "github.com/selyukovn/go-wm-assert"
 	"html/template"
 	"net/http"
@@ -12,9 +14,10 @@ const pathToTemplate = "static/layouts/general/layout.html"
 const urlSignOut = "/layouts/general/sign-out/"
 
 var config = struct {
-	appName     string
-	menuNameUrl map[string]string
-	isSet       bool
+	appName              string
+	menuNameUrl          map[string]string
+	redirectUrlForGuests string
+	isSet                bool
 }{}
 
 func Register(
@@ -34,12 +37,14 @@ func Register(
 
 	config.appName = appName
 	config.menuNameUrl = menuNameUrl
+	config.redirectUrlForGuests = redirectUrlForGuests
 	config.isSet = true
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 func MakeView(
+	apiClient gateway.ApiClient,
 	pathToPageTemplate string,
 	pathToPageTemplates ...string,
 ) View {
@@ -53,26 +58,67 @@ func MakeView(
 	tpl := template.Must(template.ParseFiles(paths...))
 
 	return View{
-		tpl: tpl,
+		apiClient: apiClient,
+		tpl:       tpl,
 	}
 }
 
 type View struct {
-	tpl *template.Template
+	apiClient gateway.ApiClient
+	tpl       *template.Template
 }
 
-func (v View) Render(w http.ResponseWriter, requestUrlPath string, pageData any) error {
+func (v View) Render(w http.ResponseWriter, r *http.Request, pageData any) error {
+	sessId := kernel.CookieGetSessId(r)
+	if sessId == "" {
+		kernel.Redirect307(w, r, config.redirectUrlForGuests)
+		return nil
+	}
+
+	requestUrlPath := r.URL.Path
+
+	fromIp := kernel.ClientIp(r)
+	fromUag := kernel.ClientUag(r)
+
+	// User info
+	// ----------------------------------------------------------------
+
+	uResp, err := v.apiClient.LayoutUserInfo(fromIp, fromUag, sessId)
+	if err != nil {
+		kernel.Error500(w)
+		return nil
+	} else if uResp.JSON422 != nil && uResp.JSON422.Code == 400 {
+		kernel.Error400(w, uResp.JSON422.Message)
+		return nil
+	} else if uResp.JSON422 != nil && uResp.JSON422.Code == 401 {
+		kernel.CookieUnsetSessId(w)
+		kernel.Redirect307(w, r, config.redirectUrlForGuests)
+		return nil
+	} else if uResp.JSON422 != nil && uResp.JSON422.Code == 403 {
+		kernel.Error403(w, uResp.JSON422.Message)
+		return nil
+	} else if uResp.JSON422 != nil && uResp.JSON422.Code == 404 {
+		kernel.Error404(w, uResp.JSON422.Message)
+		return nil
+	} else if uResp.JSON422 != nil && uResp.JSON422.Code == 422 {
+		kernel.Error422(w, uResp.JSON422.Message)
+		return nil
+	} else {
+		assert.NotNilDeepMust(uResp.JSON200)
+	}
+
+	// todo : рефакторинг : дефолтный аватар-урл понадобится не только тут
+	userPic := std.Ternary(*uResp.JSON200.AvatarUrl == "", "/static/favicon.ico", *uResp.JSON200.AvatarUrl)
+	userName := *uResp.JSON200.Username
+
+	// Menu
+	// ----------------------------------------------------------------
+
 	type MenuItem = struct {
 		IsActive bool
 		Name     string
 		Url      string
 	}
-
-	// --
-
-	// todo : брать из апи
-	userPic := "/static/favicon.ico"
-	userName := "username@example.com"
 
 	menuItems := make([]MenuItem, 0)
 	for name, url := range config.menuNameUrl {
@@ -83,7 +129,7 @@ func (v View) Render(w http.ResponseWriter, requestUrlPath string, pageData any)
 		})
 	}
 
-	// --
+	// ----------------------------------------------------------------
 
 	return v.tpl.Execute(w, struct {
 		AppName    string
