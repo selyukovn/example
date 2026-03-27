@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"example/admin/gateway/cmd/http/bundles/auth"
+	"example/admin/gateway/cmd/http/bundles/layout"
 	"example/admin/gateway/cmd/http/components/monitoring"
 	"example/admin/gateway/cmd/http/components/processing"
 	"example/admin/gateway/cmd/http/components/security"
@@ -29,6 +30,8 @@ func registerRoutes(
 	}
 
 	auth.Register(mux, middlewares, ctr, sec)
+
+	layout.Register(mux, middlewares, ctr, sec)
 
 	mux.Handle("/", http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)

@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	"example/admin/front/internal/infra/clients/gateway/auth"
+	"example/admin/front/internal/infra/clients/gateway/layout"
 	"fmt"
 	"github.com/selyukovn/go-std"
 	assert "github.com/selyukovn/go-wm-assert"
@@ -14,7 +15,8 @@ import (
 // ---------------------------------------------------------------------------------------------------------------------
 
 type ApiClient struct {
-	auth auth.ClientWithResponsesInterface
+	auth   auth.ClientWithResponsesInterface
+	layout layout.ClientWithResponsesInterface
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -25,8 +27,12 @@ func NewApiClient(baseUrl string) ApiClient {
 	authClient, err := auth.NewClientWithResponses(baseUrl)
 	assert.TrueMust(err == nil)
 
+	layoutClient, err := layout.NewClientWithResponses(baseUrl)
+	assert.TrueMust(err == nil)
+
 	return ApiClient{
-		auth: authClient,
+		auth:   authClient,
+		layout: layoutClient,
 	}
 }
 
@@ -114,6 +120,23 @@ func (c ApiClient) AuthSignOut(
 		return nil, err
 	} else if sCode := resp.StatusCode(); sCode != http.StatusOK && sCode != http.StatusUnprocessableEntity {
 		return nil, std.WrapErrorToRuntime(fmt.Errorf("%d : %s", sCode, resp.Status()), c, "AuthSignOut")
+	}
+	return resp, nil
+}
+
+// Layout
+// ---------------------------------------------------------------------------------------------------------------------
+
+func (c ApiClient) LayoutUserInfo(
+	fromIp string,
+	fromUserAgent string,
+	sessId string,
+) (*layout.GetLayoutUserInfoResponse, error) {
+	resp, err := c.layout.GetLayoutUserInfoWithResponse(context.Background(), c.fnAddHeaders(fromIp, fromUserAgent, sessId))
+	if err != nil {
+		return nil, err
+	} else if sCode := resp.StatusCode(); sCode != http.StatusOK && sCode != http.StatusUnprocessableEntity {
+		return nil, std.WrapErrorToRuntime(fmt.Errorf("%d : %s", sCode, resp.Status()), c, "LayoutUserInfo")
 	}
 	return resp, nil
 }

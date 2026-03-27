@@ -33,7 +33,7 @@ func newRenderer(
 	apiClient gateway.ApiClient,
 	redirectUrlForGuests string,
 ) http.Handler {
-	view := general.MakeView("static/pages/welcome/page.html")
+	view := general.MakeView(apiClient, "static/pages/welcome/page.html")
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sessId := kernel.CookieGetSessId(r)
@@ -44,13 +44,7 @@ func newRenderer(
 
 		ctx := r.Context()
 
-		fromIp := kernel.ClientIp(r)
-		fromUag := kernel.ClientUag(r)
-
 		// --
-
-		// todo : проверять доступ через апи ???
-		_, _, _, _ = apiClient, fromIp, fromUag, sessId
 
 		quotes := []string{
 			"Шаг влево, шаг вправо — два шага.",
@@ -63,7 +57,7 @@ func newRenderer(
 
 		// --
 
-		if err := view.Render(w, r.URL.Path, struct {
+		if err := view.Render(w, r, struct {
 			Title string
 			Quote string
 		}{
