@@ -54,8 +54,8 @@ func New(
 	assert.NotNilDeepMust(sqlDb)
 	assert.NotNilDeepMust(sqlDbFnIsDeadlockError)
 	assert.NotNilDeepMust(sqlDbFnIsDuplicateKeyError)
-	assert.NotNilDeepMust(appCfmApiGrpcBaseUrl)
-	assert.NotNilDeepMust(appCfmApiGrpcApiKey)
+	assert.Str().NotEmpty().Must(appCfmApiGrpcBaseUrl)
+	assert.Str().NotEmpty().Must(appCfmApiGrpcApiKey)
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// Infra
