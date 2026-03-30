@@ -16,7 +16,7 @@ loki.source.file "step_1_scrap_master_error" {
 loki.relabel "step_2_labels_master_error" {
   rule {
     target_label = "job"
-    replacement = "admin-storage-mysql-master"
+    replacement = "infrastructure-mysql-master"
   }
   forward_to = [loki.write.step_3_push.receiver]
 }
@@ -36,7 +36,7 @@ loki.source.file "step_1_scrap_master_general" {
 loki.relabel "step_2_labels_master_general" {
   rule {
     target_label = "job"
-    replacement = "admin-storage-mysql-master"
+    replacement = "infrastructure-mysql-master"
   }
   forward_to = [loki.write.step_3_push.receiver]
 }
@@ -56,7 +56,7 @@ loki.source.file "step_1_scrap_master_slow" {
 loki.relabel "step_2_labels_master_slow" {
   rule {
     target_label = "job"
-    replacement = "admin-storage-mysql-master"
+    replacement = "infrastructure-mysql-master"
   }
   forward_to = [loki.write.step_3_push.receiver]
 }
@@ -76,7 +76,7 @@ loki.source.file "step_1_scrap_replica_error" {
 loki.relabel "step_2_labels_replica_error" {
   rule {
     target_label = "job"
-    replacement = "admin-storage-mysql-replica"
+    replacement = "infrastructure-mysql-replica"
   }
   forward_to = [loki.write.step_3_push.receiver]
 }
@@ -96,7 +96,7 @@ loki.source.file "step_1_scrap_replica_general" {
 loki.relabel "step_2_labels_replica_general" {
   rule {
     target_label = "job"
-    replacement = "admin-storage-mysql-replica"
+    replacement = "infrastructure-mysql-replica"
   }
   forward_to = [loki.write.step_3_push.receiver]
 }
@@ -116,7 +116,7 @@ loki.source.file "step_1_scrap_replica_slow" {
 loki.relabel "step_2_labels_replica_slow" {
   rule {
     target_label = "job"
-    replacement = "admin-storage-mysql-replica"
+    replacement = "infrastructure-mysql-replica"
   }
   forward_to = [loki.write.step_3_push.receiver]
 }

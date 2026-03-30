@@ -134,7 +134,7 @@
             "uid": "P1809F7CD0C75ACF3"
           },
           "editorMode": "builder",
-          "expr": "up{job=\"admin-storage-mysql-master\"}",
+          "expr": "up{job=\"infrastructure-mysql-master\"}",
           "hide": false,
           "instant": false,
           "legendFormat": "{{job}}",
@@ -147,7 +147,7 @@
             "uid": "P1809F7CD0C75ACF3"
           },
           "editorMode": "builder",
-          "expr": "up{job=\"admin-storage-mysql-replica\"}",
+          "expr": "up{job=\"infrastructure-mysql-replica\"}",
           "hide": false,
           "instant": false,
           "legendFormat": "{{job}}",

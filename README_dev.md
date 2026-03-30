@@ -46,7 +46,7 @@
 2. Переопределяем нужные сервисы-бд, пробрасывая локальные порты.
    Например,
    ```
-   admin-storage-mysql-replica:
+   infrastructure-mysql-replica:
       ports:
          127.0.0.1:3307:3306
    ```

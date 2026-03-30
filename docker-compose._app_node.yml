@@ -17,7 +17,7 @@ services:
       - ./admin/cfm/state/grpc:/app/admin/cfm/grpc
       - ./admin/cfm/state/sch:/app/admin/cfm/sch
       - ./admin/gateway/state/http:/app/admin/gateway/http
-      - ./admin/storage/state/mysql:/app/admin/storage/mysql
+      - ./infrastructure/mysql/state/server:/app/infrastructure/mysql
     develop:
       watch:
         - action: rebuild

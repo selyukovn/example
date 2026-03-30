@@ -59,7 +59,7 @@ VOLUME /app/admin/auth/sch
 VOLUME /app/admin/cfm/grpc
 VOLUME /app/admin/cfm/sch
 VOLUME /app/admin/gateway/http
-VOLUME /app/admin/storage/mysql
+VOLUME /app/infrastructure/mysql
 
 # --------------------
 # Запуск
