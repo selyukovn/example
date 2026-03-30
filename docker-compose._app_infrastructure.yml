@@ -1,0 +1,85 @@
+name: example
+
+services:
+  # --------------------------------------------------------------------------------------------------------------------
+  # MYSQL
+  # --------------------------------------------------------------------------------------------------------------------
+
+  infrastructure-mysql-master:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: infrastructure/mysql
+      dockerfile: build/server/Dockerfile
+      args:
+        INITIAL_ROOT_PASSWORD: "initial_root_password"
+        SERVER_TYPE: master
+        SERVER_ID: 1
+    volumes:
+      - ./infrastructure/mysql/state/server/master:/var/lib/mysql
+    develop:
+      watch:
+        - action: rebuild
+          path: infrastructure/mysql/build/server/master/custom.cnf
+        - action: rebuild
+          path: infrastructure/mysql/build/server/common.cnf
+        - action: rebuild
+          path: infrastructure/mysql/build/server/Dockerfile
+        - action: rebuild
+          path: infrastructure/mysql/build/server/healthcheck.sh
+
+  # --------------------------------------------------------------------------------------------------------------------
+
+  infrastructure-mysql-replica:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: infrastructure/mysql
+      dockerfile: build/server/Dockerfile
+      args:
+        INITIAL_ROOT_PASSWORD: "initial_root_password"
+        SERVER_TYPE: replica
+        SERVER_ID: 2
+        EXTRA_REPLICA_SOURCE_HOST: "infrastructure-mysql-master"
+    volumes:
+      - ./infrastructure/mysql/state/server/replica:/var/lib/mysql
+    develop:
+      watch:
+        - action: rebuild
+          path: infrastructure/mysql/build/server/replica/custom.cnf
+        - action: rebuild
+          path: infrastructure/mysql/build/server/common.cnf
+        - action: rebuild
+          path: infrastructure/mysql/build/server/Dockerfile
+        - action: rebuild
+          path: infrastructure/mysql/build/server/healthcheck.sh
+
+  # --------------------------------------------------------------------------------------------------------------------
+
+  infrastructure-mysql-prometheus-exporter:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: infrastructure/mysql
+      dockerfile: build/prometheus-exporter/Dockerfile
+      args:
+        MYSQL_USER: ${INFRASTRUCTURE_MYSQL_CLIENT_PROMETHEUS_EXPORTER_USER}
+        MYSQL_PASSWORD: ${INFRASTRUCTURE_MYSQL_CLIENT_PROMETHEUS_EXPORTER_PASSWORD}
+    develop:
+      watch:
+        - action: rebuild
+          path: infrastructure/mysql/build/prometheus-exporter
+
+  # --------------------------------------------------------------------------------------------------------------------
+
+  infrastructure-mysql-logs-exporter:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: infrastructure/mysql
+      dockerfile: build/logs-exporter/Dockerfile
+    volumes:
+      - ./infrastructure/mysql/state/logs-exporter:/state
+      - ./infrastructure/mysql/state/server:/input
+    develop:
+      watch:
+        - action: rebuild
+          path: infrastructure/mysql/build/logs-exporter
+
+  # --------------------------------------------------------------------------------------------------------------------

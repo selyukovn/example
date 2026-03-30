@@ -22,8 +22,8 @@ EXPOSE 3306
 # ----------------------------------------------------------------------------------------------------------------------
 
 # В образе, в конце /etc/my.cnf, есть строка "!includedir /etc/mysql/conf.d/"
-COPY build/mysql/common.cnf                     /etc/mysql/conf.d/common.cnf
-COPY build/mysql/${SERVER_TYPE}/custom.cnf      /etc/mysql/conf.d/custom.cnf
+COPY build/server/common.cnf                     /etc/mysql/conf.d/common.cnf
+COPY build/server/${SERVER_TYPE}/custom.cnf      /etc/mysql/conf.d/custom.cnf
 
 RUN echo "[mysqld]"                          >> /etc/mysql/conf.d/server_id.cnf \
  && echo "server-id=${SERVER_ID}"            >> /etc/mysql/conf.d/server_id.cnf
@@ -33,7 +33,7 @@ RUN echo "[mysqld]"                          >> /etc/mysql/conf.d/server_id.cnf 
 # ----------------------------------------------------------------------------------------------------------------------
 
 # При первом запуске выполнятся в алфавитном порядке файлы из /docker-entrypoint-initdb.d
-COPY build/mysql/${SERVER_TYPE}/init.sql    /docker-entrypoint-initdb.d/init.sql
+COPY build/server/${SERVER_TYPE}/init.sql    /docker-entrypoint-initdb.d/init.sql
 
 RUN sed -i -e "s|__REPLICA_SOURCE_HOST__|${EXTRA_REPLICA_SOURCE_HOST}|g" /docker-entrypoint-initdb.d/init.sql \
  && sed -i -e "s|__REPLICA_SOURCE_PORT__|${EXTRA_REPLICA_SOURCE_PORT}|g" /docker-entrypoint-initdb.d/init.sql
@@ -42,7 +42,7 @@ RUN sed -i -e "s|__REPLICA_SOURCE_HOST__|${EXTRA_REPLICA_SOURCE_HOST}|g" /docker
 # Healthcheck
 # ----------------------------------------------------------------------------------------------------------------------
 
-COPY build/mysql/healthcheck.sh /healthcheck.sh
+COPY build/server/healthcheck.sh /healthcheck.sh
 RUN chmod +x /healthcheck.sh
 
 HEALTHCHECK \

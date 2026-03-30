@@ -6,11 +6,14 @@
 ## Общая структура
 
 - [`admin`](admin) -- приложение-админка.
-   - [`auth`](admin/auth) -- сервис авторизации.
-   - [`cfm`](admin/cfm) -- сервис отправки OTP-кодов подтверждений.
-   - [`front`](admin/front) -- см. [admin/front/README.md](admin/front/README.md).
-   - [`gateway`](admin/gateway) -- api-шлюз для BE, точка входа.
-   - [`storage`](admin/storage) -- общий сервис БД, выделенный в отдельный компонент для простоты использования.
+  - [`auth`](admin/auth) -- сервис авторизации.
+  - [`cfm`](admin/cfm) -- сервис отправки OTP-кодов подтверждений.
+  - [`front`](admin/front) -- см. [admin/front/README.md](admin/front/README.md).
+  - [`gateway`](admin/gateway) -- api-шлюз для BE, точка входа.
+
+
+- [`infrastructure`](infrastructure) -- инфраструктурные элементы, вынесенные отдельно для упрощения.
+  - [`mysql`](infrastructure/mysql)  
 
 
 - [`monitoring`](monitoring) -- приложение для мониторинга системы.

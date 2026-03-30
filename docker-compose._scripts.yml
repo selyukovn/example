@@ -45,40 +45,42 @@ x-prototypes:
     profiles:
       - script-containers
 
-  # Прототип скрипта управления миграциями - admin/storage
-  migrate-admin-storage: &migrate-admin-storage
+  # Прототип скрипта управления миграциями - infrastructure-mysql
+  migrate-infrastructure-mysql: &migrate-infrastructure-mysql
     <<: *script-container
     build:
       context: .migrator
     environment:
-      MYSQL_HOST: admin-storage-mysql-master
-      MYSQL_USER: "${ADMIN_STORAGE_MYSQL_CLIENT_MIGRATION_USER}"
-      MYSQL_PASSWORD: "${ADMIN_STORAGE_MYSQL_CLIENT_MIGRATION_PASSWORD}"
-      MYSQL_DB_AUTH: "${ADMIN_STORAGE_MYSQL_DB_AUTH}"
-      MYSQL_DB_CFM: "${ADMIN_STORAGE_MYSQL_DB_CFM}"
+      MYSQL_HOST: ${INFRASTRUCTURE_MYSQL_HOST_MASTER}
+      MYSQL_USER: ${INFRASTRUCTURE_MYSQL_CLIENT_MIGRATION_USER}
+      MYSQL_PASSWORD: ${INFRASTRUCTURE_MYSQL_CLIENT_MIGRATION_PASSWORD}
+      MYSQL_DB_AUTH: ${INFRASTRUCTURE_MYSQL_DB_AUTH}
+      MYSQL_DB_CFM: ${INFRASTRUCTURE_MYSQL_DB_CFM}
     volumes:
-      - ./admin/storage/migrations:/migrations/scripts
-      - ./admin/storage/state/migrations/state:/migrations/state
-      - ./admin/storage/state/migrations/packages:/migrations/packages
+      - ./infrastructure/mysql/migrations:/migrations/scripts
+      - ./infrastructure/mysql/state/migrations/state:/migrations/state
+      - ./infrastructure/mysql/state/migrations/packages:/migrations/packages
     depends_on:
-      admin-storage-mysql-master:
+      infrastructure-mysql-master:
         condition: service_healthy
         restart: false
     networks:
-      - admin-internal-storage-network
+      - infrastructure-mysql-network
 
 services:
   # --------------------------------------------------------------------------------------------------------------------
   # Управление миграциями
   # --------------------------------------------------------------------------------------------------------------------
 
-  # Admin - Storage
-  script-migrate-admin-storage-new:
-    <<: *migrate-admin-storage
+  # Infrastructure - MySQL
+  script-migrate-infrastructure-mysql-new:
+    <<: *migrate-infrastructure-mysql
     command: new
-  script-migrate-admin-storage-up:
-    <<: *migrate-admin-storage
+  script-migrate-infrastructure-mysql-up:
+    <<: *migrate-infrastructure-mysql
     command: up
-  script-migrate-admin-storage-down:
-    <<: *migrate-admin-storage
+  script-migrate-infrastructure-mysql-down:
+    <<: *migrate-infrastructure-mysql
     command: down
+
+  # --------------------------------------------------------------------------------------------------------------------

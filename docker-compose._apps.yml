@@ -14,7 +14,7 @@ name: example
 networks:
   admin-front-network:            # `front` --> `gateway`
   admin-internal-network:         # `gateway` --> ...внутренние-сервисы... <--> ...внутренние-сервисы ...
-  admin-internal-storage-network: # `admin-storage-mysql-prometheus-exporter` и миграции --> `admin-storage-...`
+  infrastructure-mysql-network:   # `infrastructure-mysql-prometheus-exporter` и миграции --> `infrastructure-...`
   monitoring-internal-network:    # ...внутренние-сервисы... <--> ...внутренние-сервисы ...
   monitoring-logs-network:        # все экспортеры --> loki
   monitoring-metrics-network:     # все экспортеры --> prometheus (см. monitoring/build/prometheus/prometheus.yml).
@@ -116,37 +116,41 @@ services:
     networks:
       - monitoring-logs-network
 
-  # STORAGE
+  # --------------------------------------------------------------------------------------------------------------------
+  # INFRASTRUCTURE
   # --------------------------------------------------------------------------------------------------------------------
 
-  admin-storage-mysql-master:
-    extends:
-      file: docker-compose._app_admin.yml
-      service: admin-storage-mysql-master
-    networks:
-      - admin-internal-network
-      - admin-internal-storage-network
+  # MYSQL
+  # --------------------------------------------------------------------------------------------------------------------
 
-  admin-storage-mysql-replica:
+  infrastructure-mysql-master:
     extends:
-      file: docker-compose._app_admin.yml
-      service: admin-storage-mysql-replica
+      file: docker-compose._app_infrastructure.yml
+      service: infrastructure-mysql-master
     networks:
+      - infrastructure-mysql-network
       - admin-internal-network
-      - admin-internal-storage-network
 
-  admin-storage-mysql-prometheus-exporter:
+  infrastructure-mysql-replica:
     extends:
-      file: docker-compose._app_admin.yml
-      service: admin-storage-mysql-prometheus-exporter
+      file: docker-compose._app_infrastructure.yml
+      service: infrastructure-mysql-replica
     networks:
-      - admin-internal-storage-network
+      - infrastructure-mysql-network
+      - admin-internal-network
+
+  infrastructure-mysql-prometheus-exporter:
+    extends:
+      file: docker-compose._app_infrastructure.yml
+      service: infrastructure-mysql-prometheus-exporter
+    networks:
+      - infrastructure-mysql-network
       - monitoring-metrics-network
 
-  admin-storage-logs-exporter:
+  infrastructure-mysql-logs-exporter:
     extends:
-      file: docker-compose._app_admin.yml
-      service: admin-storage-logs-exporter
+      file: docker-compose._app_infrastructure.yml
+      service: infrastructure-mysql-logs-exporter
     build:
       args:
         LOKI_BASEURL: "http://monitoring-loki:3100"

@@ -67,24 +67,25 @@ scrape_configs:
       - targets: ["admin-gateway-http:8080"]
     metrics_path: "/prometheus-metrics"
 
-  # STORAGE
+  # --------------------------------------------------------------------------------------------------------------------
+  # INFRASTRUCTURE
   # --------------------------------------------------------------------------------------------------------------------
 
-  - job_name: admin-storage-mysql-master
+  - job_name: infrastructure-mysql-master
     metrics_path: /probe
     params:
-      target: [ admin-storage-mysql-master:3306 ]
+      target: [ infrastructure-mysql-master:3306 ]
       auth_module: [ client.master ]
     static_configs:
-      - targets: ["admin-storage-mysql-prometheus-exporter:9104"]
+      - targets: ["infrastructure-mysql-prometheus-exporter:9104"]
 
-  - job_name: admin-storage-mysql-replica
+  - job_name: infrastructure-mysql-replica
     metrics_path: /probe
     params:
-      target: [ admin-storage-mysql-replica:3306 ]
+      target: [ infrastructure-mysql-replica:3306 ]
       auth_module: [ client.replica ]
     static_configs:
-      - targets: ["admin-storage-mysql-prometheus-exporter:9104"]
+      - targets: ["infrastructure-mysql-prometheus-exporter:9104"]
 
   # --------------------------------------------------------------------------------------------------------------------
   # NODE

@@ -11,11 +11,11 @@ services:
       context: admin/auth
       dockerfile: build/grpc/Dockerfile
     environment:
-      MYSQL_HOST_MASTER: "admin-storage-mysql-master"
-      MYSQL_HOST_REPLICA: "admin-storage-mysql-replica"
-      MYSQL_USER: ${ADMIN_STORAGE_MYSQL_CLIENT_APP_USER}
-      MYSQL_PASSWORD: ${ADMIN_STORAGE_MYSQL_CLIENT_APP_PASSWORD}
-      MYSQL_DB: ${ADMIN_STORAGE_MYSQL_DB_AUTH}
+      MYSQL_HOST_MASTER: ${INFRASTRUCTURE_MYSQL_HOST_MASTER}
+      MYSQL_HOST_REPLICA: ${INFRASTRUCTURE_MYSQL_HOST_REPLICA}
+      MYSQL_USER: ${INFRASTRUCTURE_MYSQL_CLIENT_APP_USER}
+      MYSQL_PASSWORD: ${INFRASTRUCTURE_MYSQL_CLIENT_APP_PASSWORD}
+      MYSQL_DB: ${INFRASTRUCTURE_MYSQL_DB_AUTH}
       API_GRPC_APIKEY: ${ADMIN_AUTH_API_GRPC_APIKEY}
       SERVICE_CFM_API_GRPC_BASEURL: "admin-cfm-grpc:50051"
       SERVICE_CFM_API_GRPC_APIKEY: ${ADMIN_CFM_API_GRPC_APIKEY}
@@ -36,11 +36,11 @@ services:
       context: admin/auth
       dockerfile: build/sch/Dockerfile
     environment:
-      MYSQL_HOST_MASTER: "admin-storage-mysql-master"
-      MYSQL_HOST_REPLICA: "admin-storage-mysql-replica"
-      MYSQL_USER: ${ADMIN_STORAGE_MYSQL_CLIENT_APP_USER}
-      MYSQL_PASSWORD: ${ADMIN_STORAGE_MYSQL_CLIENT_APP_PASSWORD}
-      MYSQL_DB: ${ADMIN_STORAGE_MYSQL_DB_AUTH}
+      MYSQL_HOST_MASTER: ${INFRASTRUCTURE_MYSQL_HOST_MASTER}
+      MYSQL_HOST_REPLICA: ${INFRASTRUCTURE_MYSQL_HOST_REPLICA}
+      MYSQL_USER: ${INFRASTRUCTURE_MYSQL_CLIENT_APP_USER}
+      MYSQL_PASSWORD: ${INFRASTRUCTURE_MYSQL_CLIENT_APP_PASSWORD}
+      MYSQL_DB: ${INFRASTRUCTURE_MYSQL_DB_AUTH}
     volumes:
       - ./admin/auth/state/sch:/state
     develop:
@@ -76,10 +76,10 @@ services:
       context: admin/cfm
       dockerfile: build/grpc/Dockerfile
     environment:
-      MYSQL_HOST: "admin-storage-mysql-master"
-      MYSQL_USER: ${ADMIN_STORAGE_MYSQL_CLIENT_APP_USER}
-      MYSQL_PASSWORD: ${ADMIN_STORAGE_MYSQL_CLIENT_APP_PASSWORD}
-      MYSQL_DB: ${ADMIN_STORAGE_MYSQL_DB_CFM}
+      MYSQL_HOST: ${INFRASTRUCTURE_MYSQL_HOST_MASTER}
+      MYSQL_USER: ${INFRASTRUCTURE_MYSQL_CLIENT_APP_USER}
+      MYSQL_PASSWORD: ${INFRASTRUCTURE_MYSQL_CLIENT_APP_PASSWORD}
+      MYSQL_DB: ${INFRASTRUCTURE_MYSQL_DB_CFM}
       API_GRPC_APIKEY: ${ADMIN_CFM_API_GRPC_APIKEY}
     volumes:
       - ./admin/cfm/state/grpc:/state
@@ -98,10 +98,10 @@ services:
       context: admin/cfm
       dockerfile: build/sch/Dockerfile
     environment:
-      MYSQL_HOST: "admin-storage-mysql-master"
-      MYSQL_USER: ${ADMIN_STORAGE_MYSQL_CLIENT_APP_USER}
-      MYSQL_PASSWORD: ${ADMIN_STORAGE_MYSQL_CLIENT_APP_PASSWORD}
-      MYSQL_DB: ${ADMIN_STORAGE_MYSQL_DB_CFM}
+      MYSQL_HOST: ${INFRASTRUCTURE_MYSQL_HOST_MASTER}
+      MYSQL_USER: ${INFRASTRUCTURE_MYSQL_CLIENT_APP_USER}
+      MYSQL_PASSWORD: ${INFRASTRUCTURE_MYSQL_CLIENT_APP_PASSWORD}
+      MYSQL_DB: ${INFRASTRUCTURE_MYSQL_DB_CFM}
       API_GRPC_APIKEY: ${ADMIN_CFM_API_GRPC_APIKEY}
     volumes:
       - ./admin/cfm/state/sch:/state
@@ -184,86 +184,5 @@ services:
       watch:
         - action: rebuild
           path: admin/gateway/build/logs-exporter
-
-  # --------------------------------------------------------------------------------------------------------------------
-  # STORAGE
-  # --------------------------------------------------------------------------------------------------------------------
-
-  admin-storage-mysql-master:
-    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
-    build:
-      context: admin/storage
-      dockerfile: build/mysql/Dockerfile
-      args:
-        INITIAL_ROOT_PASSWORD: "initial_root_password"
-        SERVER_TYPE: master
-        SERVER_ID: 1
-    volumes:
-      - ./admin/storage/state/mysql/master:/var/lib/mysql
-    develop:
-      watch:
-        - action: rebuild
-          path: admin/storage/build/mysql/master/custom.cnf
-        - action: rebuild
-          path: admin/storage/build/mysql/common.cnf
-        - action: rebuild
-          path: admin/storage/build/mysql/Dockerfile
-        - action: rebuild
-          path: admin/storage/build/mysql/healthcheck.sh
-
-  # --------------------------------------------------------------------------------------------------------------------
-
-  admin-storage-mysql-replica:
-    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
-    build:
-      context: admin/storage
-      dockerfile: build/mysql/Dockerfile
-      args:
-        INITIAL_ROOT_PASSWORD: "initial_root_password"
-        SERVER_TYPE: replica
-        SERVER_ID: 2
-        EXTRA_REPLICA_SOURCE_HOST: "admin-storage-mysql-master"
-    volumes:
-      - ./admin/storage/state/mysql/replica:/var/lib/mysql
-    develop:
-      watch:
-        - action: rebuild
-          path: admin/storage/build/mysql/replica/custom.cnf
-        - action: rebuild
-          path: admin/storage/build/mysql/common.cnf
-        - action: rebuild
-          path: admin/storage/build/mysql/Dockerfile
-        - action: rebuild
-          path: admin/storage/build/mysql/healthcheck.sh
-
-  # --------------------------------------------------------------------------------------------------------------------
-
-  admin-storage-mysql-prometheus-exporter:
-    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
-    build:
-      context: admin/storage
-      dockerfile: build/mysql-prometheus-exporter/Dockerfile
-      args:
-        MYSQL_USER: ${ADMIN_STORAGE_MYSQL_CLIENT_PROMETHEUS_EXPORTER_USER}
-        MYSQL_PASSWORD: ${ADMIN_STORAGE_MYSQL_CLIENT_PROMETHEUS_EXPORTER_PASSWORD}
-    develop:
-      watch:
-        - action: rebuild
-          path: admin/storage/build/mysql-prometheus-exporter
-
-  # --------------------------------------------------------------------------------------------------------------------
-
-  admin-storage-logs-exporter:
-    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
-    build:
-      context: admin/storage
-      dockerfile: build/logs-exporter/Dockerfile
-    volumes:
-      - ./admin/storage/state/logs-exporter:/state
-      - ./admin/storage/state/mysql:/input
-    develop:
-      watch:
-        - action: rebuild
-          path: admin/storage/build/logs-exporter
 
   # --------------------------------------------------------------------------------------------------------------------
