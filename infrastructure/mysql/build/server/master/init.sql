@@ -22,6 +22,17 @@ GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO 'docker_prometheus_exporter_
 FLUSH PRIVILEGES;
 
 ########################################################################################################################
+# KAFKA-CONNECT
+########################################################################################################################
+
+# https://debezium.io/documentation/reference/3.5/connectors/mysql.html#mysql-creating-user
+# Kafka-Connect может применяться для различных целей, поэтому ограничений на конкретные схемы и таблицы нет.
+CREATE USER 'docker_kafka_connect_user'@'172.16.0.0/255.240.0.0' IDENTIFIED BY 'docker_kafka_connect_password';
+GRANT SELECT, RELOAD, SHOW DATABASES, REPLICATION SLAVE, REPLICATION CLIENT
+    ON *.* TO 'docker_kafka_connect_user'@'172.16.0.0/255.240.0.0';
+FLUSH PRIVILEGES;
+
+########################################################################################################################
 # HEALTHCHECK
 ########################################################################################################################
 

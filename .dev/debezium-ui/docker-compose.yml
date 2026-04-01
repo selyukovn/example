@@ -1,0 +1,21 @@
+name: example
+
+services:
+  # https://debezium.io/documentation//reference/stable/operations/debezium-ui.html
+  dev-tools-debezium-ui:
+    # user в исходном образе свой, а у передаваемого не будет прав на запуск,
+    # поэтому возникнет ошибка "/bin/sh: /deployments/run-java.sh: Permission denied".
+    # А поскольку логи и данные этого контейнера неважны, то и смысла что-то менять нет.
+    # user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      KAFKA_CONNECT_URIS: "http://infrastructure-kafka-connect:8083"
+    networks:
+      - infrastructure-kafka-network
+    # ports:
+    #   - 127.0.0.1:8003:8080
+    depends_on:
+      infrastructure-kafka-connect:
+        condition: service_healthy

@@ -15,6 +15,7 @@ networks:
   admin-front-network:            # `front` --> `gateway`
   admin-internal-network:         # `gateway` --> ...внутренние-сервисы... <--> ...внутренние-сервисы ...
   infrastructure-mysql-network:   # `infrastructure-mysql-prometheus-exporter` и миграции --> `infrastructure-...`
+  infrastructure-kafka-network:   # `infrastructure-kafka-...` между собой и миграциями
   monitoring-internal-network:    # ...внутренние-сервисы... <--> ...внутренние-сервисы ...
   monitoring-logs-network:        # все экспортеры --> loki
   monitoring-metrics-network:     # все экспортеры --> prometheus (см. monitoring/build/prometheus/prometheus.yml).
@@ -119,6 +120,81 @@ services:
   # --------------------------------------------------------------------------------------------------------------------
   # INFRASTRUCTURE
   # --------------------------------------------------------------------------------------------------------------------
+
+  # KAFKA
+  # --------------------------------------------------------------------------------------------------------------------
+
+  infrastructure-kafka-broker-a:
+    extends:
+      file: docker-compose._app_infrastructure.yml
+      service: infrastructure-kafka-broker-a
+    networks:
+      - infrastructure-kafka-network
+      - admin-internal-network
+
+  infrastructure-kafka-broker-b:
+    extends:
+      file: docker-compose._app_infrastructure.yml
+      service: infrastructure-kafka-broker-b
+    networks:
+      - infrastructure-kafka-network
+      - admin-internal-network
+
+  infrastructure-kafka-broker-c:
+    extends:
+      file: docker-compose._app_infrastructure.yml
+      service: infrastructure-kafka-broker-c
+    networks:
+      - infrastructure-kafka-network
+      - admin-internal-network
+
+  infrastructure-kafka-connect:
+    extends:
+      file: docker-compose._app_infrastructure.yml
+      service: infrastructure-kafka-connect
+    networks:
+      - infrastructure-mysql-network
+      - infrastructure-kafka-network
+      - monitoring-metrics-network
+
+  infrastructure-kafka-controller-a:
+    extends:
+      file: docker-compose._app_infrastructure.yml
+      service: infrastructure-kafka-controller-a
+    networks:
+      - infrastructure-kafka-network
+
+  infrastructure-kafka-controller-b:
+    extends:
+      file: docker-compose._app_infrastructure.yml
+      service: infrastructure-kafka-controller-b
+    networks:
+      - infrastructure-kafka-network
+
+  infrastructure-kafka-controller-c:
+    extends:
+      file: docker-compose._app_infrastructure.yml
+      service: infrastructure-kafka-controller-c
+    networks:
+      - infrastructure-kafka-network
+
+  infrastructure-kafka-logs-exporter:
+    extends:
+      file: docker-compose._app_infrastructure.yml
+      service: infrastructure-kafka-logs-exporter
+    build:
+      args:
+        LOKI_BASEURL: "http://monitoring-loki:3100"
+    networks:
+      - monitoring-logs-network
+
+  infrastructure-kafka-prometheus-exporter:
+    extends:
+      file: docker-compose._app_infrastructure.yml
+      service: infrastructure-kafka-prometheus-exporter
+    networks:
+      - infrastructure-kafka-network
+      - monitoring-metrics-network
 
   # MYSQL
   # --------------------------------------------------------------------------------------------------------------------

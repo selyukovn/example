@@ -13,7 +13,8 @@
 
 
 - [`infrastructure`](infrastructure) -- инфраструктурные элементы, вынесенные отдельно для упрощения.
-  - [`mysql`](infrastructure/mysql)  
+  - [`kafka`](infrastructure/kafka)
+  - [`mysql`](infrastructure/mysql)
 
 
 - [`monitoring`](monitoring) -- приложение для мониторинга системы.

@@ -1,0 +1,28 @@
+name: example
+
+services:
+  dev-tools-kafka-ui:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      KAFKA_CLUSTERS_0_NAME: ${INFRASTRUCTURE_KAFKA_CLUSTER_ID}
+      KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS: "BROKER://infrastructure-kafka-broker-a:9092,BROKER://infrastructure-kafka-broker-b:9092,BROKER://infrastructure-kafka-broker-c:9092"
+    networks:
+      - infrastructure-kafka-network
+    # ports:
+    #   - 127.0.0.1:8003:8080
+    depends_on:
+      infrastructure-kafka-broker-a:
+        condition: service_healthy
+      infrastructure-kafka-broker-b:
+        condition: service_healthy
+      infrastructure-kafka-broker-c:
+        condition: service_healthy
+      infrastructure-kafka-controller-a:
+        condition: service_healthy
+      infrastructure-kafka-controller-b:
+        condition: service_healthy
+      infrastructure-kafka-controller-c:
+        condition: service_healthy

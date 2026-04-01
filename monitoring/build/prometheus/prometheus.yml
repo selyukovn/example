@@ -71,6 +71,20 @@ scrape_configs:
   # INFRASTRUCTURE
   # --------------------------------------------------------------------------------------------------------------------
 
+  # KAFKA
+  # --------------------------------------------------------------------------------------------------------------------
+
+  - job_name: infrastructure-kafka-server
+    static_configs:
+      - targets: ["infrastructure-kafka-prometheus-exporter:9308"]
+
+  - job_name: infrastructure-kafka-connect
+    static_configs:
+      - targets: ["infrastructure-kafka-connect:7073"]
+
+  # MYSQL
+  # --------------------------------------------------------------------------------------------------------------------
+
   - job_name: infrastructure-mysql-master
     metrics_path: /probe
     params:
@@ -119,3 +133,5 @@ scrape_configs:
   - job_name: monitoring-prometheus
     static_configs:
       - targets: ['localhost:9090']
+
+  # --------------------------------------------------------------------------------------------------------------------
