@@ -1,0 +1,134 @@
+// https://grafana.com/docs/alloy/latest/tutorials/send-logs-to-loki/
+// https://grafana.com/docs/alloy/latest/tutorials/logs-and-relabeling-basics/
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Broker-A
+// ---------------------------------------------------------------------------------------------------------------------
+
+local.file_match "broker_a_step_0_files" {
+  path_targets = [{"__path__" = "/input/broker-a/root.log"}, {"__path__" = "/input/broker-a/logger.log"}]
+  sync_period = "5s"
+}
+loki.source.file "broker_a_step_1_scrap" {
+  targets    = local.file_match.broker_a_step_0_files.targets
+  forward_to = [loki.relabel.broker_a_step_2_labels.receiver]
+}
+loki.relabel "broker_a_step_2_labels" {
+  rule {
+    target_label = "job"
+    replacement = "infrastructure-kafka-broker-a"
+  }
+  forward_to = [loki.write.step_3_push.receiver]
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Broker-B
+// ---------------------------------------------------------------------------------------------------------------------
+
+local.file_match "broker_b_step_0_files" {
+  path_targets = [{"__path__" = "/input/broker-b/root.log"}, {"__path__" = "/input/broker-b/logger.log"}]
+  sync_period = "5s"
+}
+loki.source.file "broker_b_step_1_scrap" {
+  targets    = local.file_match.broker_b_step_0_files.targets
+  forward_to = [loki.relabel.broker_b_step_2_labels.receiver]
+}
+loki.relabel "broker_b_step_2_labels" {
+  rule {
+    target_label = "job"
+    replacement = "infrastructure-kafka-broker-b"
+  }
+  forward_to = [loki.write.step_3_push.receiver]
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Broker-C
+// ---------------------------------------------------------------------------------------------------------------------
+
+local.file_match "broker_c_step_0_files" {
+  path_targets = [{"__path__" = "/input/broker-c/root.log"}, {"__path__" = "/input/broker-c/logger.log"}]
+  sync_period = "5s"
+}
+loki.source.file "broker_c_step_1_scrap" {
+  targets    = local.file_match.broker_c_step_0_files.targets
+  forward_to = [loki.relabel.broker_c_step_2_labels.receiver]
+}
+loki.relabel "broker_c_step_2_labels" {
+  rule {
+    target_label = "job"
+    replacement = "infrastructure-kafka-broker-c"
+  }
+  forward_to = [loki.write.step_3_push.receiver]
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Controller-A
+// ---------------------------------------------------------------------------------------------------------------------
+
+local.file_match "controller_a_step_0_files" {
+  path_targets = [{"__path__" = "/input/controller-a/root.log"}, {"__path__" = "/input/controller-a/logger.log"}]
+  sync_period = "5s"
+}
+loki.source.file "controller_a_step_1_scrap" {
+  targets    = local.file_match.controller_a_step_0_files.targets
+  forward_to = [loki.relabel.controller_a_step_2_labels.receiver]
+}
+loki.relabel "controller_a_step_2_labels" {
+  rule {
+    target_label = "job"
+    replacement = "infrastructure-kafka-controller-a"
+  }
+  forward_to = [loki.write.step_3_push.receiver]
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Controller-B
+// ---------------------------------------------------------------------------------------------------------------------
+
+local.file_match "controller_b_step_0_files" {
+  path_targets = [{"__path__" = "/input/controller-b/root.log"}, {"__path__" = "/input/controller-b/logger.log"}]
+  sync_period = "5s"
+}
+loki.source.file "controller_b_step_1_scrap" {
+  targets    = local.file_match.controller_b_step_0_files.targets
+  forward_to = [loki.relabel.controller_b_step_2_labels.receiver]
+}
+loki.relabel "controller_b_step_2_labels" {
+  rule {
+    target_label = "job"
+    replacement = "infrastructure-kafka-controller-b"
+  }
+  forward_to = [loki.write.step_3_push.receiver]
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Controller-C
+// ---------------------------------------------------------------------------------------------------------------------
+
+local.file_match "controller_c_step_0_files" {
+  path_targets = [{"__path__" = "/input/controller-c/root.log"}, {"__path__" = "/input/controller-c/logger.log"}]
+  sync_period = "5s"
+}
+loki.source.file "controller_c_step_1_scrap" {
+  targets    = local.file_match.controller_c_step_0_files.targets
+  forward_to = [loki.relabel.controller_c_step_2_labels.receiver]
+}
+loki.relabel "controller_c_step_2_labels" {
+  rule {
+    target_label = "job"
+    replacement = "infrastructure-kafka-controller-c"
+  }
+  forward_to = [loki.write.step_3_push.receiver]
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// LOKI
+// ---------------------------------------------------------------------------------------------------------------------
+
+loki.write "step_3_push" {
+  endpoint {
+    url = "__LOKI_BASEURL__/loki/api/v1/push"
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
