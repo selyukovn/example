@@ -45,6 +45,50 @@ x-prototypes:
     profiles:
       - script-containers
 
+  # Прототип скрипта управления миграциями - infrastructure-kafka
+  migrate-infrastructure-kafka: &migrate-infrastructure-kafka
+    <<: *script-container
+    build:
+      context: .migrator
+    environment:
+      KAFKA_CONNECT_BASE_URL: infrastructure-kafka-connect:8083
+      MYSQL_HOST: ${INFRASTRUCTURE_MYSQL_HOST_MASTER}
+      MYSQL_USER: ${INFRASTRUCTURE_MYSQL_CLIENT_KAFKA_CONNECT_USER}
+      MYSQL_PASSWORD: ${INFRASTRUCTURE_MYSQL_CLIENT_KAFKA_CONNECT_PASSWORD}
+      KAFKA_BROKERS: "BROKER://infrastructure-kafka-broker-a:9092,BROKER://infrastructure-kafka-broker-b:9092,BROKER://infrastructure-kafka-broker-c:9092"
+    volumes:
+      - ./infrastructure/kafka/migrations:/migrations/scripts
+      - ./infrastructure/kafka/state/migrations/state:/migrations/state
+      - ./infrastructure/kafka/state/migrations/packages:/migrations/packages
+    networks:
+      - infrastructure-kafka-network
+    depends_on:
+      infrastructure-kafka-broker-a:
+        condition: service_healthy
+        restart: false
+      infrastructure-kafka-broker-b:
+        condition: service_healthy
+        restart: false
+      infrastructure-kafka-broker-c:
+        condition: service_healthy
+        restart: false
+      infrastructure-kafka-connect:
+        condition: service_healthy
+        restart: false
+      infrastructure-kafka-controller-a:
+        condition: service_healthy
+        restart: false
+      infrastructure-kafka-controller-b:
+        condition: service_healthy
+        restart: false
+      infrastructure-kafka-controller-c:
+        condition: service_healthy
+        restart: false
+      infrastructure-mysql-master:
+        condition: service_healthy
+      infrastructure-mysql-replica:
+        condition: service_healthy
+
   # Прототип скрипта управления миграциями - infrastructure-mysql
   migrate-infrastructure-mysql: &migrate-infrastructure-mysql
     <<: *script-container
@@ -70,6 +114,19 @@ x-prototypes:
 services:
   # --------------------------------------------------------------------------------------------------------------------
   # Управление миграциями
+  # --------------------------------------------------------------------------------------------------------------------
+
+  # Infrastructure - Kafka
+  script-migrate-infrastructure-kafka-new:
+    <<: *migrate-infrastructure-kafka
+    command: new
+  script-migrate-infrastructure-kafka-up:
+    <<: *migrate-infrastructure-kafka
+    command: up
+  script-migrate-infrastructure-kafka-down:
+    <<: *migrate-infrastructure-kafka
+    command: down
+
   # --------------------------------------------------------------------------------------------------------------------
 
   # Infrastructure - MySQL

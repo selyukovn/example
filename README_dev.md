@@ -85,6 +85,38 @@
 
 Доступные инструменты см. в [`.dev/tools/docker-compose.yml`](.dev/tools/docker-compose.yml).
 
+### Kafka UI
+
+https://github.com/kafbat/kafka-ui
+
+1. Создать `docker-compose.override.yml`.
+2. Расширить сервис `dev-tools-kafka-ui` из [`.dev/kafka-ui/docker-compose.yml`](.dev/kafka-ui/docker-compose.yml),
+   пробросив порт на `8080`-порт контейнера. Например,
+   ```
+   dev-tools-kafka-ui:
+      extends:
+         file: .dev/kafka-ui/Dockerfile
+         service: dev-tools-kafka-ui
+      ports:
+         - 127.0.0.1:8003:8080
+   ```
+
+### Debezium UI
+
+https://debezium.io/documentation//reference/stable/operations/debezium-ui.html
+
+1. Создать `docker-compose.override.yml`. 
+2. Расширить сервис `dev-tools-debezium-ui` из [`.dev/debezium-ui/docker-compose.yml`](.dev/debezium-ui/docker-compose.yml),
+   пробросив порт на `8080`-порт контейнера. Например, 
+   ```
+   dev-tools-debezium-ui:
+      extends:
+         file: .dev/debezium-ui/Dockerfile
+         service: dev-tools-debezium-ui
+      ports:
+         - 127.0.0.1:8003:8080
+   ```
+
 ------------------------------------------------------------------------------------------------------------------------
 
 ## Создание нового компонента

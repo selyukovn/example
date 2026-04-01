@@ -2,6 +2,245 @@ name: example
 
 services:
   # --------------------------------------------------------------------------------------------------------------------
+  # KAFKA
+  # https://docs.confluent.io/platform/current/installation/docker/config-reference.html
+  # --------------------------------------------------------------------------------------------------------------------
+
+  # Brokers
+  # --------------------------------------------------------------------------------------------------------------------
+
+  infrastructure-kafka-broker-a:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: infrastructure/kafka
+      dockerfile: build/server/Dockerfile
+      args:
+        CLUSTER_ID: ${INFRASTRUCTURE_KAFKA_CLUSTER_ID}
+    environment:
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,BROKER:PLAINTEXT"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "BROKER"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "101@infrastructure-kafka-controller-a:9092,102@infrastructure-kafka-controller-b:9092,103@infrastructure-kafka-controller-c:9092"
+      KAFKA_NODE_ID: 201
+      KAFKA_PROCESS_ROLES: "broker"
+      KAFKA_LISTENERS: "BROKER://0.0.0.0:9092"
+      KAFKA_ADVERTISED_LISTENERS: "BROKER://infrastructure-kafka-broker-a:9092"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 1
+    volumes:
+      - ./infrastructure/kafka/state/broker-a/data:/var/lib/kafka/data
+      - ./infrastructure/kafka/state/broker-a/logs:/var/log/kafka/custom
+    develop:
+      watch:
+        - action: rebuild
+          path: infrastructure/kafka/build/server
+
+  infrastructure-kafka-broker-b:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: infrastructure/kafka
+      dockerfile: build/server/Dockerfile
+      args:
+        CLUSTER_ID: ${INFRASTRUCTURE_KAFKA_CLUSTER_ID}
+    environment:
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,BROKER:PLAINTEXT"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "BROKER"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "101@infrastructure-kafka-controller-a:9092,102@infrastructure-kafka-controller-b:9092,103@infrastructure-kafka-controller-c:9092"
+      KAFKA_NODE_ID: 202
+      KAFKA_PROCESS_ROLES: "broker"
+      KAFKA_LISTENERS: "BROKER://0.0.0.0:9092"
+      KAFKA_ADVERTISED_LISTENERS: "BROKER://infrastructure-kafka-broker-b:9092"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 1
+    volumes:
+      - ./infrastructure/kafka/state/broker-b/data:/var/lib/kafka/data
+      - ./infrastructure/kafka/state/broker-b/logs:/var/log/kafka/custom
+    develop:
+      watch:
+        - action: rebuild
+          path: infrastructure/kafka/build/server
+
+  infrastructure-kafka-broker-c:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: infrastructure/kafka
+      dockerfile: build/server/Dockerfile
+      args:
+        CLUSTER_ID: ${INFRASTRUCTURE_KAFKA_CLUSTER_ID}
+    environment:
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,BROKER:PLAINTEXT"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "BROKER"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "101@infrastructure-kafka-controller-a:9092,102@infrastructure-kafka-controller-b:9092,103@infrastructure-kafka-controller-c:9092"
+      KAFKA_NODE_ID: 203
+      KAFKA_PROCESS_ROLES: "broker"
+      KAFKA_LISTENERS: "BROKER://0.0.0.0:9092"
+      KAFKA_ADVERTISED_LISTENERS: "BROKER://infrastructure-kafka-broker-c:9092"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 1
+    volumes:
+      - ./infrastructure/kafka/state/broker-c/data:/var/lib/kafka/data
+      - ./infrastructure/kafka/state/broker-c/logs:/var/log/kafka/custom
+    develop:
+      watch:
+        - action: rebuild
+          path: infrastructure/kafka/build/server
+
+  # Connect
+  # --------------------------------------------------------------------------------------------------------------------
+
+  infrastructure-kafka-connect:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: infrastructure/kafka
+      dockerfile: build/connect/Dockerfile
+    environment:
+      MYSQL_HOST: infrastructure-mysql-master
+      MYSQL_PORT: 3306
+      MYSQL_USER: ${INFRASTRUCTURE_MYSQL_CLIENT_KAFKA_CONNECT_USER}
+      MYSQL_PASSWORD: ${INFRASTRUCTURE_MYSQL_CLIENT_KAFKA_CONNECT_PASSWORD}
+      CONNECT_REST_ADVERTISED_HOST_NAME: infrastructure-kafka-connect
+      CONNECT_BOOTSTRAP_SERVERS: "BROKER://infrastructure-kafka-broker-a:9092,BROKER://infrastructure-kafka-broker-b:9092,BROKER://infrastructure-kafka-broker-c:9092"
+    volumes:
+      - ./infrastructure/kafka/state/connect/data:/var/lib/kafka/data
+    depends_on:
+      infrastructure-kafka-broker-a:
+        condition: service_healthy
+      infrastructure-kafka-broker-b:
+        condition: service_healthy
+      infrastructure-kafka-broker-c:
+        condition: service_healthy
+      infrastructure-kafka-controller-a:
+        condition: service_healthy
+      infrastructure-kafka-controller-b:
+        condition: service_healthy
+      infrastructure-kafka-controller-c:
+        condition: service_healthy
+      infrastructure-mysql-master:
+        condition: service_healthy
+      infrastructure-mysql-replica:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: rebuild
+          path: infrastructure/kafka/build/connect
+
+  # Controllers
+  # --------------------------------------------------------------------------------------------------------------------
+
+  infrastructure-kafka-controller-a:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: infrastructure/kafka
+      dockerfile: build/server/Dockerfile
+      args:
+        CLUSTER_ID: ${INFRASTRUCTURE_KAFKA_CLUSTER_ID}
+    environment:
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,BROKER:PLAINTEXT"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "101@infrastructure-kafka-controller-a:9093,102@infrastructure-kafka-controller-b:9093,103@infrastructure-kafka-controller-c:9093"
+      KAFKA_NODE_ID: 101
+      KAFKA_PROCESS_ROLES: "controller"
+      KAFKA_LISTENERS: "CONTROLLER://0.0.0.0:9092"
+    volumes:
+      - ./infrastructure/kafka/state/controller-a/data:/var/lib/kafka/data
+      - ./infrastructure/kafka/state/controller-a/logs:/var/log/kafka/custom
+    develop:
+      watch:
+        - action: rebuild
+          path: infrastructure/kafka/build/server
+
+  infrastructure-kafka-controller-b:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: infrastructure/kafka
+      dockerfile: build/server/Dockerfile
+      args:
+        CLUSTER_ID: ${INFRASTRUCTURE_KAFKA_CLUSTER_ID}
+    environment:
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,BROKER:PLAINTEXT"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "101@infrastructure-kafka-controller-a:9093,102@infrastructure-kafka-controller-b:9093,103@infrastructure-kafka-controller-c:9093"
+      KAFKA_NODE_ID: 102
+      KAFKA_PROCESS_ROLES: "controller"
+      KAFKA_LISTENERS: "CONTROLLER://0.0.0.0:9092"
+    volumes:
+      - ./infrastructure/kafka/state/controller-b/data:/var/lib/kafka/data
+      - ./infrastructure/kafka/state/controller-b/logs:/var/log/kafka/custom
+    develop:
+      watch:
+        - action: rebuild
+          path: infrastructure/kafka/build/server
+
+  infrastructure-kafka-controller-c:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: infrastructure/kafka
+      dockerfile: build/server/Dockerfile
+      args:
+        CLUSTER_ID: ${INFRASTRUCTURE_KAFKA_CLUSTER_ID}
+    environment:
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,BROKER:PLAINTEXT"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "101@infrastructure-kafka-controller-a:9092,102@infrastructure-kafka-controller-b:9092,103@infrastructure-kafka-controller-c:9092"
+      KAFKA_NODE_ID: 103
+      KAFKA_PROCESS_ROLES: "controller"
+      KAFKA_LISTENERS: "CONTROLLER://0.0.0.0:9092"
+    volumes:
+      - ./infrastructure/kafka/state/controller-c/data:/var/lib/kafka/data
+      - ./infrastructure/kafka/state/controller-c/logs:/var/log/kafka/custom
+    develop:
+      watch:
+        - action: rebuild
+          path: infrastructure/kafka/build/server
+
+  # Logs
+  # --------------------------------------------------------------------------------------------------------------------
+
+  infrastructure-kafka-logs-exporter:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: infrastructure/kafka
+      dockerfile: build/logs-exporter/Dockerfile
+    volumes:
+      - ./infrastructure/kafka/state/logs-exporter:/state
+      - ./infrastructure/kafka/state/broker-a/logs:/input/broker-a
+      - ./infrastructure/kafka/state/broker-b/logs:/input/broker-b
+      - ./infrastructure/kafka/state/broker-c/logs:/input/broker-c
+      - ./infrastructure/kafka/state/controller-a/logs:/input/controller-a
+      - ./infrastructure/kafka/state/controller-b/logs:/input/controller-b
+      - ./infrastructure/kafka/state/controller-c/logs:/input/controller-c
+    develop:
+      watch:
+        - action: rebuild
+          path: infrastructure/kafka/build/logs-exporter
+
+  # Monitoring
+  # --------------------------------------------------------------------------------------------------------------------
+
+  infrastructure-kafka-prometheus-exporter:
+    build:
+      context: infrastructure/kafka
+      dockerfile: build/prometheus-exporter/Dockerfile
+    environment:
+      BROKER_A: "infrastructure-kafka-broker-a:9092"
+      BROKER_B: "infrastructure-kafka-broker-b:9092"
+      BROKER_C: "infrastructure-kafka-broker-c:9092"
+    depends_on:
+      # иначе экспортер не запускается из-за connection refused
+      infrastructure-kafka-broker-a:
+        condition: service_healthy
+      infrastructure-kafka-broker-b:
+        condition: service_healthy
+      infrastructure-kafka-broker-c:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: rebuild
+          path: infrastructure/kafka/build/prometheus-exporter
+
+  # --------------------------------------------------------------------------------------------------------------------
   # MYSQL
   # --------------------------------------------------------------------------------------------------------------------
 

@@ -1,0 +1,4 @@
+# https://prometheus.github.io/jmx_exporter/1.5.0/java-agent/http-mode/
+
+rules:
+  - pattern: ".*"

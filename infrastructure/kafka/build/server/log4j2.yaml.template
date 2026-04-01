@@ -1,0 +1,64 @@
+# Изначально взят из /etc/confluent/docker/log4j2.yaml.template
+# https://docs.confluent.io/platform/current/installation/docker/development.html#log-to-external-volumes
+# https://logging.apache.org/log4j/2.12.x/manual/configuration.html
+
+Configuration:
+  name: "Log4j2"
+
+  Appenders:
+
+    # Убрать STDOUT из логгеров почему-то нельзя.
+    # main ERROR Unable to locate appender "FILE_ROOT" for logger config "root".
+
+    Console:
+      name: STDOUT
+      target: SYSTEM_OUT
+      PatternLayout:
+        Pattern: "[%d] %p %m (%c)%n"
+
+    RollingFile:
+      name: FILE_ROOT
+      fileName: "${sys:kafka.logs.dir}/custom/root.log"
+      filePattern: "${sys:kafka.logs.dir}/custom/root.log.%d{yyyy-MM-dd-HH}-%i"
+      PatternLayout:
+        Pattern: "{\"time\":\"%d\",\"level\":\"%p\",\"msg\":\"%m (%c)\"}%n"
+      TimeBasedTriggeringPolicy:
+        modulate: true
+        interval: 1
+
+    RollingFile:
+      name: FILE_LOGGER
+      fileName: "${sys:kafka.logs.dir}/custom/logger.log"
+      filePattern: "${sys:kafka.logs.dir}/custom/logger.log.%d{yyyy-MM-dd-HH}-%i"
+      PatternLayout:
+        Pattern: "{\"time\":\"%d\",\"level\":\"%p\",\"msg\":\"%m (%c)\"}%n"
+      TimeBasedTriggeringPolicy:
+        modulate: true
+        interval: 1
+
+  Loggers:
+    Root:
+      level: "{{ getEnv "KAFKA_LOG4J_ROOT_LOGLEVEL" "INFO" }}"
+      AppenderRef:
+        - ref: STDOUT
+        - ref: FILE_ROOT
+
+    Logger:
+{{- $defaultLoggersStr := printf "%s,%s,%s,%s,%s,%s,%s,%s"
+    "kafka=INFO"
+    "kafka.network.RequestChannel$=WARN"
+    "kafka.producer.async.DefaultEventHandler=DEBUG"
+    "kafka.request.logger=WARN"
+    "kafka.controller=TRACE"
+    "kafka.log.LogCleaner=INFO"
+    "state.change.logger=TRACE"
+    "kafka.authorizer.logger=WARN" -}}
+{{- $defaultLoggers := splitToMapDefaults "," $defaultLoggersStr "" -}}
+{{- $loggers := parseLog4jLoggers (getEnv "KAFKA_LOG4J_LOGGERS" "") $defaultLoggers -}}
+{{- range $k, $v := $loggers }}
+      - name: "{{ $k }}"
+        level: "{{ $v }}"
+        AppenderRef:
+          - ref: STDOUT
+          - ref: FILE_LOGGER
+{{- end }}

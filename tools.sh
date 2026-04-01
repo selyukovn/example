@@ -108,7 +108,7 @@ elif [[ ${tool} == 'up' ]]; then
     # Так что пусть лучше чистит все в параллельном фоновом процессе.
     echo -n "Запускается фоновый уборщик watch-мусора..."
     bg_watch_gb_collector_cmd="yes | docker system prune --volumes > /dev/null 2>&1"
-    nohup watch -n 60 "$bg_watch_gb_collector_cmd" > /dev/null 2>&1 &
+    nohup watch -n 120 "$bg_watch_gb_collector_cmd" > /dev/null 2>&1 &
     nohup_pid=$!
     for _ in {1..10}; do
         sleep 1
