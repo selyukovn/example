@@ -124,26 +124,26 @@ services:
   # KAFKA
   # --------------------------------------------------------------------------------------------------------------------
 
-  infrastructure-kafka-broker-a:
+  infrastructure-kafka-server-a:
     extends:
       file: docker-compose._app_infrastructure.yml
-      service: infrastructure-kafka-broker-a
+      service: infrastructure-kafka-server-a
     networks:
       - infrastructure-kafka-network
       - admin-internal-network
 
-  infrastructure-kafka-broker-b:
+  infrastructure-kafka-server-b:
     extends:
       file: docker-compose._app_infrastructure.yml
-      service: infrastructure-kafka-broker-b
+      service: infrastructure-kafka-server-b
     networks:
       - infrastructure-kafka-network
       - admin-internal-network
 
-  infrastructure-kafka-broker-c:
+  infrastructure-kafka-server-c:
     extends:
       file: docker-compose._app_infrastructure.yml
-      service: infrastructure-kafka-broker-c
+      service: infrastructure-kafka-server-c
     networks:
       - infrastructure-kafka-network
       - admin-internal-network
@@ -156,27 +156,6 @@ services:
       - infrastructure-mysql-network
       - infrastructure-kafka-network
       - monitoring-metrics-network
-
-  infrastructure-kafka-controller-a:
-    extends:
-      file: docker-compose._app_infrastructure.yml
-      service: infrastructure-kafka-controller-a
-    networks:
-      - infrastructure-kafka-network
-
-  infrastructure-kafka-controller-b:
-    extends:
-      file: docker-compose._app_infrastructure.yml
-      service: infrastructure-kafka-controller-b
-    networks:
-      - infrastructure-kafka-network
-
-  infrastructure-kafka-controller-c:
-    extends:
-      file: docker-compose._app_infrastructure.yml
-      service: infrastructure-kafka-controller-c
-    networks:
-      - infrastructure-kafka-network
 
   infrastructure-kafka-logs-exporter:
     extends:
