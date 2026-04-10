@@ -2,121 +2,61 @@
 // https://grafana.com/docs/alloy/latest/tutorials/logs-and-relabeling-basics/
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Broker-A
+// Server-A
 // ---------------------------------------------------------------------------------------------------------------------
 
-local.file_match "broker_a_step_0_files" {
-  path_targets = [{"__path__" = "/input/broker-a/root.log"}, {"__path__" = "/input/broker-a/logger.log"}]
+local.file_match "server_a_step_0_files" {
+  path_targets = [{"__path__" = "/input/server-a/root.log"}, {"__path__" = "/input/server-a/logger.log"}]
   sync_period = "5s"
 }
-loki.source.file "broker_a_step_1_scrap" {
-  targets    = local.file_match.broker_a_step_0_files.targets
-  forward_to = [loki.relabel.broker_a_step_2_labels.receiver]
+loki.source.file "server_a_step_1_scrap" {
+  targets    = local.file_match.server_a_step_0_files.targets
+  forward_to = [loki.relabel.server_a_step_2_labels.receiver]
 }
-loki.relabel "broker_a_step_2_labels" {
+loki.relabel "server_a_step_2_labels" {
   rule {
     target_label = "job"
-    replacement = "infrastructure-kafka-broker-a"
+    replacement = "infrastructure-kafka-server-a"
   }
   forward_to = [loki.write.step_3_push.receiver]
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Broker-B
+// Server-B
 // ---------------------------------------------------------------------------------------------------------------------
 
-local.file_match "broker_b_step_0_files" {
-  path_targets = [{"__path__" = "/input/broker-b/root.log"}, {"__path__" = "/input/broker-b/logger.log"}]
+local.file_match "server_b_step_0_files" {
+  path_targets = [{"__path__" = "/input/server-b/root.log"}, {"__path__" = "/input/server-b/logger.log"}]
   sync_period = "5s"
 }
-loki.source.file "broker_b_step_1_scrap" {
-  targets    = local.file_match.broker_b_step_0_files.targets
-  forward_to = [loki.relabel.broker_b_step_2_labels.receiver]
+loki.source.file "server_b_step_1_scrap" {
+  targets    = local.file_match.server_b_step_0_files.targets
+  forward_to = [loki.relabel.server_b_step_2_labels.receiver]
 }
-loki.relabel "broker_b_step_2_labels" {
+loki.relabel "server_b_step_2_labels" {
   rule {
     target_label = "job"
-    replacement = "infrastructure-kafka-broker-b"
+    replacement = "infrastructure-kafka-server-b"
   }
   forward_to = [loki.write.step_3_push.receiver]
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Broker-C
+// Server-C
 // ---------------------------------------------------------------------------------------------------------------------
 
-local.file_match "broker_c_step_0_files" {
-  path_targets = [{"__path__" = "/input/broker-c/root.log"}, {"__path__" = "/input/broker-c/logger.log"}]
+local.file_match "server_c_step_0_files" {
+  path_targets = [{"__path__" = "/input/server-c/root.log"}, {"__path__" = "/input/server-c/logger.log"}]
   sync_period = "5s"
 }
-loki.source.file "broker_c_step_1_scrap" {
-  targets    = local.file_match.broker_c_step_0_files.targets
-  forward_to = [loki.relabel.broker_c_step_2_labels.receiver]
+loki.source.file "server_c_step_1_scrap" {
+  targets    = local.file_match.server_c_step_0_files.targets
+  forward_to = [loki.relabel.server_c_step_2_labels.receiver]
 }
-loki.relabel "broker_c_step_2_labels" {
+loki.relabel "server_c_step_2_labels" {
   rule {
     target_label = "job"
-    replacement = "infrastructure-kafka-broker-c"
-  }
-  forward_to = [loki.write.step_3_push.receiver]
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Controller-A
-// ---------------------------------------------------------------------------------------------------------------------
-
-local.file_match "controller_a_step_0_files" {
-  path_targets = [{"__path__" = "/input/controller-a/root.log"}, {"__path__" = "/input/controller-a/logger.log"}]
-  sync_period = "5s"
-}
-loki.source.file "controller_a_step_1_scrap" {
-  targets    = local.file_match.controller_a_step_0_files.targets
-  forward_to = [loki.relabel.controller_a_step_2_labels.receiver]
-}
-loki.relabel "controller_a_step_2_labels" {
-  rule {
-    target_label = "job"
-    replacement = "infrastructure-kafka-controller-a"
-  }
-  forward_to = [loki.write.step_3_push.receiver]
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Controller-B
-// ---------------------------------------------------------------------------------------------------------------------
-
-local.file_match "controller_b_step_0_files" {
-  path_targets = [{"__path__" = "/input/controller-b/root.log"}, {"__path__" = "/input/controller-b/logger.log"}]
-  sync_period = "5s"
-}
-loki.source.file "controller_b_step_1_scrap" {
-  targets    = local.file_match.controller_b_step_0_files.targets
-  forward_to = [loki.relabel.controller_b_step_2_labels.receiver]
-}
-loki.relabel "controller_b_step_2_labels" {
-  rule {
-    target_label = "job"
-    replacement = "infrastructure-kafka-controller-b"
-  }
-  forward_to = [loki.write.step_3_push.receiver]
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Controller-C
-// ---------------------------------------------------------------------------------------------------------------------
-
-local.file_match "controller_c_step_0_files" {
-  path_targets = [{"__path__" = "/input/controller-c/root.log"}, {"__path__" = "/input/controller-c/logger.log"}]
-  sync_period = "5s"
-}
-loki.source.file "controller_c_step_1_scrap" {
-  targets    = local.file_match.controller_c_step_0_files.targets
-  forward_to = [loki.relabel.controller_c_step_2_labels.receiver]
-}
-loki.relabel "controller_c_step_2_labels" {
-  rule {
-    target_label = "job"
-    replacement = "infrastructure-kafka-controller-c"
+    replacement = "infrastructure-kafka-server-c"
   }
   forward_to = [loki.write.step_3_push.receiver]
 }

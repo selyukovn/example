@@ -8,21 +8,15 @@ services:
       dockerfile: Dockerfile
     environment:
       KAFKA_CLUSTERS_0_NAME: ${INFRASTRUCTURE_KAFKA_CLUSTER_ID}
-      KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS: "BROKER://infrastructure-kafka-broker-a:9092,BROKER://infrastructure-kafka-broker-b:9092,BROKER://infrastructure-kafka-broker-c:9092"
+      KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS: "BROKER://infrastructure-kafka-server-a:9092,BROKER://infrastructure-kafka-server-b:9092,BROKER://infrastructure-kafka-server-c:9092"
     networks:
       - infrastructure-kafka-network
     # ports:
     #   - 127.0.0.1:8003:8080
     depends_on:
-      infrastructure-kafka-broker-a:
+      infrastructure-kafka-server-a:
         condition: service_healthy
-      infrastructure-kafka-broker-b:
+      infrastructure-kafka-server-b:
         condition: service_healthy
-      infrastructure-kafka-broker-c:
-        condition: service_healthy
-      infrastructure-kafka-controller-a:
-        condition: service_healthy
-      infrastructure-kafka-controller-b:
-        condition: service_healthy
-      infrastructure-kafka-controller-c:
+      infrastructure-kafka-server-c:
         condition: service_healthy

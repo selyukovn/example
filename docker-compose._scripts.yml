@@ -55,7 +55,7 @@ x-prototypes:
       MYSQL_HOST: ${INFRASTRUCTURE_MYSQL_HOST_MASTER}
       MYSQL_USER: ${INFRASTRUCTURE_MYSQL_CLIENT_KAFKA_CONNECT_USER}
       MYSQL_PASSWORD: ${INFRASTRUCTURE_MYSQL_CLIENT_KAFKA_CONNECT_PASSWORD}
-      KAFKA_BROKERS: "BROKER://infrastructure-kafka-broker-a:9092,BROKER://infrastructure-kafka-broker-b:9092,BROKER://infrastructure-kafka-broker-c:9092"
+      KAFKA_BROKERS: "BROKER://infrastructure-kafka-server-a:9092,BROKER://infrastructure-kafka-server-b:9092,BROKER://infrastructure-kafka-server-c:9092"
     volumes:
       - ./infrastructure/kafka/migrations:/migrations/scripts
       - ./infrastructure/kafka/state/migrations/state:/migrations/state
@@ -63,25 +63,16 @@ x-prototypes:
     networks:
       - infrastructure-kafka-network
     depends_on:
-      infrastructure-kafka-broker-a:
+      infrastructure-kafka-server-a:
         condition: service_healthy
         restart: false
-      infrastructure-kafka-broker-b:
+      infrastructure-kafka-server-b:
         condition: service_healthy
         restart: false
-      infrastructure-kafka-broker-c:
+      infrastructure-kafka-server-c:
         condition: service_healthy
         restart: false
       infrastructure-kafka-connect:
-        condition: service_healthy
-        restart: false
-      infrastructure-kafka-controller-a:
-        condition: service_healthy
-        restart: false
-      infrastructure-kafka-controller-b:
-        condition: service_healthy
-        restart: false
-      infrastructure-kafka-controller-c:
         condition: service_healthy
         restart: false
       infrastructure-mysql-master:
