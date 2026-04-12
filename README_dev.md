@@ -69,33 +69,37 @@
 
 ## Инструменты
 
-Основные инструменты собраны в скрипте [`tools.sh`](tools.sh) -- через него и запускаются.
+### Запуск
+
+Скрипты запуска собраны в [`tools.sh`](tools.sh).
 
 Команда вызова справки:
 ```
 . tools.sh help
 ```
 
+### Go
+
 Специфические инструменты для разработки (например, go get и т.д. для go-сервисов)
-уложены в специальные контейнеры `dev-tools-{NAME}` -- для каждого сервиса, в котором они востребованы.
+уложены в специальные контейнеры `dev-tools-go-{NAME}` -- для каждого сервиса, в котором они востребованы.
 Для использования нужно:
 
-1. Создать `docker-compose.override.yml` и добавить `.dev/tools/docker-compose.yml` в секцию `include`.
+1. Создать `docker-compose.override.yml` и добавить `.dev/tools/go/docker-compose.yml` в секцию `include`.
 2. После запуска подключиться к соответствующему контейнеру через IDE или вручную через терминал.
 
-Доступные инструменты см. в [`.dev/tools/docker-compose.yml`](.dev/tools/docker-compose.yml).
+Доступные инструменты см. в [`.dev/tools/go/docker-compose.yml`](.dev/tools/go/docker-compose.yml).
 
 ### Kafka UI
 
 https://github.com/kafbat/kafka-ui
 
 1. Создать `docker-compose.override.yml`.
-2. Расширить сервис `dev-tools-kafka-ui` из [`.dev/kafka-ui/docker-compose.yml`](.dev/kafka-ui/docker-compose.yml),
+2. Расширить сервис `dev-tools-kafka-ui` из [`.dev/tools/kafka-ui/docker-compose.yml`](.dev/tools/kafka-ui/docker-compose.yml),
    пробросив порт на `8080`-порт контейнера. Например,
    ```
    dev-tools-kafka-ui:
       extends:
-         file: .dev/kafka-ui/Dockerfile
+         file: .dev/tools/kafka-ui/Dockerfile
          service: dev-tools-kafka-ui
       ports:
          - 127.0.0.1:8003:8080
@@ -106,12 +110,12 @@ https://github.com/kafbat/kafka-ui
 https://debezium.io/documentation//reference/stable/operations/debezium-ui.html
 
 1. Создать `docker-compose.override.yml`. 
-2. Расширить сервис `dev-tools-debezium-ui` из [`.dev/debezium-ui/docker-compose.yml`](.dev/debezium-ui/docker-compose.yml),
+2. Расширить сервис `dev-tools-debezium-ui` из [`.dev/tools/debezium-ui/docker-compose.yml`](.dev/tools/debezium-ui/docker-compose.yml),
    пробросив порт на `8080`-порт контейнера. Например, 
    ```
    dev-tools-debezium-ui:
       extends:
-         file: .dev/debezium-ui/Dockerfile
+         file: .dev/tools/debezium-ui/Dockerfile
          service: dev-tools-debezium-ui
       ports:
          - 127.0.0.1:8003:8080
