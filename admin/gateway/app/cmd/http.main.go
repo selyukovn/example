@@ -55,7 +55,7 @@ func main() {
 	// Container
 	// -----------------------------------------------------------------------------------------------------------------
 
-	ctr, authCacheTicker := container.New(
+	ctr := container.New(
 		assert.Str().NotEmpty().MustGet(os.Getenv("SERVICE_AUTH_API_GRPC_BASEURL"), "env: SERVICE_AUTH_API_GRPC_BASEURL"),
 		assert.Str().NotEmpty().MustGet(os.Getenv("SERVICE_AUTH_API_GRPC_APIKEY"), "env: SERVICE_AUTH_API_GRPC_APIKEY"),
 	)
@@ -77,11 +77,6 @@ func main() {
 			"Monitoring-сервер",
 			func(context.Context) error { return monServer.Start() },
 			func(context.Context) error { return monServer.Stop() },
-		},
-		{
-			"Auth-Cache-Ticker",
-			func(context.Context) error { authCacheTicker.Start(); return nil },
-			func(context.Context) error { authCacheTicker.Stop(); return nil },
 		},
 	})
 
