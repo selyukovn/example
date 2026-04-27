@@ -14,8 +14,9 @@ name: example
 networks:
   admin-front-network:            # `front` --> `gateway`
   admin-internal-network:         # `gateway` --> ...внутренние-сервисы... <--> ...внутренние-сервисы ...
-  infrastructure-mysql-network:   # `infrastructure-mysql-prometheus-exporter` и миграции --> `infrastructure-...`
   infrastructure-kafka-network:   # `infrastructure-kafka-...` между собой и миграциями
+  infrastructure-mysql-network:   # `infrastructure-mysql-prometheus-exporter` и миграции --> `infrastructure-...`
+  infrastructure-redis-network:   # `infrastructure-redis-prometheus-exporter` и миграции --> `infrastructure-...`
   monitoring-internal-network:    # ...внутренние-сервисы... <--> ...внутренние-сервисы ...
   monitoring-logs-network:        # все экспортеры --> loki
   monitoring-metrics-network:     # все экспортеры --> prometheus (см. monitoring/build/prometheus/prometheus.yml).
@@ -206,6 +207,34 @@ services:
     extends:
       file: docker-compose._app_infrastructure.yml
       service: infrastructure-mysql-logs-exporter
+    build:
+      args:
+        LOKI_BASEURL: "http://monitoring-loki:3100"
+    networks:
+      - monitoring-logs-network
+
+  # REDIS
+  # --------------------------------------------------------------------------------------------------------------------
+
+  infrastructure-redis-cache:
+    extends:
+      file: docker-compose._app_infrastructure.yml
+      service: infrastructure-redis-cache
+    networks:
+      - infrastructure-redis-network
+
+  infrastructure-redis-prometheus-exporter:
+    extends:
+      file: docker-compose._app_infrastructure.yml
+      service: infrastructure-redis-prometheus-exporter
+    networks:
+      - infrastructure-redis-network
+      - monitoring-metrics-network
+
+  infrastructure-redis-logs-exporter:
+    extends:
+      file: docker-compose._app_infrastructure.yml
+      service: infrastructure-redis-logs-exporter
     build:
       args:
         LOKI_BASEURL: "http://monitoring-loki:3100"
