@@ -60,6 +60,7 @@ VOLUME /app/admin/cfm/grpc
 VOLUME /app/admin/cfm/sch
 VOLUME /app/admin/gateway/http
 VOLUME /app/infrastructure/mysql
+VOLUME /app/infrastructure/redis
 
 # --------------------
 # Запуск
