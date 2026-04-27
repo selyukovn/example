@@ -222,6 +222,7 @@ services:
       service: infrastructure-redis-cache
     networks:
       - infrastructure-redis-network
+      - admin-internal-network
 
   infrastructure-redis-prometheus-exporter:
     extends:
