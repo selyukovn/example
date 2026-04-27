@@ -244,3 +244,55 @@ services:
           path: infrastructure/mysql/build/logs-exporter
 
   # --------------------------------------------------------------------------------------------------------------------
+  # REDIS
+  # --------------------------------------------------------------------------------------------------------------------
+
+  infrastructure-redis-cache:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: infrastructure/redis
+      dockerfile: build/server/Dockerfile
+      args:
+        SERVER_TYPE: cache
+    volumes:
+      - ./infrastructure/redis/state/server/cache:/data
+    develop:
+      watch:
+        - action: rebuild
+          path: infrastructure/redis/build/server/cache.conf
+        - action: rebuild
+          path: infrastructure/redis/build/server/Dockerfile
+        - action: rebuild
+          path: infrastructure/redis/build/server/*.sh
+
+  infrastructure-redis-prometheus-exporter:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: infrastructure/redis
+      dockerfile: build/prometheus-exporter/Dockerfile
+    environment:
+      REDIS_ADDR: redis://infrastructure-redis-cache:6379
+      REDIS_USER: ${INFRASTRUCTURE_REDIS_CLIENT_PROMETHEUS_EXPORTER_USER}
+      REDIS_PASSWORD: ${INFRASTRUCTURE_REDIS_CLIENT_PROMETHEUS_EXPORTER_PASSWORD}
+    depends_on:
+      infrastructure-redis-cache:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: rebuild
+          path: infrastructure/redis/build/prometheus-exporter
+
+  infrastructure-redis-logs-exporter:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: infrastructure/redis
+      dockerfile: build/logs-exporter/Dockerfile
+    volumes:
+      - ./infrastructure/redis/state/logs-exporter:/state
+      - ./infrastructure/redis/state/server:/input
+    develop:
+      watch:
+        - action: rebuild
+          path: infrastructure/redis/build/logs-exporter
+
+  # --------------------------------------------------------------------------------------------------------------------

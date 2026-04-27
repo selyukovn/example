@@ -18,6 +18,7 @@ services:
       - ./admin/cfm/state/sch:/app/admin/cfm/sch
       - ./admin/gateway/state/http:/app/admin/gateway/http
       - ./infrastructure/mysql/state/server:/app/infrastructure/mysql
+      - ./infrastructure/redis/state/server:/app/infrastructure/redis
     develop:
       watch:
         - action: rebuild

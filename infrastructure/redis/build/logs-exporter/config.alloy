@@ -1,0 +1,36 @@
+// https://grafana.com/docs/alloy/latest/tutorials/send-logs-to-loki/
+// https://grafana.com/docs/alloy/latest/tutorials/logs-and-relabeling-basics/
+
+// ---------------------------------------------------------------------------------------------------------------------
+// CACHE
+// ---------------------------------------------------------------------------------------------------------------------
+
+local.file_match "step_0_files_cache" {
+  path_targets = [{"__path__" = "/input/cache/redis.log"}]
+  sync_period = "5s"
+}
+
+loki.source.file "step_1_scrap_cache" {
+  targets    = local.file_match.step_0_files_cache.targets
+  forward_to = [loki.relabel.step_2_labels_cache.receiver]
+}
+
+loki.relabel "step_2_labels_cache" {
+  rule {
+    target_label = "job"
+    replacement = "infrastructure-redis-cache"
+  }
+  forward_to = [loki.write.step_3_push.receiver]
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// LOKI
+// ---------------------------------------------------------------------------------------------------------------------
+
+loki.write "step_3_push" {
+  endpoint {
+    url = "__LOKI_BASEURL__/loki/api/v1/push"
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
