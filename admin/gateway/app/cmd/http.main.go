@@ -15,6 +15,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"strconv"
 )
 
 func main() {
@@ -44,6 +45,15 @@ func main() {
 	logIo := resources.NewLogIoFile(argLogFile)
 	defer fnClose("logIo", logIo)
 
+	// redis
+	redisCacheClient := resources.OpenRedis(
+		assert.Str().NotEmpty().MustGet(os.Getenv("REDIS_CACHE_HOST")),
+		assert.Str().NotEmpty().MustGet(os.Getenv("REDIS_CACHE_USER")),
+		assert.Str().NotEmpty().MustGet(os.Getenv("REDIS_CACHE_PASSWORD")),
+		uint(std.Must[uint64](strconv.ParseUint(os.Getenv("REDIS_CACHE_DB"), 10, 64))),
+	)
+	defer fnClose("redisCacheClient", redisCacheClient)
+
 	// -----------------------------------------------------------------------------------------------------------------
 	// Globals
 	// -----------------------------------------------------------------------------------------------------------------
@@ -59,6 +69,7 @@ func main() {
 	// -----------------------------------------------------------------------------------------------------------------
 
 	ctr := container.New(
+		redisCacheClient,
 		assert.Str().NotEmpty().MustGet(os.Getenv("SERVICE_AUTH_API_GRPC_BASEURL"), "env: SERVICE_AUTH_API_GRPC_BASEURL"),
 		assert.Str().NotEmpty().MustGet(os.Getenv("SERVICE_AUTH_API_GRPC_APIKEY"), "env: SERVICE_AUTH_API_GRPC_APIKEY"),
 	)

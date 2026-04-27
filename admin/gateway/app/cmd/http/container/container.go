@@ -7,12 +7,10 @@ import (
 	adapt_infra_clients_auth "example/admin/gateway/internal/adapt/infra/clients/auth"
 	adapt_infra_clients_auth_cacher "example/admin/gateway/internal/adapt/infra/clients/auth/cacher"
 	infra_cache "example/admin/gateway/internal/infra/cache"
-	infra_cache_memory "example/admin/gateway/internal/infra/cache/memory"
+	infra_cache_redis "example/admin/gateway/internal/infra/cache/redis"
 	infra_clients_auth "example/admin/gateway/internal/infra/clients/auth"
 	infra_clients_auth_grpc "example/admin/gateway/internal/infra/clients/auth/grpc"
-	"fmt"
-	goroutiner "github.com/selyukovn/go-routiner"
-	"github.com/selyukovn/go-std/logger"
+	"github.com/redis/go-redis/v9"
 	assert "github.com/selyukovn/go-wm-assert"
 )
 
@@ -25,6 +23,7 @@ type Services = struct {
 }
 
 func New(
+	redisCacheClient *redis.Client,
 	appCfmApiGrpcBaseUrl string,
 	appCfmApiGrpcApiKey string,
 ) *Container {
@@ -44,15 +43,7 @@ func New(
 	)
 	// +cache
 	var authCache infra_cache.CacheInterface
-	authCache, authCacheTicker := infra_cache_memory.New()
-	// Точка запуска тикера может быть любой, поскольку ему не требуется graceful-shutdown.
-	goroutiner.New(goroutiner.MwPanicToError(func(pv any, ds []byte, ctx context.Context) error {
-		logger.PanicFf(ctx, pv, ds, "goroutiner.authCacheTicker")
-		return fmt.Errorf("panic: %#v; stack: %s", pv, ds)
-	})).SingleAsync(context.Background(), func(ctx context.Context) error {
-		authCacheTicker.Start()
-		return nil
-	})
+	authCache = infra_cache_redis.New(redisCacheClient)
 	authCache = adapt_infra_cache.NewDecoratorLoggable(authCache, true)
 	sAuth = adapt_infra_clients_auth.NewDecoratorCacheable(
 		sAuth,
