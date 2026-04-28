@@ -78,7 +78,7 @@ func New(
 
 	// event storage
 	evStorage := domain_event_storage.NewStorage(
-		adapt_domain_event_storage.NewRepositoryImplSql(),
+		adapt_domain_event_storage.NewRepositoryImplSql(processing.OperationId),
 	)
 
 	// account

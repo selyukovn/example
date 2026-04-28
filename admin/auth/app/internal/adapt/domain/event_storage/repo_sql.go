@@ -20,7 +20,9 @@ import (
 
 var _ event_storage.RepositoryInterface = RepositoryImplSql{}
 
-type RepositoryImplSql struct{}
+type RepositoryImplSql struct {
+	fnGetOperationId func(context.Context) string
+}
 
 const (
 	EventTypeAccountCreated            = "account_created"
@@ -34,8 +36,12 @@ const (
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
-func NewRepositoryImplSql() RepositoryImplSql {
-	return RepositoryImplSql{}
+func NewRepositoryImplSql(fnGetOperationId func(context.Context) string) RepositoryImplSql {
+	assert.NotNilDeepMust(fnGetOperationId)
+
+	return RepositoryImplSql{
+		fnGetOperationId: fnGetOperationId,
+	}
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -55,6 +61,8 @@ func (r RepositoryImplSql) AddAccountCreated(ctx context.Context, e account.Even
 	tx := txr.TxFromCtx(ctx).(*sql.Tx)
 
 	dbRow := &db.EventRow{}
+	dbRow.OutboxGroupId = e.AccId().String()
+	dbRow.OutboxOperationId = r.fnGetOperationId(ctx)
 	dbRow.CreatedAt = time.Now()
 	dbRow.Type = EventTypeAccountCreated
 	dbRow.Version = 1
@@ -84,6 +92,8 @@ func (r RepositoryImplSql) AddAccountDeactivated(ctx context.Context, e account.
 	tx := txr.TxFromCtx(ctx).(*sql.Tx)
 
 	dbRow := &db.EventRow{}
+	dbRow.OutboxGroupId = e.AccId().String()
+	dbRow.OutboxOperationId = r.fnGetOperationId(ctx)
 	dbRow.CreatedAt = time.Now()
 	dbRow.Type = EventTypeAccountDeactivated
 	dbRow.Version = 1
@@ -112,6 +122,8 @@ func (r RepositoryImplSql) AddAccountIpWhitelistChanged(ctx context.Context, e a
 	tx := txr.TxFromCtx(ctx).(*sql.Tx)
 
 	dbRow := &db.EventRow{}
+	dbRow.OutboxGroupId = e.AccId().String()
+	dbRow.OutboxOperationId = r.fnGetOperationId(ctx)
 	dbRow.CreatedAt = time.Now()
 	dbRow.Type = EventTypeAccountIpWhitelistChanged
 	dbRow.Version = 1
@@ -157,6 +169,8 @@ func (r RepositoryImplSql) AddSessionCreated(ctx context.Context, e session.Even
 	tx := txr.TxFromCtx(ctx).(*sql.Tx)
 
 	dbRow := &db.EventRow{}
+	dbRow.OutboxGroupId = e.AccId().String()
+	dbRow.OutboxOperationId = r.fnGetOperationId(ctx)
 	dbRow.CreatedAt = time.Now()
 	dbRow.Type = EventTypeSessionCreated
 	dbRow.Version = 1
@@ -186,6 +200,8 @@ func (r RepositoryImplSql) AddSessionClosed(ctx context.Context, e session.Event
 	tx := txr.TxFromCtx(ctx).(*sql.Tx)
 
 	dbRow := &db.EventRow{}
+	dbRow.OutboxGroupId = e.AccId().String()
+	dbRow.OutboxOperationId = r.fnGetOperationId(ctx)
 	dbRow.CreatedAt = time.Now()
 	dbRow.Type = EventTypeSessionClosed
 	dbRow.Version = 1

@@ -3,6 +3,7 @@ package container
 import (
 	"context"
 	"database/sql"
+	"example/admin/auth/cmd/common/components/processing"
 	adapt_domain_event_storage "example/admin/auth/internal/adapt/domain/event_storage"
 	adapt_domain_session "example/admin/auth/internal/adapt/domain/session"
 	domain_event_storage "example/admin/auth/internal/domain/event_storage"
@@ -42,7 +43,7 @@ func New(
 
 	// event storage
 	evStorage := domain_event_storage.NewStorage(
-		adapt_domain_event_storage.NewRepositoryImplSql(),
+		adapt_domain_event_storage.NewRepositoryImplSql(processing.OperationId),
 	)
 
 	// session
