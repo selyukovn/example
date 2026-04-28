@@ -21,6 +21,8 @@ type EventRow = struct {
 	ExtraAccIpWhitelistJson sql.NullString
 	ExtraSessId             sql.NullString
 	CreatedAt               time.Time
+	OutboxGroupId           string
+	OutboxOperationId       string
 }
 
 // #####################################################################################################################
@@ -43,8 +45,10 @@ func (t eventTable) ColumnExtraAccId() string      { return "extra_account_id" }
 func (t eventTable) ColumnExtraAccIpWhitelistJson() string {
 	return "extra_account_ip_whitelist_json"
 }
-func (t eventTable) ColumnExtraSessId() string { return "extra_session_id" }
-func (t eventTable) ColumnCreatedAt() string   { return "created_at" }
+func (t eventTable) ColumnExtraSessId() string       { return "extra_session_id" }
+func (t eventTable) ColumnCreatedAt() string         { return "created_at" }
+func (t eventTable) ColumnOutboxGroupId() string     { return "outbox_group_id" }
+func (t eventTable) ColumnOutboxOperationId() string { return "outbox_operation_id" }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -67,6 +71,8 @@ func (t eventTable) Insert(ctx context.Context, tx *sql.Tx, row *EventRow) error
 			t.ColumnExtraAccIpWhitelistJson(),
 			t.ColumnExtraSessId(),
 			t.ColumnCreatedAt(),
+			t.ColumnOutboxGroupId(),
+			t.ColumnOutboxOperationId(),
 		).
 		Values(
 			t.ColumnOccurredAt(),
@@ -77,6 +83,8 @@ func (t eventTable) Insert(ctx context.Context, tx *sql.Tx, row *EventRow) error
 			t.ColumnExtraAccIpWhitelistJson(),
 			t.ColumnExtraSessId(),
 			t.ColumnCreatedAt(),
+			t.ColumnOutboxGroupId(),
+			t.ColumnOutboxOperationId(),
 		).
 		String(),
 		// --
@@ -88,6 +96,8 @@ func (t eventTable) Insert(ctx context.Context, tx *sql.Tx, row *EventRow) error
 		row.ExtraAccIpWhitelistJson,
 		row.ExtraSessId,
 		row.CreatedAt,
+		row.OutboxGroupId,
+		row.OutboxOperationId,
 	)
 
 	return err
