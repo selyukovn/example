@@ -10,9 +10,12 @@ set -e
 # Вместо default для явного подключения и необходимости использования default для healthcheck (см. ниже).
 echo 'ACL SETUSER root on >initial_root_password sanitize-payload ~* &* +@all' | redis-cli
 
-# Отдельный пользователь для миграций не создается,
-# поскольку не просматриваются сколь-нибудь вероятные случаи применения миграций к `redis`
-# или случаи использования `redis` в миграциях.
+# Для cache-сервера миграции, конечно, смысла не имеют, но не хочется разделять из-за этого скрипт инициализации.
+# Для db-сервера миграции все же могут иметь смысл, хоть в точности и сложно предположить что-то конкретное.
+# Пусть начальный набор правил совпадает с app_user -- по мере использования будет видно, что нужно добавить.
+echo 'ACL SETUSER migration_user on >initial_migration_password sanitize-payload ~* &* ' \
+  '-@all +@connection +@read +@write -@dangerous' \
+  | redis-cli
 
 echo 'ACL SETUSER app_user on >initial_app_password sanitize-payload ~* &* ' \
   '-@all +@connection +@read +@write -@dangerous' \
