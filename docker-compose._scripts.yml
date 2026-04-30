@@ -56,6 +56,9 @@ x-prototypes:
       MYSQL_HOST: ${INFRASTRUCTURE_MYSQL_HOST_MASTER}
       MYSQL_USER: ${INFRASTRUCTURE_MYSQL_CLIENT_MIGRATION_USER}
       MYSQL_PASSWORD: ${INFRASTRUCTURE_MYSQL_CLIENT_MIGRATION_PASSWORD}
+      REDIS_HOST: ${INFRASTRUCTURE_REDIS_HOST_DB}
+      REDIS_USER: ${INFRASTRUCTURE_REDIS_CLIENT_MIGRATION_USER}
+      REDIS_PASSWORD: ${INFRASTRUCTURE_REDIS_CLIENT_MIGRATION_PASSWORD}
     volumes:
       - ./.migrator/scripts:/migrations/scripts
       - ./.migrator/state:/migrations/state
@@ -75,6 +78,7 @@ services:
     networks:
       - infrastructure-kafka-network
       - infrastructure-mysql-network
+      - infrastructure-redis-network
     depends_on:
       infrastructure-kafka-server-a:
         condition: service_healthy
@@ -91,6 +95,8 @@ services:
       infrastructure-mysql-master:
         condition: service_healthy
       infrastructure-mysql-replica:
+        condition: service_healthy
+      infrastructure-redis-db:
         condition: service_healthy
 
   script-migrate-down:
@@ -99,6 +105,7 @@ services:
     networks:
       - infrastructure-kafka-network
       - infrastructure-mysql-network
+      - infrastructure-redis-network
     depends_on:
       infrastructure-kafka-server-a:
         condition: service_healthy
@@ -115,6 +122,8 @@ services:
       infrastructure-mysql-master:
         condition: service_healthy
       infrastructure-mysql-replica:
+        condition: service_healthy
+      infrastructure-redis-db:
         condition: service_healthy
 
   # --------------------------------------------------------------------------------------------------------------------

@@ -24,6 +24,28 @@ loki.relabel "step_2_labels_cache" {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+// DB
+// ---------------------------------------------------------------------------------------------------------------------
+
+local.file_match "step_0_files_db" {
+  path_targets = [{"__path__" = "/input/db/redis.log"}]
+  sync_period = "5s"
+}
+
+loki.source.file "step_1_scrap_db" {
+  targets    = local.file_match.step_0_files_db.targets
+  forward_to = [loki.relabel.step_2_labels_db.receiver]
+}
+
+loki.relabel "step_2_labels_db" {
+  rule {
+    target_label = "job"
+    replacement = "infrastructure-redis-db"
+  }
+  forward_to = [loki.write.step_3_push.receiver]
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // LOKI
 // ---------------------------------------------------------------------------------------------------------------------
 

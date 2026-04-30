@@ -19,7 +19,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": 7,
+  "id": 3,
   "links": [],
   "panels": [
     {
@@ -1521,10 +1521,10 @@
       {
         "current": {
           "text": [
-            "infrastructure-redis-prometheus-exporter:9121"
+            "redis://infrastructure-redis-cache:6379"
           ],
           "value": [
-            "infrastructure-redis-prometheus-exporter:9121"
+            "redis://infrastructure-redis-cache:6379"
           ]
         },
         "datasource": {
