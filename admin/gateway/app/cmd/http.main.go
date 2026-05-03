@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"example/admin/gateway/cmd/common/launcher"
 	"example/admin/gateway/cmd/common/monitoring"
 	"example/admin/gateway/cmd/common/resources"
@@ -84,13 +83,13 @@ func main() {
 	launcher.LaunchServers([]launcher.Server{
 		{
 			"HTTP-сервер",
-			func(context.Context) error { return httpServer.Start() },
-			func(context.Context) error { return httpServer.Stop() },
+			httpServer.Start,
+			httpServer.Stop,
 		},
 		{
 			"Monitoring-сервер",
-			func(context.Context) error { return monServer.Start() },
-			func(context.Context) error { return monServer.Stop() },
+			monServer.Start,
+			monServer.Stop,
 		},
 	})
 

@@ -35,18 +35,36 @@ func LaunchServers(servers []Server) {
 	starter := noPanicGrt.
 		Batch(bgCtx).
 		Add(func(ctx context.Context) error {
+			// Внимание!
+			// Использующийся `CancelOnError`-подход в случае ошибки отменяет контекст, передаваемый в каждую горутину.
+			// Это нарушает схему работы лаунчера, который при возникновении ошибки сам вызывает `Stop` каждого сервера.
+			// Также такой подход чреват появлением ошибок из других серверов в неожиданных местах,
+			// если зависимые от контекста методы возвращают ошибки как есть из `context.Cause(ctx)`
+			// (например, можно получить "http: Server closed" в kafka-консьюмере).
+			// Поэтому в данном случае контекст запуска сервера должен быть изолирован от контекста стартера.
+			serverStartCtx := bgCtx
 			return noPanicGrt.
 				Batch(ctx).
 				AddRange(len(servers), func(i int) (goroutiner.Goroutine, []goroutiner.Middleware) {
-					return func(ctx context.Context) error {
+					return func(coeCtx context.Context) error {
 						name := servers[i].Name
-						logger.InfoFf(ctx, "Запуск %s ...", name)
-						if err := servers[i].FnStart(ctx); err != nil {
-							logger.ErrorFf(ctx, "Ошибка при запуске %s: %s - %#v", name, err, err)
-							return err
+						logger.InfoFf(coeCtx, "Запуск %s ...", name)
+						// `CancelOnError` отменяет "соседние" горутины с помощью отмены контекста.
+						// Если отмену контекста не обработать, `CancelOnError` не вернет результат.
+						// Обработка отмены контекста не должна выполняться внутри `Server.FnStart()` --
+						// это ответственность лаунчера, поскольку он контролирует graceful-shutdown-процесс.
+						select {
+						case <-coeCtx.Done():
+							return coeCtx.Err()
+						// `FnStart` блокирующий -- необходима отдельная горутина, иначе select не начнет выполнение.
+						case err := <-noPanicGrt.SingleAsync(serverStartCtx, servers[i].FnStart):
+							if err != nil {
+								logger.ErrorFf(coeCtx, "Ошибка при запуске %s: %s - %#v", name, err, err)
+								return err
+							}
+							logger.InfoFf(coeCtx, "%s больше не запушен!", name)
+							return nil
 						}
-						logger.InfoFf(ctx, "%s больше не запушен!", name)
-						return nil
 					}, nil
 				}).
 				CancelOnError()
