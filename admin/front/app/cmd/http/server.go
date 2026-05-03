@@ -5,6 +5,7 @@ import (
 	"example/admin/front/cmd/http/kernel"
 	"example/admin/front/internal/infra/clients/gateway"
 	assert "github.com/selyukovn/go-wm-assert"
+	"net"
 	"net/http"
 )
 
@@ -64,13 +65,14 @@ func NewServer(
 // Actions
 // ---------------------------------------------------------------------------------------------------------------------
 
-func (s Server) Start() error {
+func (s Server) Start(ctx context.Context) error {
+	s.s.BaseContext = func(net.Listener) context.Context { return ctx }
 	return s.s.ListenAndServe()
 }
 
-func (s Server) Stop() error {
+func (s Server) Stop(ctx context.Context) error {
 	// todo : возможно, есть смысл ограничить по времени
-	return s.s.Shutdown(context.Background())
+	return s.s.Shutdown(ctx)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

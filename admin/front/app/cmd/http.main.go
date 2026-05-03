@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"example/admin/front/cmd/common/launcher"
 	"example/admin/front/cmd/http"
 	"example/admin/front/internal/infra/clients/gateway"
@@ -52,8 +51,8 @@ func main() {
 	launcher.LaunchServers([]launcher.Server{
 		{
 			"HTTP-сервер",
-			func(context.Context) error { return httpServer.Start() },
-			func(context.Context) error { return httpServer.Stop() },
+			httpServer.Start,
+			httpServer.Stop,
 		},
 	})
 

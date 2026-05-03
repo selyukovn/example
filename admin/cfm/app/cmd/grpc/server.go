@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"context"
 	"example/admin/cfm/cmd/common/container"
 	"example/admin/cfm/cmd/grpc/interceptors"
 	"example/admin/cfm/cmd/grpc/pb"
@@ -42,7 +43,8 @@ func NewServer(ctr *container.Container, apiKey string) Server {
 // Actions
 // ---------------------------------------------------------------------------------------------------------------------
 
-func (s Server) Start() error {
+func (s Server) Start(ctx context.Context) error {
+	// todo : использовать контекст как базовый
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		return err
@@ -51,7 +53,8 @@ func (s Server) Start() error {
 	return s.s.Serve(lis)
 }
 
-func (s Server) Stop() error {
+func (s Server) Stop(ctx context.Context) error {
+	// todo : возможно, есть смысл ограничить по времени
 	s.s.GracefulStop()
 	return nil
 }

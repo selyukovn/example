@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"example/admin/auth/cmd/common/launcher"
 	"example/admin/auth/cmd/common/monitoring"
 	"example/admin/auth/cmd/common/resources"
@@ -87,13 +86,13 @@ func main() {
 	launcher.LaunchServers([]launcher.Server{
 		{
 			"GRPC-сервер",
-			func(context.Context) error { return grpcServer.Start() },
-			func(context.Context) error { return grpcServer.Stop() },
+			grpcServer.Start,
+			grpcServer.Stop,
 		},
 		{
 			"Monitoring-сервер",
-			func(context.Context) error { return monServer.Start() },
-			func(context.Context) error { return monServer.Stop() },
+			monServer.Start,
+			monServer.Stop,
 		},
 	})
 

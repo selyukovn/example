@@ -41,12 +41,22 @@ func LaunchServers(servers []Server) {
 					return func(ctx context.Context) error {
 						name := servers[i].Name
 						logger.InfoFf(ctx, "Запуск %s ...", name)
-						if err := servers[i].FnStart(ctx); err != nil {
-							logger.ErrorFf(ctx, "Ошибка при запуске %s: %s - %#v", name, err, err)
-							return err
+						// `CancelOnError` отменяет "соседние" горутины с помощью отмены контекста.
+						// Если отмену контекста не обработать, `CancelOnError` не вернет результат.
+						// Обработка отмены контекста не должна выполняться внутри `Server.FnStart()` --
+						// это ответственность лаунчера, поскольку он контролирует graceful-shutdown-процесс.
+						select {
+						case <-ctx.Done():
+							return ctx.Err()
+						// `FnStart` блокирующий -- необходима отдельная горутина, иначе select не начнет выполнение.
+						case err := <-noPanicGrt.SingleAsync(ctx, servers[i].FnStart):
+							if err != nil {
+								logger.ErrorFf(ctx, "Ошибка при запуске %s: %s - %#v", name, err, err)
+								return err
+							}
+							logger.InfoFf(ctx, "%s больше не запушен!", name)
+							return nil
 						}
-						logger.InfoFf(ctx, "%s больше не запушен!", name)
-						return nil
 					}, nil
 				}).
 				CancelOnError()
