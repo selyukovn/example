@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"example/admin/auth/cmd/common/launcher"
 	"example/admin/auth/cmd/common/monitoring"
 	"example/admin/auth/cmd/common/resources"
@@ -83,13 +82,13 @@ func main() {
 	launcher.LaunchServers([]launcher.Server{
 		{
 			"Scheduler",
-			func(context.Context) error { return scheduler.Start() },
-			func(context.Context) error { return scheduler.Stop() },
+			scheduler.Start,
+			scheduler.Stop,
 		},
 		{
 			"Monitoring-сервер",
-			func(context.Context) error { return monServer.Start() },
-			func(context.Context) error { return monServer.Stop() },
+			monServer.Start,
+			monServer.Stop,
 		},
 	})
 

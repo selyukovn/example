@@ -4,6 +4,7 @@ import (
 	"context"
 	"example/admin/gateway/cmd/http/container"
 	assert "github.com/selyukovn/go-wm-assert"
+	"net"
 	"net/http"
 )
 
@@ -47,13 +48,14 @@ func NewServer(ctr *container.Container) Server {
 // Actions
 // ---------------------------------------------------------------------------------------------------------------------
 
-func (s Server) Start() error {
+func (s Server) Start(ctx context.Context) error {
+	s.s.BaseContext = func(net.Listener) context.Context { return ctx }
 	return s.s.ListenAndServe()
 }
 
-func (s Server) Stop() error {
+func (s Server) Stop(ctx context.Context) error {
 	// todo : возможно, есть смысл ограничить по времени
-	return s.s.Shutdown(context.Background())
+	return s.s.Shutdown(ctx)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

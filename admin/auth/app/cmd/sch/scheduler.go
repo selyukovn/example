@@ -66,14 +66,16 @@ func NewScheduler(ctr *container.Container) Scheduler {
 // Actions
 // ---------------------------------------------------------------------------------------------------------------------
 
-func (s Scheduler) Start() error {
+func (s Scheduler) Start(ctx context.Context) error {
+	// todo : использовать контекст как базовый
 	s.c.Start()
 	s.wg.Add(1)
 	s.wg.Wait()
 	return nil
 }
 
-func (s Scheduler) Stop() error {
+func (s Scheduler) Stop(ctx context.Context) error {
+	// todo : возможно, есть смысл ограничить по времени
 	s.wg.Done()
 	<-s.c.Stop().Done()
 	return nil
