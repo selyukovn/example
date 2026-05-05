@@ -16,6 +16,10 @@
 
 FROM golang:1.22.0-alpine AS inner_build
 
+# Для компиляции с `confluent-kafka-go` нужен `gcc`.
+# И поскольку образ основан на alpine, то вместо `libc-dev` следует использовать `musl-dev`.
+RUN apk add gcc musl-dev
+
 WORKDIR /app
 
 # <Кеширование зависимостей в нижних слоях>
@@ -25,7 +29,12 @@ RUN go mod download
 
 # <Компиляция>
 COPY app ./
-RUN CGO_ENABLED=0 GOOS=linux go build -o ./exec ./cmd/sch.main.go
+# https://github.com/confluentinc/confluent-kafka-go/tree/v2.12.0
+# "... CGO_ENABLED must NOT be set to 0 since the Go client is based on the C library librdkafka. ..."
+# "... If you are building for Alpine Linux (musl), -tags musl must be specified. ..."
+# "... If the bundled librdkafka build is not supported on your platform,
+# or you need a librdkafka with GSSAPI/Kerberos support, you must install librdkafka manually ..."
+RUN CGO_ENABLED=1 GOOS=linux go build -tags musl -o ./exec ./cmd/sch.main.go
 # </>
 
 # ----------------------------------------------------------------------------------------------------------------------
