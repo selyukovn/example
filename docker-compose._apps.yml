@@ -108,6 +108,14 @@ services:
       - admin-internal-network
       - monitoring-metrics-network
 
+  admin-gateway-kafcon:
+    extends:
+      file: docker-compose._app_admin.yml
+      service: admin-gateway-kafcon
+    networks:
+      - admin-internal-network
+      - monitoring-metrics-network
+
   admin-gateway-logs-exporter:
     extends:
       file: docker-compose._app_admin.yml

@@ -2,7 +2,7 @@ package container
 
 import (
 	"context"
-	"example/admin/gateway/cmd/http/components/processing"
+	"example/admin/gateway/cmd/common/components/processing"
 	adapt_infra_cache "example/admin/gateway/internal/adapt/infra/cache"
 	adapt_infra_clients_auth "example/admin/gateway/internal/adapt/infra/clients/auth"
 	adapt_infra_clients_auth_cacher "example/admin/gateway/internal/adapt/infra/clients/auth/cacher"

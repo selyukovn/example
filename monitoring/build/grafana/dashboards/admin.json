@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 2,
-  "id": 2,
+  "id": 1,
   "links": [],
   "panels": [
     {
@@ -113,47 +113,8 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.8",
+      "pluginVersion": "12.1.10",
       "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "P1809F7CD0C75ACF3"
-          },
-          "editorMode": "code",
-          "expr": "up{job=\"admin-gateway-http\"}",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{job}}",
-          "range": true,
-          "refId": "GATEWAY"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "P1809F7CD0C75ACF3"
-          },
-          "editorMode": "builder",
-          "expr": "up{job=\"infrastructure-mysql-master\"}",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{job}}",
-          "range": true,
-          "refId": "MYSQL-MASTER"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "P1809F7CD0C75ACF3"
-          },
-          "editorMode": "builder",
-          "expr": "up{job=\"infrastructure-mysql-replica\"}",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{job}}",
-          "range": true,
-          "refId": "MYSQL-REPLICA"
-        },
         {
           "datasource": {
             "type": "prometheus",
@@ -214,6 +175,58 @@
           "legendFormat": "{{job}}",
           "range": true,
           "refId": "CFM-SCH"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P1809F7CD0C75ACF3"
+          },
+          "editorMode": "code",
+          "expr": "up{job=\"admin-gateway-http\"}",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{job}}",
+          "range": true,
+          "refId": "GATEWAY-HTTP"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P1809F7CD0C75ACF3"
+          },
+          "editorMode": "code",
+          "expr": "up{job=\"admin-gateway-kafcon\"}",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{job}}",
+          "range": true,
+          "refId": "GATEWAY-KAFCON"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P1809F7CD0C75ACF3"
+          },
+          "editorMode": "builder",
+          "expr": "up{job=\"infrastructure-mysql-master\"}",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{job}}",
+          "range": true,
+          "refId": "MYSQL-MASTER"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P1809F7CD0C75ACF3"
+          },
+          "editorMode": "builder",
+          "expr": "up{job=\"infrastructure-mysql-replica\"}",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{job}}",
+          "range": true,
+          "refId": "MYSQL-REPLICA"
         }
       ],
       "title": "Up",
@@ -349,6 +362,60 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Gateway-HTTP"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Gateway-KAFCON"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "Gateway-KAFCON"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
           }
         ]
       },
@@ -372,21 +439,8 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.8",
+      "pluginVersion": "12.1.10",
       "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "P1809F7CD0C75ACF3"
-          },
-          "editorMode": "code",
-          "expr": "avg(go_goroutines{job=\"admin-gateway-http\"})",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "Gateway-HTTP",
-          "range": true,
-          "refId": "GATEWAY-HTTP"
-        },
         {
           "datasource": {
             "type": "prometheus",
@@ -439,6 +493,32 @@
           "legendFormat": "Cfm-SCH",
           "range": true,
           "refId": "CFM-SCH"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P1809F7CD0C75ACF3"
+          },
+          "editorMode": "code",
+          "expr": "avg(go_goroutines{job=\"admin-gateway-http\"})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Gateway-HTTP",
+          "range": true,
+          "refId": "GATEWAY-HTTP"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P1809F7CD0C75ACF3"
+          },
+          "editorMode": "code",
+          "expr": "avg(go_goroutines{job=\"admin-gateway-kafcon\"})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Gateway-KAFCON",
+          "range": true,
+          "refId": "GATEWAY-KAFCON"
         }
       ],
       "title": "Go - Goroutines",
@@ -559,6 +639,36 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Gateway / KAFCON - Heap Allocated"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Gateway / HTTP - Heap Allocated"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-green",
+                  "mode": "fixed"
+                }
+              }
+            ]
           }
         ]
       },
@@ -582,21 +692,8 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.8",
+      "pluginVersion": "12.1.10",
       "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "P1809F7CD0C75ACF3"
-          },
-          "editorMode": "code",
-          "expr": "avg(go_memstats_alloc_bytes{job=\"admin-gateway-http\"})",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "Gateway / HTTP - Heap Allocated",
-          "range": true,
-          "refId": "GATEWAY-HTTP"
-        },
         {
           "datasource": {
             "type": "prometheus",
@@ -649,6 +746,32 @@
           "legendFormat": "Cfm / SCH - Heap Allocated",
           "range": true,
           "refId": "CFM-SCH"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P1809F7CD0C75ACF3"
+          },
+          "editorMode": "code",
+          "expr": "avg(go_memstats_alloc_bytes{job=\"admin-gateway-http\"})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Gateway / HTTP - Heap Allocated",
+          "range": true,
+          "refId": "GATEWAY-HTTP"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P1809F7CD0C75ACF3"
+          },
+          "editorMode": "code",
+          "expr": "avg(go_memstats_alloc_bytes{job=\"admin-gateway-kafcon\"})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Gateway / KAFCON - Heap Allocated",
+          "range": true,
+          "refId": "GATEWAY-KAFCON"
         }
       ],
       "title": "Go - Memory",
@@ -680,5 +803,5 @@
   "timezone": "browser",
   "title": "Admin",
   "uid": "5455cdd4-ac0a-49ab-aafa-78d699d6caf7",
-  "version": 2
+  "version": 1
 }

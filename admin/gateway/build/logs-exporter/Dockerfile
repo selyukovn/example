@@ -6,7 +6,8 @@ ARG LOKI_BASEURL
 COPY build/logs-exporter/config.alloy                   /etc/alloy/config.alloy
 RUN sed -i -e "s|__LOKI_BASEURL__|${LOKI_BASEURL}|g"    /etc/alloy/config.alloy
 
-VOLUME /input
+VOLUME /input/http
+VOLUME /input/kafcon
 VOLUME /state
 
 EXPOSE 12345

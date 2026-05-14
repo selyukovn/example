@@ -2,10 +2,10 @@ package http
 
 import (
 	"context"
+	"example/admin/gateway/cmd/common/components/processing"
 	"example/admin/gateway/cmd/http/bundles/auth"
 	"example/admin/gateway/cmd/http/bundles/layout"
 	"example/admin/gateway/cmd/http/components/monitoring"
-	"example/admin/gateway/cmd/http/components/processing"
 	"example/admin/gateway/cmd/http/components/security"
 	"example/admin/gateway/cmd/http/container"
 	"example/admin/gateway/cmd/http/kernel"
