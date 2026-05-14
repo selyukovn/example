@@ -11,16 +11,6 @@ fi
 
 if [[ ${cmd} == 'up' || ${cmd} == 'down' ]]; then
   echo 'Запуск "'${cmd}'"...'
-  echo 'Установка пакетов...'
-  if [[ -f ./scripts/requirements.txt ]]; then
-    pip install \
-      --ignore-installed \
-      --requirement ./scripts/requirements.txt \
-      --target /migrations/packages \
-      --cache-dir /migrations/packages/.cache
-  else
-    echo 'Нет requirements.txt'
-  fi
   echo 'Выполнение...'
   python ${cmd}.py
   echo 'Готово!'

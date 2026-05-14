@@ -3,8 +3,6 @@ import os
 import pydoc
 import sys
 
-sys.path.insert(0,'/migrations/packages')
-
 DIR_SCRIPTS = 'scripts'
 DIR_STATE = 'state'
 
