@@ -1,0 +1,109 @@
+package main
+
+import (
+	"example/admin/gateway/cmd/common/launcher"
+	"example/admin/gateway/cmd/common/monitoring"
+	"example/admin/gateway/cmd/common/resources"
+	"example/admin/gateway/cmd/kafcon"
+	"example/admin/gateway/cmd/kafcon/container"
+	"flag"
+	"fmt"
+	"github.com/selyukovn/go-std"
+	"github.com/selyukovn/go-std/logger"
+	assert "github.com/selyukovn/go-wm-assert"
+	"io"
+	"log/slog"
+	"os"
+	"strconv"
+	"strings"
+)
+
+const serviceName = "gateway"
+
+func main() {
+	// -----------------------------------------------------------------------------------------------------------------
+	// Args
+	// -----------------------------------------------------------------------------------------------------------------
+
+	_argDebug := flag.Bool("debug", false, "")
+	_argLogFile := flag.String("log-file", "/state/app.log", "путь к log-файлу")
+	flag.Parse()
+	argDebug := *_argDebug
+	argLogFile := *_argLogFile
+
+	// -----------------------------------------------------------------------------------------------------------------
+	// Resources
+	// -----------------------------------------------------------------------------------------------------------------
+
+	fnClose := func(name string, resource io.Closer) {
+		if err := resource.Close(); err != nil {
+			fmt.Printf("Ошибка закрытия ресурса %s: %s - %#v\n", name, err, err)
+		} else {
+			fmt.Printf("Ресурс %s закрыт!\n", name)
+		}
+	}
+
+	// logIo
+	logIo := resources.NewLogIoFile(argLogFile)
+	defer fnClose("logIo", logIo)
+
+	// redis
+	redisCacheClient := resources.OpenRedis(
+		assert.Str().NotEmpty().MustGet(os.Getenv("REDIS_CACHE_HOST")),
+		assert.Str().NotEmpty().MustGet(os.Getenv("REDIS_CACHE_USER")),
+		assert.Str().NotEmpty().MustGet(os.Getenv("REDIS_CACHE_PASSWORD")),
+		uint(std.Must[uint64](strconv.ParseUint(os.Getenv("REDIS_CACHE_DB"), 10, 64))),
+	)
+	defer fnClose("redisCacheClient", redisCacheClient)
+
+	// -----------------------------------------------------------------------------------------------------------------
+	// Globals
+	// -----------------------------------------------------------------------------------------------------------------
+
+	xLogger := logger.NewSlogLogger(slog.NewJSONHandler(logIo, &slog.HandlerOptions{
+		Level: std.Ternary(argDebug, slog.LevelDebug, slog.LevelInfo),
+	}))
+	logger.SetDefault(xLogger)
+	slog.SetDefault(xLogger.SlogLogger())
+
+	// -----------------------------------------------------------------------------------------------------------------
+	// Container
+	// -----------------------------------------------------------------------------------------------------------------
+
+	ctr := container.New(redisCacheClient)
+
+	// -----------------------------------------------------------------------------------------------------------------
+	// Launch
+	// -----------------------------------------------------------------------------------------------------------------
+
+	brokersHostPorts := strings.Split(assert.Str().NotEmpty().MustGet(os.Getenv("KAFKA_BROKERS_HOSTPORTS")), ",")
+
+	adminAuthEventsCnsA := kafcon.NewConsumer(serviceName, kafcon.AdminAuthEventsTopic, "a", brokersHostPorts, ctr)
+	adminAuthEventsCnsB := kafcon.NewConsumer(serviceName, kafcon.AdminAuthEventsTopic, "b", brokersHostPorts, ctr)
+	adminAuthEventsCnsC := kafcon.NewConsumer(serviceName, kafcon.AdminAuthEventsTopic, "c", brokersHostPorts, ctr)
+
+	monServer := monitoring.NewMonitoringServer()
+
+	launcher.LaunchServers([]launcher.Server{
+		{
+			Name:    adminAuthEventsCnsA.Id(),
+			FnStart: adminAuthEventsCnsA.Start,
+			FnStop:  adminAuthEventsCnsA.Stop,
+		},
+		{
+			Name:    adminAuthEventsCnsB.Id(),
+			FnStart: adminAuthEventsCnsB.Start,
+			FnStop:  adminAuthEventsCnsB.Stop,
+		},
+		{
+			Name:    adminAuthEventsCnsC.Id(),
+			FnStart: adminAuthEventsCnsC.Start,
+			FnStop:  adminAuthEventsCnsC.Stop,
+		},
+		{
+			Name:    "Monitoring-сервер",
+			FnStart: monServer.Start,
+			FnStop:  monServer.Stop,
+		},
+	})
+}
