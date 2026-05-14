@@ -51,11 +51,11 @@ x-prototypes:
     build:
       context: .migrator
     environment:
+      KAFKA_BROKERS: ${INFRASTRUCTURE_KAFKA_BROKERS}
       KAFKA_CONNECT_BASE_URL: infrastructure-kafka-connect:8083
       MYSQL_HOST: ${INFRASTRUCTURE_MYSQL_HOST_MASTER}
       MYSQL_USER: ${INFRASTRUCTURE_MYSQL_CLIENT_KAFKA_CONNECT_USER}
       MYSQL_PASSWORD: ${INFRASTRUCTURE_MYSQL_CLIENT_KAFKA_CONNECT_PASSWORD}
-      KAFKA_BROKERS: "BROKER://infrastructure-kafka-server-a:9092,BROKER://infrastructure-kafka-server-b:9092,BROKER://infrastructure-kafka-server-c:9092"
     volumes:
       - ./infrastructure/kafka/migrations:/migrations/scripts
       - ./infrastructure/kafka/state/migrations/state:/migrations/state
