@@ -57,18 +57,13 @@ if [[ ${tool} == 'help' ]]; then
   # MIGRATE
   elif [[ ${help_tool} == 'migrate' ]]; then
     echo ""
-    echo "Основана на отдельной программке \"example/migrations\""
-    echo ""
     echo "Шаблон:"
-    echo "    ${_script_call_help_str_} migrate ACTION [APP]"
+    echo "    ${_script_call_help_str_} migrate ACTION"
     echo ""
     echo "Аргументы:"
-    echo "    APP -- имена приложений в проекте (папки верхнего уровня)."
-    echo "    ACTION -- основаны на \"example/migration\" контейнере:"
-    docker run --rm example/migrations help
-    echo ""
-    echo "Также можно запустить \"up\" во всех приложениях командой:"
-    echo "    ${_script_call_help_str_} migrate up --all"
+    echo "    ACTION -- основаны на \"example/migrator\" контейнере:"
+    docker build -q --tag="example/migrator:latest" .migrator/build > /dev/null
+    docker run --rm example/migrator:latest help
     echo ""
 
   # ОШИБКА
@@ -100,7 +95,7 @@ elif [[ ${tool} == 'up' ]]; then
     if [[ ${up_opt1} == "--no-migrate" ]]; then
       echo "Запуск миграций пропущен!"
     else
-      source ${_script_name_} migrate up --all
+      source ${_script_name_} migrate up
     fi
 
     # Watch при ребилдах создает "безымянные" (sha256:...) образы, которые накапливаются и не удаляются автоматически.
@@ -154,7 +149,7 @@ elif [[ ${tool} == 'up' ]]; then
   # PROD
   elif [[ ${up_mode} == "" ]]; then
     docker compose up --remove-orphans --build --detach
-    source ${_script_name_} migrate up --all
+    source ${_script_name_} migrate up
     docker system prune --force
 
   # ОШИБКА
@@ -179,23 +174,6 @@ elif [[ ${tool} == 'down' ]]; then
 
 elif [[ ${tool} == 'migrate' ]]; then
   migrate_action=${arg1}
-  migrate_app=${arg2}
-
-  # Up для всех приложений
-  # --------------------------------
-
-  if [[ ${migrate_action} == 'up' && ${migrate_app} == '--all' ]]; then
-    for script in $(docker compose --profile=script-containers config --services | grep 'script-migrate-' | grep '\-up')
-    do
-      migrate_app=${script:15:-3}
-      echo "Миграции для ${migrate_app}..."
-      source ${_script_name_} migrate up ${migrate_app}
-    done
-    return
-  fi
-
-  # Действия в одном приложении
-  # --------------------------------
 
   if [[ ${migrate_action} == '' ]]; then
     echo ""
@@ -204,24 +182,12 @@ elif [[ ${tool} == 'migrate' ]]; then
     return
   fi
 
-  if [[ ${migrate_app} == '' ]]; then
-    echo ""
-    echo "Надо указать APP!"
-    echo ""
-    return
-  elif [[ ${migrate_app} == \.* || ${migrate_app} == \/* ]]; then
-    echo ""
-    echo "Некорректный APP \"${migrate_app}\"!"
-    echo ""
-    return
-  fi
-
-  migration_service_name="script-migrate-${migrate_app}-${migrate_action}"
+  migration_service_name="script-migrate-${migrate_action}"
 
   is_service_exist=$(docker compose --profile=script-containers config --format=json | grep "${migration_service_name}")
   if [[ ! ${is_service_exist} ]]; then
     echo ""
-    echo "Нет такого APP \"${migrate_app}\""
+    echo "Нет такого сервиса \"${migration_service_name}\""
     echo ""
     return
   fi
@@ -276,6 +242,7 @@ elif [[ ${tool} == 'migrate' ]]; then
   # Выполнение команды
   # --------------------------------
 
+  docker compose build ${migration_service_name}
   docker compose --profile=script-containers run --rm ${migration_service_name}
 
   # Остановка ранее незапущенных зависимостей

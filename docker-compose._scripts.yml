@@ -45,23 +45,36 @@ x-prototypes:
     profiles:
       - script-containers
 
-  # Прототип скрипта управления миграциями - infrastructure-kafka
-  migrate-infrastructure-kafka: &migrate-infrastructure-kafka
+  # Прототип скрипта управления миграциями
+  migrate: &migrate
     <<: *script-container
     build:
-      context: .migrator
+      context: .migrator/build
     environment:
       KAFKA_BROKERS: ${INFRASTRUCTURE_KAFKA_BROKERS}
       KAFKA_CONNECT_BASE_URL: infrastructure-kafka-connect:8083
       MYSQL_HOST: ${INFRASTRUCTURE_MYSQL_HOST_MASTER}
-      MYSQL_USER: ${INFRASTRUCTURE_MYSQL_CLIENT_KAFKA_CONNECT_USER}
-      MYSQL_PASSWORD: ${INFRASTRUCTURE_MYSQL_CLIENT_KAFKA_CONNECT_PASSWORD}
+      MYSQL_USER: ${INFRASTRUCTURE_MYSQL_CLIENT_MIGRATION_USER}
+      MYSQL_PASSWORD: ${INFRASTRUCTURE_MYSQL_CLIENT_MIGRATION_PASSWORD}
     volumes:
-      - ./infrastructure/kafka/migrations:/migrations/scripts
-      - ./infrastructure/kafka/state/migrations/state:/migrations/state
-      - ./infrastructure/kafka/state/migrations/packages:/migrations/packages
+      - ./.migrator/scripts:/migrations/scripts
+      - ./.migrator/state:/migrations/state
+
+services:
+  # --------------------------------------------------------------------------------------------------------------------
+  # Управление миграциями
+  # --------------------------------------------------------------------------------------------------------------------
+
+  script-migrate-new:
+    <<: *migrate
+    command: new
+
+  script-migrate-up:
+    <<: *migrate
+    command: up
     networks:
       - infrastructure-kafka-network
+      - infrastructure-mysql-network
     depends_on:
       infrastructure-kafka-server-a:
         condition: service_healthy
@@ -80,55 +93,28 @@ x-prototypes:
       infrastructure-mysql-replica:
         condition: service_healthy
 
-  # Прототип скрипта управления миграциями - infrastructure-mysql
-  migrate-infrastructure-mysql: &migrate-infrastructure-mysql
-    <<: *script-container
-    build:
-      context: .migrator
-    environment:
-      MYSQL_HOST: ${INFRASTRUCTURE_MYSQL_HOST_MASTER}
-      MYSQL_USER: ${INFRASTRUCTURE_MYSQL_CLIENT_MIGRATION_USER}
-      MYSQL_PASSWORD: ${INFRASTRUCTURE_MYSQL_CLIENT_MIGRATION_PASSWORD}
-      MYSQL_DB_AUTH: ${INFRASTRUCTURE_MYSQL_DB_AUTH}
-      MYSQL_DB_CFM: ${INFRASTRUCTURE_MYSQL_DB_CFM}
-    volumes:
-      - ./infrastructure/mysql/migrations:/migrations/scripts
-      - ./infrastructure/mysql/state/migrations/state:/migrations/state
-      - ./infrastructure/mysql/state/migrations/packages:/migrations/packages
+  script-migrate-down:
+    <<: *migrate
+    command: down
+    networks:
+      - infrastructure-kafka-network
+      - infrastructure-mysql-network
     depends_on:
-      infrastructure-mysql-master:
+      infrastructure-kafka-server-a:
         condition: service_healthy
         restart: false
-    networks:
-      - infrastructure-mysql-network
-
-services:
-  # --------------------------------------------------------------------------------------------------------------------
-  # Управление миграциями
-  # --------------------------------------------------------------------------------------------------------------------
-
-  # Infrastructure - Kafka
-  script-migrate-infrastructure-kafka-new:
-    <<: *migrate-infrastructure-kafka
-    command: new
-  script-migrate-infrastructure-kafka-up:
-    <<: *migrate-infrastructure-kafka
-    command: up
-  script-migrate-infrastructure-kafka-down:
-    <<: *migrate-infrastructure-kafka
-    command: down
-
-  # --------------------------------------------------------------------------------------------------------------------
-
-  # Infrastructure - MySQL
-  script-migrate-infrastructure-mysql-new:
-    <<: *migrate-infrastructure-mysql
-    command: new
-  script-migrate-infrastructure-mysql-up:
-    <<: *migrate-infrastructure-mysql
-    command: up
-  script-migrate-infrastructure-mysql-down:
-    <<: *migrate-infrastructure-mysql
-    command: down
+      infrastructure-kafka-server-b:
+        condition: service_healthy
+        restart: false
+      infrastructure-kafka-server-c:
+        condition: service_healthy
+        restart: false
+      infrastructure-kafka-connect:
+        condition: service_healthy
+        restart: false
+      infrastructure-mysql-master:
+        condition: service_healthy
+      infrastructure-mysql-replica:
+        condition: service_healthy
 
   # --------------------------------------------------------------------------------------------------------------------
