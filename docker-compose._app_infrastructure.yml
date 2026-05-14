@@ -101,7 +101,7 @@ services:
       MYSQL_USER: ${INFRASTRUCTURE_MYSQL_CLIENT_KAFKA_CONNECT_USER}
       MYSQL_PASSWORD: ${INFRASTRUCTURE_MYSQL_CLIENT_KAFKA_CONNECT_PASSWORD}
       CONNECT_REST_ADVERTISED_HOST_NAME: infrastructure-kafka-connect
-      CONNECT_BOOTSTRAP_SERVERS: "BROKER://infrastructure-kafka-server-a:9092,BROKER://infrastructure-kafka-server-b:9092,BROKER://infrastructure-kafka-server-c:9092"
+      CONNECT_BOOTSTRAP_SERVERS: ${INFRASTRUCTURE_KAFKA_BROKERS}
     volumes:
       - ./infrastructure/kafka/state/connect/data:/var/lib/kafka/data
     depends_on:

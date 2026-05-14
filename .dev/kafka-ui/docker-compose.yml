@@ -8,7 +8,7 @@ services:
       dockerfile: Dockerfile
     environment:
       KAFKA_CLUSTERS_0_NAME: ${INFRASTRUCTURE_KAFKA_CLUSTER_ID}
-      KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS: "BROKER://infrastructure-kafka-server-a:9092,BROKER://infrastructure-kafka-server-b:9092,BROKER://infrastructure-kafka-server-c:9092"
+      KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS: ${INFRASTRUCTURE_KAFKA_BROKERS}
     networks:
       - infrastructure-kafka-network
     # ports:
