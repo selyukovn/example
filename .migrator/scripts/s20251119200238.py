@@ -1,26 +1,27 @@
 import mysql.connector
 import os
 
-class s20251216163146:
+class s20251119200238:
     def up(self):
         with mysql.connector.connect(
             host=os.environ['MYSQL_HOST'],
             port=3306,
             user=os.environ['MYSQL_USER'],
             password=os.environ['MYSQL_PASSWORD'],
-            database=os.environ['MYSQL_DB_CFM'],
+            database="auth",
         ) as connection:
             with connection.cursor() as cursor:
                 cursor.execute("""
-                    CREATE TABLE event (
-                        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-                        occurred_at DATETIME NOT NULL,
-                        type VARBINARY(255) NOT NULL,
-                        version TINYINT UNSIGNED NOT NULL,
-                        extra_confirmation_id BINARY(36) NULL DEFAULT NULL,
-                        extra_finish_type TINYINT UNSIGNED NULL DEFAULT NULL,
+                    CREATE TABLE action_request (
+                        id BINARY(36) NOT NULL,
+                        type TINYINT UNSIGNED NOT NULL,
+                        account_id BINARY(36) NOT NULL,
+                        confirmation_id BINARY(36) NOT NULL,
+                        requested_at DATETIME NOT NULL,
                         created_at DATETIME NOT NULL,
-                        PRIMARY KEY (id)
+                        updated_at DATETIME NOT NULL,
+                        PRIMARY KEY(id),
+                        UNIQUE KEY u_confirmation (confirmation_id)
                     )
                 """)
 
@@ -30,7 +31,7 @@ class s20251216163146:
             port=3306,
             user=os.environ['MYSQL_USER'],
             password=os.environ['MYSQL_PASSWORD'],
-            database=os.environ['MYSQL_DB_CFM'],
+            database="auth",
         ) as connection:
             with connection.cursor() as cursor:
-                cursor.execute("""DROP TABLE event""")
+                cursor.execute("DROP TABLE action_request")

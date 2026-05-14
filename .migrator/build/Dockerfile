@@ -28,6 +28,11 @@ RUN apk add gcc libc-dev
 COPY --from=librdkafka /librdkafka/compiled /usr
 # </confluent-kafka>
 
+# Поскольку мигратор теперь один, то нет смысла в requirements.txt -- проще уже иметь все пакеты в образе.
+RUN pip install \
+    confluent-kafka==2.13.2 \
+    mysql-connector-python==9.2.0
+
 WORKDIR /migrations
 
 COPY up.py ./
@@ -37,7 +42,6 @@ RUN chmod +x ./entrypoint.sh
 
 VOLUME /migrations/scripts
 VOLUME /migrations/state
-VOLUME /migrations/packages
 
 ENTRYPOINT ["/bin/sh", "/migrations/entrypoint.sh"]
 CMD ["help"]
