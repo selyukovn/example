@@ -67,6 +67,11 @@ scrape_configs:
       - targets: ["admin-gateway-http:8080"]
     metrics_path: "/prometheus-metrics"
 
+  - job_name: admin-gateway-kafcon
+    static_configs:
+      - targets: ["admin-gateway-kafcon:8080"]
+    metrics_path: "/prometheus-metrics"
+
   # --------------------------------------------------------------------------------------------------------------------
   # INFRASTRUCTURE
   # --------------------------------------------------------------------------------------------------------------------

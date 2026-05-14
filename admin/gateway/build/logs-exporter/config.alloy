@@ -2,30 +2,52 @@
 // https://grafana.com/docs/alloy/latest/tutorials/logs-and-relabeling-basics/
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Target
+// HTTP
 // ---------------------------------------------------------------------------------------------------------------------
 
-local.file_match "step_0_files" {
-  path_targets = [{"__path__" = "/input/app.log"}]
+local.file_match "step_0_files_http" {
+  path_targets = [{"__path__" = "/input/http/app.log"}]
   sync_period = "5s"
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
-// Process
-// ---------------------------------------------------------------------------------------------------------------------
-
-loki.source.file "step_1_scrap" {
-  targets    = local.file_match.step_0_files.targets
-  forward_to = [loki.relabel.step_2_labels.receiver]
+loki.source.file "step_1_scrap_http" {
+  targets    = local.file_match.step_0_files_http.targets
+  forward_to = [loki.relabel.step_2_labels_http.receiver]
 }
 
-loki.relabel "step_2_labels" {
+loki.relabel "step_2_labels_http" {
   rule {
     target_label = "job"
     replacement = "admin-gateway-http"
   }
   forward_to = [loki.write.step_3_push.receiver]
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// KAFCON
+// ---------------------------------------------------------------------------------------------------------------------
+
+local.file_match "step_0_files_kafcon" {
+  path_targets = [{"__path__" = "/input/kafcon/app.log"}]
+  sync_period = "5s"
+}
+
+loki.source.file "step_1_scrap_kafcon" {
+  targets    = local.file_match.step_0_files_kafcon.targets
+  forward_to = [loki.relabel.step_2_labels_kafcon.receiver]
+}
+
+loki.relabel "step_2_labels_kafcon" {
+  rule {
+    target_label = "job"
+    replacement = "admin-gateway-kafcon"
+  }
+  forward_to = [loki.write.step_3_push.receiver]
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// LOKI
+// ---------------------------------------------------------------------------------------------------------------------
 
 loki.write "step_3_push" {
   endpoint {

@@ -17,6 +17,7 @@ services:
       - ./admin/cfm/state/grpc:/app/admin/cfm/grpc
       - ./admin/cfm/state/sch:/app/admin/cfm/sch
       - ./admin/gateway/state/http:/app/admin/gateway/http
+      - ./admin/gateway/state/kafcon:/app/admin/gateway/kafcon
       - ./infrastructure/mysql/state/server:/app/infrastructure/mysql
       - ./infrastructure/redis/state/server:/app/infrastructure/redis
     develop:
