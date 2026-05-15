@@ -12,7 +12,12 @@ x-prototypes:
     context: ./
     dockerfile: Dockerfile
 
+  dev-tools-go-build-args: &dev-tools-go-build-args
+    USER: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+
 # ----------------------------------------------------------------------------------------------------------------------
+
+# См. `tools.sh go {NAME}`
 
 services:
   # --------------------------------------------------------------------------------------------------------------------
@@ -24,6 +29,7 @@ services:
     build:
       << : *dev-tools-go-build
       args:
+        << : *dev-tools-go-build-args
         SERVICE_NAME: auth
     volumes:
       - ../../../admin/auth/app:/app
@@ -37,6 +43,7 @@ services:
     build:
       << : *dev-tools-go-build
       args:
+        << : *dev-tools-go-build-args
         SERVICE_NAME: cfm
     volumes:
       - ../../../admin/cfm/app:/app
@@ -50,6 +57,7 @@ services:
     build:
       << : *dev-tools-go-build
       args:
+        << : *dev-tools-go-build-args
         SERVICE_NAME: front
     volumes:
       - ../../../admin/front/app:/app
@@ -63,6 +71,7 @@ services:
     build:
       << : *dev-tools-go-build
       args:
+        << : *dev-tools-go-build-args
         SERVICE_NAME: gateway
     volumes:
       - ../../../admin/gateway/app:/app
