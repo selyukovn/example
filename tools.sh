@@ -66,6 +66,16 @@ if [[ ${tool} == 'help' ]]; then
     docker run --rm example/migrator:latest help
     echo ""
 
+  # GO
+  elif [[ ${help_tool} == 'go' ]]; then
+    echo ""
+    echo "Шаблон:"
+    echo "    ${_script_call_help_str_} go NAME"
+    echo ""
+    echo "Аргументы:"
+    echo "    NAME -- например, \"admin-auth\". Полный список см. в .dev/tools/go/docker-compose.yml"
+    echo ""
+
   # ОШИБКА
   else
     echo ""
@@ -267,6 +277,26 @@ elif [[ ${tool} == 'migrate' ]]; then
       fi
     done
   done
+
+# ----------------------------------------------------------------------------------------------------------------------
+# GO
+# ----------------------------------------------------------------------------------------------------------------------
+
+elif [[ ${tool} == 'go' ]]; then
+  app_name=${arg1}
+
+  if [[ ${app_name} == '' ]]; then
+    echo ""
+    echo "Надо указать имя сервиса!"
+    echo ""
+    return
+  fi
+
+  # см. .dev/tools/go/docker-compose.yml
+  docker \
+    compose --file=.dev/tools/go/docker-compose.yml --env-file=.env \
+    run --build --rm --interactive dev-tools-go-${app_name} \
+    /bin/sh
 
 # ----------------------------------------------------------------------------------------------------------------------
 # ОШИБКА
