@@ -35,8 +35,23 @@ RUN echo "rm -f /app/cmd/http/bundles/\$1/openapi/*.openapi.go" >> /openapi/gen.
     && chmod +x /openapi/gen.sh
 # </open-api>
 
+# <app>
 WORKDIR /app
 VOLUME /app
+
+# Для установки некоторых пакетов `go get` требует установленного `git`.
+RUN apk add git
+
+# Некоторые команды (например, `go mod tidy` или `go get`)
+# требуют права записи как для внутренних директорий (например, /.cache/go-build), так и для подключенных в VOLUME /app.
+# Для использования внутренних файлов нужно запускаться под `root`, ведь у "обычного" пользователя не будет нужных прав.
+# Но при таком запуске придется каждый раз менять владельца файлов, созданных в VOLUME /app, что очень неудобно.
+ARG USER
+RUN chown -R ${USER} /go \
+    && mkdir -p /.cache/go-build && chown -R ${USER} /.cache/go-build
+# </app>
+
+# --
 
 # Игнорируем предупреждение "JSONArgsRecommended",
 # т.к. CMD требуется прописать не по форме, а корректная обработка сигналов ОС в данном случае неважна.
