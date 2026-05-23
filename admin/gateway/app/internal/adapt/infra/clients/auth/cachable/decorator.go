@@ -1,8 +1,8 @@
-package auth
+package cachable
 
 import (
 	"context"
-	"example/admin/gateway/internal/adapt/infra/clients/auth/cacher"
+	"example/admin/gateway/internal/infra/cache"
 	infra_clients_auth "example/admin/gateway/internal/infra/clients/auth"
 	"github.com/selyukovn/go-std"
 	"github.com/selyukovn/go-std/logger"
@@ -14,27 +14,27 @@ import (
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
-var _ infra_clients_auth.ClientInterface = DecoratorCacheable{}
+var _ infra_clients_auth.ClientInterface = Decorator{}
 
-type DecoratorCacheable struct {
+type Decorator struct {
 	origin infra_clients_auth.ClientInterface
-	cacher cacher.Cacher
+	cacher Cacher
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
-// NewDecoratorCacheable
+// NewDecorator
 //
 // Паникует при нулевых аргументах.
-func NewDecoratorCacheable(origin infra_clients_auth.ClientInterface, cacher cacher.Cacher) DecoratorCacheable {
+func NewDecorator(origin infra_clients_auth.ClientInterface, cache cache.CacheInterface) Decorator {
 	assert.NotNilDeepMust(origin)
-	assert.NotZeroMust(cacher)
+	assert.NotZeroMust(cache)
 
-	return DecoratorCacheable{
+	return Decorator{
 		origin: origin,
-		cacher: cacher,
+		cacher: NewCacher(cache),
 	}
 }
 
@@ -51,22 +51,22 @@ func NewDecoratorCacheable(origin infra_clients_auth.ClientInterface, cacher cac
 // При нормальном поведении клиента кеширование даже с малым ttl будет бессмысленным или даже вредным.
 // С патологической же клиентурой скорее следует бороться путем ограничения кол-ва запросов и/или иными способами.
 
-func (d DecoratorCacheable) SignInRequest(ctx context.Context, fromIp netip.Addr, fromUserAgent string, email std.Email) (infra_clients_auth.SignInRequestResult, error) {
+func (d Decorator) SignInRequest(ctx context.Context, fromIp netip.Addr, fromUserAgent string, email std.Email) (infra_clients_auth.SignInRequestResult, error) {
 	return d.origin.SignInRequest(ctx, fromIp, fromUserAgent, email)
 }
 
-func (d DecoratorCacheable) SignInRequestRetry(ctx context.Context, fromIp netip.Addr, fromUserAgent string, signInId string) (infra_clients_auth.SignInRequestRetryResult, error) {
+func (d Decorator) SignInRequestRetry(ctx context.Context, fromIp netip.Addr, fromUserAgent string, signInId string) (infra_clients_auth.SignInRequestRetryResult, error) {
 	return d.origin.SignInRequestRetry(ctx, fromIp, fromUserAgent, signInId)
 }
 
-func (d DecoratorCacheable) SignInConfirm(ctx context.Context, fromIp netip.Addr, fromUserAgent string, signInId string, code string) (infra_clients_auth.SignInConfirmResult, error) {
+func (d Decorator) SignInConfirm(ctx context.Context, fromIp netip.Addr, fromUserAgent string, signInId string, code string) (infra_clients_auth.SignInConfirmResult, error) {
 	return d.origin.SignInConfirm(ctx, fromIp, fromUserAgent, signInId, code)
 }
 
 // Sign Out
 // ---------------------------------------------------------------------------------------------------------------------
 
-func (d DecoratorCacheable) SignOut(ctx context.Context, fromIp netip.Addr, fromUserAgent string, sessionId string) error {
+func (d Decorator) SignOut(ctx context.Context, fromIp netip.Addr, fromUserAgent string, sessionId string) error {
 	rErr := d.origin.SignOut(ctx, fromIp, fromUserAgent, sessionId)
 	if rErr != nil {
 		return rErr
@@ -99,7 +99,7 @@ func (d DecoratorCacheable) SignOut(ctx context.Context, fromIp netip.Addr, from
 //   - infra_clients_auth.ErrorAccountAccessDenied
 //   - infra_clients_auth.ErrorSessionClosed
 //   - std.ErrorRuntime
-func (d DecoratorCacheable) CheckSession(
+func (d Decorator) CheckSession(
 	ctx context.Context,
 	fromIp netip.Addr,
 	fromUserAgent string,

@@ -1,4 +1,4 @@
-package cache
+package loggable
 
 import (
 	"context"
@@ -12,9 +12,9 @@ import (
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
-var _ cache.CacheInterface = DecoratorLoggable{}
+var _ cache.CacheInterface = Decorator{}
 
-type DecoratorLoggable struct {
+type Decorator struct {
 	origin   cache.CacheInterface
 	maskKeys bool
 }
@@ -23,8 +23,8 @@ type DecoratorLoggable struct {
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
-func NewDecoratorLoggable(origin cache.CacheInterface, maskKeys bool) DecoratorLoggable {
-	return DecoratorLoggable{
+func NewDecorator(origin cache.CacheInterface, maskKeys bool) Decorator {
+	return Decorator{
 		origin:   origin,
 		maskKeys: maskKeys,
 	}
@@ -34,7 +34,7 @@ func NewDecoratorLoggable(origin cache.CacheInterface, maskKeys bool) DecoratorL
 // Actions
 // ---------------------------------------------------------------------------------------------------------------------
 
-func (d DecoratorLoggable) Set(ctx context.Context, key string, value []byte, ttl time.Duration) error {
+func (d Decorator) Set(ctx context.Context, key string, value []byte, ttl time.Duration) error {
 	keyForLog := std.Ternary(d.maskKeys, std.MaskStrNotFirstLast(key), key)
 	logger.InfoFf(ctx, "%T.%s(%q); ttl=%s", d, "Set", keyForLog, ttl.String())
 
@@ -48,7 +48,7 @@ func (d DecoratorLoggable) Set(ctx context.Context, key string, value []byte, tt
 	return err
 }
 
-func (d DecoratorLoggable) Unset(ctx context.Context, key string) error {
+func (d Decorator) Unset(ctx context.Context, key string) error {
 	keyForLog := std.Ternary(d.maskKeys, std.MaskStrNotFirstLast(key), key)
 	logger.InfoFf(ctx, "%T.%s(%q)", d, "Unset", keyForLog)
 
@@ -71,7 +71,7 @@ func (d DecoratorLoggable) Unset(ctx context.Context, key string) error {
 // Ошибки:
 //   - std.ErrorNotFound
 //   - std.ErrorRuntime
-func (d DecoratorLoggable) Get(ctx context.Context, key string) ([]byte, error) {
+func (d Decorator) Get(ctx context.Context, key string) ([]byte, error) {
 	keyForLog := std.Ternary(d.maskKeys, std.MaskStrNotFirstLast(key), key)
 
 	rRes, rErr := d.origin.Get(ctx, key)

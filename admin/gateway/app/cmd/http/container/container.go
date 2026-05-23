@@ -3,9 +3,9 @@ package container
 import (
 	"context"
 	"example/admin/gateway/cmd/common/components/processing"
-	adapt_infra_cache "example/admin/gateway/internal/adapt/infra/cache"
-	adapt_infra_clients_auth "example/admin/gateway/internal/adapt/infra/clients/auth"
-	adapt_infra_clients_auth_cacher "example/admin/gateway/internal/adapt/infra/clients/auth/cacher"
+	adapt_infra_cache_loggable "example/admin/gateway/internal/adapt/infra/cache/loggable"
+	adapt_infra_clients_auth_cachable "example/admin/gateway/internal/adapt/infra/clients/auth/cachable"
+	adapt_infra_clients_auth_loggable "example/admin/gateway/internal/adapt/infra/clients/auth/loggable"
 	infra_cache "example/admin/gateway/internal/infra/cache"
 	infra_cache_redis "example/admin/gateway/internal/infra/cache/redis"
 	infra_clients_auth "example/admin/gateway/internal/infra/clients/auth"
@@ -44,13 +44,10 @@ func New(
 	// +cache
 	var authCache infra_cache.CacheInterface
 	authCache = infra_cache_redis.New(redisCacheClient)
-	authCache = adapt_infra_cache.NewDecoratorLoggable(authCache, true)
-	sAuth = adapt_infra_clients_auth.NewDecoratorCacheable(
-		sAuth,
-		adapt_infra_clients_auth_cacher.NewCacher(authCache),
-	)
+	authCache = adapt_infra_cache_loggable.NewDecorator(authCache, true)
+	sAuth = adapt_infra_clients_auth_cachable.NewDecorator(sAuth, authCache)
 	// +logger
-	sAuth = adapt_infra_clients_auth.NewDecoratorLoggable(sAuth)
+	sAuth = adapt_infra_clients_auth_loggable.NewDecorator(sAuth)
 	// </auth-service>
 
 	// -----------------------------------------------------------------------------------------------------------------
