@@ -1,4 +1,4 @@
-package cfm
+package loggable
 
 import (
 	"context"
@@ -12,9 +12,9 @@ import (
 // Struct
 // ---------------------------------------------------------------------------------------------------------------------
 
-var _ cfm.ClientInterface = DecoratorLoggable{}
+var _ cfm.ClientInterface = Decorator{}
 
-type DecoratorLoggable struct {
+type Decorator struct {
 	origin cfm.ClientInterface
 }
 
@@ -22,13 +22,13 @@ type DecoratorLoggable struct {
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
-// NewDecoratorLoggable
+// NewDecorator
 //
 // Паникует при нулевых аргументах.
-func NewDecoratorLoggable(origin cfm.ClientInterface) DecoratorLoggable {
+func NewDecorator(origin cfm.ClientInterface) Decorator {
 	assert.NotNilDeepMust(origin)
 
-	return DecoratorLoggable{
+	return Decorator{
 		origin: origin,
 	}
 }
@@ -43,7 +43,7 @@ func NewDecoratorLoggable(origin cfm.ClientInterface) DecoratorLoggable {
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (d DecoratorLoggable) CreateForEmail(ctx context.Context, email std.Email) (
+func (d Decorator) CreateForEmail(ctx context.Context, email std.Email) (
 	rRes cfm.CreateForEmailResult,
 	rErr error,
 ) {
@@ -63,7 +63,7 @@ func (d DecoratorLoggable) CreateForEmail(ctx context.Context, email std.Email) 
 //   - cfm.ErrorNoAttemptsLeft
 //   - cfm.ErrorRequestsFrequency
 //   - std.ErrorRuntime
-func (d DecoratorLoggable) Request(ctx context.Context, cfmId string) (
+func (d Decorator) Request(ctx context.Context, cfmId string) (
 	rRes cfm.RequestResult,
 	rErr error,
 ) {
@@ -82,7 +82,7 @@ func (d DecoratorLoggable) Request(ctx context.Context, cfmId string) (
 //   - cfm.ErrorFinished
 //   - std.ErrorUnprocessable -- если не была запрошена
 //   - std.ErrorRuntime
-func (d DecoratorLoggable) Confirm(ctx context.Context, cfmId string, code string) (
+func (d Decorator) Confirm(ctx context.Context, cfmId string, code string) (
 	rRes cfm.ConfirmResult,
 	rErr error,
 ) {

@@ -9,7 +9,7 @@ import (
 	adapt_domain_cfm "example/admin/auth/internal/adapt/domain/cfm"
 	adapt_domain_event_storage "example/admin/auth/internal/adapt/domain/event_storage"
 	adapt_domain_session "example/admin/auth/internal/adapt/domain/session"
-	adapt_infra_clients_cfm "example/admin/auth/internal/adapt/infra/clients/cfm"
+	adapt_infra_clients_cfm_loggable "example/admin/auth/internal/adapt/infra/clients/cfm/loggable"
 	domain_account "example/admin/auth/internal/domain/account"
 	domain_action_request "example/admin/auth/internal/domain/action_request"
 	domain_cfm "example/admin/auth/internal/domain/cfm"
@@ -62,7 +62,7 @@ func New(
 	// -----------------------------------------------------------------------------------------------------------------
 
 	// clients - cfm
-	infraCfmGrpcClient := adapt_infra_clients_cfm.NewDecoratorLoggable(
+	infraCfmGrpcClient := adapt_infra_clients_cfm_loggable.NewDecorator(
 		infra_clients_cfm_grpc.NewClientGrpcMust(
 			appCfmApiGrpcBaseUrl,
 			appCfmApiGrpcApiKey,
