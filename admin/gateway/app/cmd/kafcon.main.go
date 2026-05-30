@@ -45,7 +45,16 @@ func main() {
 	logIo := resources.NewLogIoFile(argLogFile)
 	defer fnClose("logIo", logIo)
 
-	// redis
+	// mysql
+	mysql := resources.OpenMysql(
+		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_HOST")),
+		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_USER")),
+		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_PASSWORD")),
+		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_DB")),
+	)
+	defer fnClose("mysql", mysql.Db)
+
+	// redis-cache
 	redisCacheClient := resources.OpenRedis(
 		assert.Str().NotEmpty().MustGet(os.Getenv("REDIS_CACHE_HOST")),
 		assert.Str().NotEmpty().MustGet(os.Getenv("REDIS_CACHE_USER")),
@@ -53,6 +62,15 @@ func main() {
 		uint(std.Must[uint64](strconv.ParseUint(os.Getenv("REDIS_CACHE_DB"), 10, 64))),
 	)
 	defer fnClose("redisCacheClient", redisCacheClient)
+
+	// redis-kvdb
+	redisKvDbClient := resources.OpenRedis(
+		assert.Str().NotEmpty().MustGet(os.Getenv("REDIS_KVDB_HOST")),
+		assert.Str().NotEmpty().MustGet(os.Getenv("REDIS_KVDB_USER")),
+		assert.Str().NotEmpty().MustGet(os.Getenv("REDIS_KVDB_PASSWORD")),
+		uint(std.Must[uint64](strconv.ParseUint(os.Getenv("REDIS_KVDB_DB"), 10, 64))),
+	)
+	defer fnClose("redisKvDbClient", redisKvDbClient)
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// Globals
@@ -68,7 +86,13 @@ func main() {
 	// Container
 	// -----------------------------------------------------------------------------------------------------------------
 
-	ctr := container.New(redisCacheClient)
+	ctr := container.New(
+		redisCacheClient,
+		redisKvDbClient,
+		mysql.Db,
+		mysql.FnIsDeadlockError,
+		mysql.FnIsDuplicateKeyError,
+	)
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// Launch
