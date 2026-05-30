@@ -32,7 +32,10 @@ type topicRouter struct {
 func newRouter(ctr *container.Container) topicRouter {
 	m := make(map[string]kernel.TopicHandlerInterface)
 
-	admin_auth_events.Register(m, ctr)
+	m[admin_auth_events.TopicName] = admin_auth_events.NewTopicHandlerDecoratorDlq(
+		admin_auth_events.NewTopicHandlerDefault(ctr),
+		ctr.Dlq.Storage,
+	)
 
 	return topicRouter{
 		m: m,

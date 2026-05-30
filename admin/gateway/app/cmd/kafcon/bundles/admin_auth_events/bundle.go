@@ -5,40 +5,38 @@ import (
 	"example/admin/gateway/cmd/common/components/processing"
 	"example/admin/gateway/cmd/kafcon/bundles/admin_auth_events/handlers"
 	"example/admin/gateway/cmd/kafcon/bundles/admin_auth_events/kafapi"
+	"example/admin/gateway/cmd/kafcon/components/dlq"
 	"example/admin/gateway/cmd/kafcon/container"
 	"example/admin/gateway/cmd/kafcon/kernel"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/selyukovn/go-std"
 	"github.com/selyukovn/go-std/logger"
-	assert "github.com/selyukovn/go-wm-assert"
 )
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Register
+// Const
 // ---------------------------------------------------------------------------------------------------------------------
 
 const TopicName = "admin-auth-events"
 
-func Register(topicRouting map[string]kernel.TopicHandlerInterface, ctr *container.Container) {
-	assert.NotNilDeepMust(topicRouting)
-	assert.NotNilDeepMust(ctr)
+// ---------------------------------------------------------------------------------------------------------------------
+// Default
+// ---------------------------------------------------------------------------------------------------------------------
 
+func NewTopicHandlerDefault(ctr *container.Container) kernel.TopicHandlerInterface {
 	service := sDecoratorBoundary{
 		origin: sDefault{
 			sessionClosedV1: handlers.NewSessionClosedV1(ctr),
 		},
 	}
 
-	topicRouting[TopicName] = kernel.FnTopicHandler(func(ctx context.Context, kMsg *kafka.Message) error {
+	return kernel.FnTopicHandler(func(ctx context.Context, kMsg *kafka.Message) error {
+		_o_ := TopicName
+		_m_ := "NewTopicHandlerDefault"
+
 		err := kafapi.Handle(service, ctx, kMsg)
 		switch vErr := err.(type) {
-		case nil:
-			// pass
-		case kafapi.ErrorDecoding:
-			// todo : ???
-			return vErr
-		case kafapi.ErrorMapping:
-			// todo : ???
+		case nil, kafapi.ErrorDecoding, kafapi.ErrorMapping:
 			return vErr
 		case kafapi.ErrorUnsupported:
 			// Внимание!
@@ -50,18 +48,14 @@ func Register(topicRouting map[string]kernel.TopicHandlerInterface, ctr *contain
 			logger.WarnFf(ctx, "Неопознанное сообщение (id=%d): %s", vErr.Meta.Id, vErr.Error())
 			return nil
 		case kafapi.ErrorHandling:
-			// todo : if err ???
-			return vErr
+			return std.WrapErrorToRuntime(vErr, _o_, _m_, "Handle", "ErrorHandling")
 		default:
 			panic(vErr)
 		}
-
-		return nil
 	})
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
-// Default
+// Default: Service Default
 // ---------------------------------------------------------------------------------------------------------------------
 
 var _ kafapi.ServiceInterface = sDefault{}
@@ -75,8 +69,7 @@ func (s sDefault) SessionClosedV1(ctx context.Context, meta *kafapi.Meta, msg *k
 	return s.sessionClosedV1(ctx, meta, msg)
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
-// Decorator Boundary
+// Default: Service Decorator Boundary
 // ---------------------------------------------------------------------------------------------------------------------
 
 var _ kafapi.ServiceInterface = sDecoratorBoundary{}
@@ -145,6 +138,93 @@ func (s sDecoratorBoundary) SessionClosedV1(ctx context.Context, meta *kafapi.Me
 	logger.InfoFf(ctx, "%T/%T - end: %#v", s, data, err)
 
 	return err
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Decorator DLQ
+// ---------------------------------------------------------------------------------------------------------------------
+
+func NewTopicHandlerDecoratorDlq(
+	origin kernel.TopicHandlerInterface,
+	dlqStorage dlq.StorageInterface,
+) kernel.TopicHandlerInterface {
+	fnHandleErrIsDlq := func(_ context.Context, err error) bool {
+		switch err.(type) {
+		case kafapi.ErrorDecoding, kafapi.ErrorMapping:
+			return true
+		default:
+			return false
+		}
+	}
+
+	return kernel.FnTopicHandler(dlq.Decorate(
+		dlqStorage,
+		TopicName,
+		FnGetGroupId,
+		origin.Handle,
+		fnHandleErrIsDlq,
+	))
+}
+
+func FnGetGroupId(ctx context.Context, kMsg *kafka.Message) (string, error) {
+	// Внимание!
+	//
+	// `kafapi` сервиса `auth` не разделяет парсинг метаданных и обработку сообщения
+	// и не предоставляет возможности вклиниться в эти этапы для вставки кода DLQ -- и, в общем-то, не обязан.
+	// Метаданные передаются в теле сообщения из-за особенностей продюсера, поэтому и нет смысла в явном разделении.
+	//
+	// Для `dlq.Decorate` метаданные должны быть известны до вызова обработчика сообщения
+	// для предотвращения нормальной обработки и перенаправления сообщения в DLQ при обнаружении отравленной группы.
+	// Такой подход обеспечивает сохранение порядка сообщений в каждой из групп --
+	// это общий механизм, не зависящий от `kafapi` сервиса `auth` или кода обработки любого другого топика.
+	//
+	// Трюк с `kafapi`-сервисом для извлечения метаданных решает проблему несовместимости механизмов,
+	// однако, приводит к повторному декодированию сообщения при вызове основного обработчика -- нужна оптимизация.
+	// todo : избавиться от повторного декодирования при извлечении метаданных из auth.kafapi для DLQ.
+	trickyService := new(sTrickyServiceToGetMetaForDlq)
+	err := kafapi.Handle(trickyService, ctx, kMsg)
+	switch vErr := err.(type) {
+	case nil:
+		return trickyService.Meta.GroupId, nil
+	case kafapi.ErrorDecoding:
+		return "", vErr
+	case kafapi.ErrorMapping:
+		return vErr.Meta.GroupId, nil
+	case kafapi.ErrorUnsupported:
+		return vErr.Meta.GroupId, nil
+	default:
+		panic(vErr)
+	}
+}
+
+// Decorator DLQ: Tricky Service to Parse Metadata
+// ---------------------------------------------------------------------------------------------------------------------
+
+var _ kafapi.ServiceInterface = new(sTrickyServiceToGetMetaForDlq)
+
+type sTrickyServiceToGetMetaForDlq struct {
+	Meta *kafapi.Meta
+}
+
+func (s *sTrickyServiceToGetMetaForDlq) handle(meta *kafapi.Meta) error {
+	s.Meta = meta
+	return nil
+}
+
+func (s *sTrickyServiceToGetMetaForDlq) AccountCreatedV1(_ context.Context, meta *kafapi.Meta, _ *kafapi.DataAccountCreatedV1) error {
+	return s.handle(meta)
+}
+func (s *sTrickyServiceToGetMetaForDlq) AccountDeactivatedV1(_ context.Context, meta *kafapi.Meta, _ *kafapi.DataAccountDeactivatedV1) error {
+	return s.handle(meta)
+}
+func (s *sTrickyServiceToGetMetaForDlq) IpWhitelistChangedV1(_ context.Context, meta *kafapi.Meta, _ *kafapi.DataIpWhitelistChangedV1) error {
+	return s.handle(meta)
+}
+func (s *sTrickyServiceToGetMetaForDlq) SessionCreatedV1(_ context.Context, meta *kafapi.Meta, _ *kafapi.DataSessionCreatedV1) error {
+	return s.handle(meta)
+}
+func (s *sTrickyServiceToGetMetaForDlq) SessionClosedV1(_ context.Context, meta *kafapi.Meta, _ *kafapi.DataSessionClosedV1) error {
+	return s.handle(meta)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
