@@ -28,7 +28,7 @@ loki.relabel "step_2_labels_http" {
 // ---------------------------------------------------------------------------------------------------------------------
 
 local.file_match "step_0_files_kafcon" {
-  path_targets = [{"__path__" = "/input/kafcon/app.log"}]
+  path_targets = [{"__path__" = "/input/kafcon/server.log"}, {"__path__" = "/input/kafcon/cli_dlq.log"}]
   sync_period = "5s"
 }
 

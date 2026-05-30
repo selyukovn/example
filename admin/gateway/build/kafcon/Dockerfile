@@ -34,7 +34,8 @@ COPY app ./
 # "... If you are building for Alpine Linux (musl), -tags musl must be specified. ..."
 # "... If the bundled librdkafka build is not supported on your platform,
 # or you need a librdkafka with GSSAPI/Kerberos support, you must install librdkafka manually ..."
-RUN CGO_ENABLED=1 GOOS=linux go build -tags musl -o ./exec ./cmd/kafcon.main.go
+RUN CGO_ENABLED=1 GOOS=linux go build -tags musl -o ./server ./cmd/kafcon.server.main.go
+RUN CGO_ENABLED=1 GOOS=linux go build -tags musl -o ./cli_dlq ./cmd/kafcon.cli_dlq.main.go
 # </>
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -54,9 +55,10 @@ FROM alpine:3.22.1 AS debug
 WORKDIR /app
 
 # <Копирование файлов>
-COPY --from=inner_build /app/exec       /app/exec
+COPY --from=inner_build /app/server     /app/server
+COPY --from=inner_build /app/cli_dlq    /app/cli_dlq
 # дебагер
-COPY --from=inner_debugger /go/bin/dlv /app/dlv
+COPY --from=inner_debugger /go/bin/dlv  /app/dlv
 # </>
 
 VOLUME /state
@@ -67,12 +69,22 @@ EXPOSE 8080
 EXPOSE 9999
 
 ENV KAFKA_BROKERS_HOSTPORTS=""
+# --
+ENV MYSQL_HOST=""
+ENV MYSQL_USER=""
+ENV MYSQL_PASSWORD=""
+ENV MYSQL_DB=""
+# --
 ENV REDIS_CACHE_HOST=""
 ENV REDIS_CACHE_USER=""
 ENV REDIS_CACHE_PASSWORD=""
 ENV REDIS_CACHE_DB=0
 
-CMD ["./dlv", "--listen=:9999", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", "/app/exec"]
+RUN echo "./dlv --listen=:9998 --headless=true --api-version=2 --accept-multiclient \\" >> ./dlv_cli_dlq.sh && \
+    echo "exec /app/cli_dlq -- \"\$@\"" >> ./dlv_cli_dlq.sh && \
+    chmod +x ./dlv_cli_dlq.sh
+
+CMD ["./dlv", "--listen=:9999", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", "/app/server"]
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Запуск в обычном режиме (по умолчанию)
@@ -83,7 +95,8 @@ FROM alpine:3.22.1 AS default
 WORKDIR /app
 
 # <Копирование файлов>
-COPY --from=inner_build /app/exec       /app/exec
+COPY --from=inner_build /app/server     /app/server
+COPY --from=inner_build /app/cli_dlq    /app/cli_dlq
 # </>
 
 VOLUME /state
@@ -92,11 +105,17 @@ VOLUME /state
 EXPOSE 8080
 
 ENV KAFKA_BROKERS_HOSTPORTS=""
+# --
+ENV MYSQL_HOST=""
+ENV MYSQL_USER=""
+ENV MYSQL_PASSWORD=""
+ENV MYSQL_DB=""
+# --
 ENV REDIS_CACHE_HOST=""
 ENV REDIS_CACHE_USER=""
 ENV REDIS_CACHE_PASSWORD=""
 ENV REDIS_CACHE_DB=0
 
-CMD ["./exec"]
+CMD ["./server"]
 
 # ----------------------------------------------------------------------------------------------------------------------

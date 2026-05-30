@@ -26,7 +26,7 @@ func main() {
 	// -----------------------------------------------------------------------------------------------------------------
 
 	_argDebug := flag.Bool("debug", false, "")
-	_argLogFile := flag.String("log-file", "/state/app.log", "путь к log-файлу")
+	_argLogFile := flag.String("log-file", "/state/server.log", "путь к log-файлу")
 	flag.Parse()
 	argDebug := *_argDebug
 	argLogFile := *_argLogFile
@@ -47,7 +47,16 @@ func main() {
 	logIo := resources.NewLogIoFile(argLogFile)
 	defer fnClose("logIo", logIo)
 
-	// redis
+	// mysql
+	mysql := resources.OpenMysql(
+		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_HOST")),
+		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_USER")),
+		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_PASSWORD")),
+		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_DB")),
+	)
+	defer fnClose("mysql", mysql.Db)
+
+	// redis-cache
 	redisCacheClient := resources.OpenRedis(
 		assert.Str().NotEmpty().MustGet(os.Getenv("REDIS_CACHE_HOST")),
 		assert.Str().NotEmpty().MustGet(os.Getenv("REDIS_CACHE_USER")),
@@ -70,7 +79,12 @@ func main() {
 	// Container
 	// -----------------------------------------------------------------------------------------------------------------
 
-	ctr := container.New(redisCacheClient)
+	ctr := container.New(
+		redisCacheClient,
+		mysql.Db,
+		mysql.FnIsDeadlockError,
+		mysql.FnIsDuplicateKeyError,
+	)
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// Launch
