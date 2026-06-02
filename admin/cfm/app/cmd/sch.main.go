@@ -17,8 +17,11 @@ func main() {
 	// Params
 	// -----------------------------------------------------------------------------------------------------------------
 
-	argDebug := *flag.Bool("debug", false, "")
-	argLogFile := *flag.String("log-file", "/state/app.log", "путь к log-файлу")
+	_argDebug := flag.Bool("debug", false, "")
+	_argLogFile := flag.String("log-file", "/state/app.log", "путь к log-файлу")
+	flag.Parse()
+	argDebug := *_argDebug
+	argLogFile := *_argLogFile
 
 	env := sch.LoadEnv()
 

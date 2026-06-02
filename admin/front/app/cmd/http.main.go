@@ -15,7 +15,9 @@ func main() {
 	// Params
 	// -----------------------------------------------------------------------------------------------------------------
 
-	argDebug := *flag.Bool("debug", false, "")
+	_argDebug := flag.Bool("debug", false, "")
+	flag.Parse()
+	argDebug := *_argDebug
 
 	env := http.LoadEnv()
 
