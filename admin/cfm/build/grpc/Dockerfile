@@ -25,7 +25,7 @@ RUN go mod download
 
 # <Компиляция>
 COPY app ./
-RUN CGO_ENABLED=0 GOOS=linux go build -o ./exec ./cmd/grpc.main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o ./exec ./cmd/grpc/
 # </>
 
 # ----------------------------------------------------------------------------------------------------------------------

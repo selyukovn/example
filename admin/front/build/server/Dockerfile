@@ -25,7 +25,7 @@ RUN go mod download
 
 # <Компиляция>
 COPY app ./
-RUN CGO_ENABLED=0 GOOS=linux go build -o ./exec ./cmd/http.main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o ./exec ./cmd/http/
 # </>
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -46,7 +46,7 @@ WORKDIR /app
 
 # <Копирование файлов>
 COPY --from=inner_build /app/exec       /app/exec
-COPY app/cmd/http/static                /app/static
+COPY app/internal/api/http/static       /app/static
 # дебагер
 COPY --from=inner_debugger /go/bin/dlv  /app/dlv
 # </>
@@ -75,7 +75,7 @@ WORKDIR /app
 
 # <Копирование файлов>
 COPY --from=inner_build /app/exec   /app/exec
-COPY app/cmd/http/static            /app/static
+COPY app/internal/api/http/static   /app/static
 # </>
 
 # логика

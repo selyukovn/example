@@ -34,7 +34,7 @@ COPY app ./
 # "... If you are building for Alpine Linux (musl), -tags musl must be specified. ..."
 # "... If the bundled librdkafka build is not supported on your platform,
 # or you need a librdkafka with GSSAPI/Kerberos support, you must install librdkafka manually ..."
-RUN CGO_ENABLED=1 GOOS=linux go build -tags musl -o ./exec ./cmd/grpc.main.go
+RUN CGO_ENABLED=1 GOOS=linux go build -tags musl -o ./exec ./cmd/grpc/
 # </>
 
 # ----------------------------------------------------------------------------------------------------------------------
