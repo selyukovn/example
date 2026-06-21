@@ -11,7 +11,7 @@ require (
 	github.com/oapi-codegen/runtime v1.2.0
 	github.com/prometheus/client_golang v1.22.0
 	github.com/redis/go-redis/v9 v9.18.0
-	github.com/selyukovn/go-routiner v0.2.0
+	github.com/selyukovn/example_gopkg v0.1.0
 	github.com/selyukovn/go-std v0.5.0
 	github.com/selyukovn/go-txr v0.6.0
 	github.com/selyukovn/go-wm-assert v0.3.0
@@ -30,6 +30,7 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
+	github.com/selyukovn/go-routiner v0.2.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect

@@ -3,15 +3,17 @@ package container
 import (
 	"context"
 	"database/sql"
-	adapt_domain_event_storage "example/admin/auth/internal/adapt/domain/event_storage"
-	adapt_domain_session "example/admin/auth/internal/adapt/domain/session"
-	domain_event_storage "example/admin/auth/internal/domain/event_storage"
-	domain_session "example/admin/auth/internal/domain/session"
-	opera_domain_facades "example/admin/auth/internal/opera/domain_facades"
-	"example/admin/auth/internal/opera/use_cases/session_tick_time"
+	adapt_domain_cfm "example/admin/cfm/internal/adapt/domain/cfm"
+	adapt_domain_cfm_code "example/admin/cfm/internal/adapt/domain/cfm/code"
+	adapt_domain_event_storage "example/admin/cfm/internal/adapt/domain/event_storage"
+	domain_cfm "example/admin/cfm/internal/domain/cfm"
+	domain_event_storage "example/admin/cfm/internal/domain/event_storage"
+	opera_domain_facades "example/admin/cfm/internal/opera/domain_facades"
+	"example/admin/cfm/internal/opera/use_cases/confirm"
+	"example/admin/cfm/internal/opera/use_cases/create_for_email"
+	"example/admin/cfm/internal/opera/use_cases/request"
+	"example/admin/cfm/internal/opera/use_cases/tick_time"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/selyukovn/example_gopkg/processing"
 	goroutiner "github.com/selyukovn/go-routiner"
 	"github.com/selyukovn/go-std"
 	"github.com/selyukovn/go-std/logger"
@@ -25,7 +27,10 @@ type Container = struct {
 }
 
 type UseCases = struct {
-	SessionTickTime session_tick_time.Command
+	CreateForEmail create_for_email.Command
+	Request        request.Command
+	Confirm        confirm.Command
+	TickTime       tick_time.Command
 }
 
 func New(
@@ -43,13 +48,16 @@ func New(
 
 	// event storage
 	evStorage := domain_event_storage.NewStorage(
-		adapt_domain_event_storage.NewRepositoryImplSql(processing.OperationId),
+		adapt_domain_event_storage.NewRepositoryImplSql(),
 	)
 
-	// session
-	sessIdGen := adapt_domain_session.NewIdGeneratorImplUniqueRandom()
-	sessFactory := domain_session.NewFactory(sessIdGen)
-	sessRepo := adapt_domain_session.NewRepositoryImplSql(sqlDbFnIsDuplicateKeyError)
+	// cfm
+	cfmCodeGen := adapt_domain_cfm_code.NewGeneratorImplUintRand1()
+	cfmCodeHasher := adapt_domain_cfm_code.NewHasherImplBcrypt10()
+	cfmCodeSender := adapt_domain_cfm_code.NewSenderImplDummy()
+	cfmIdGen := adapt_domain_cfm.NewIdGeneratorImplUniqueRandom()
+	cfmFactory := domain_cfm.NewFactory(cfmIdGen, cfmCodeGen, cfmCodeHasher)
+	cfmRepo := adapt_domain_cfm.NewRepositoryImplSql(sqlDbFnIsDuplicateKeyError)
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// Opera
@@ -77,7 +85,14 @@ func New(
 	)
 
 	// domain facades
-	sessDomFac := opera_domain_facades.NewSessionDomFac(operaTxr, evStorage, sessFactory, sessRepo)
+	cfmDomFac := opera_domain_facades.NewCfmDomFac(
+		operaTxr,
+		evStorage,
+		cfmFactory,
+		cfmRepo,
+		cfmCodeSender,
+		cfmCodeHasher,
+	)
 
 	// -----------------------------------------------------------------------------------------------------------------
 
@@ -85,7 +100,10 @@ func New(
 	// Поэтому лучше сразу использовать контейнер через указатель.
 	return &Container{
 		UseCases: UseCases{
-			SessionTickTime: session_tick_time.NewCommand(operaGrt, sessDomFac),
+			CreateForEmail: create_for_email.NewCommand(cfmDomFac),
+			Request:        request.NewCommand(operaGrt, cfmDomFac),
+			Confirm:        confirm.NewCommand(cfmDomFac),
+			TickTime:       tick_time.NewCommand(operaGrt, cfmDomFac),
 		},
 	}
 }

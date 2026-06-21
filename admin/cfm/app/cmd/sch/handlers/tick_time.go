@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"context"
-	"example/admin/cfm/cmd/common/container"
+	"example/admin/cfm/cmd/sch/container"
 	"example/admin/cfm/internal/opera/use_cases/tick_time"
 	"github.com/selyukovn/go-std"
 	"github.com/selyukovn/go-std/logger"

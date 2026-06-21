@@ -2,7 +2,7 @@ package sch
 
 import (
 	"context"
-	"example/admin/cfm/cmd/common/container"
+	"example/admin/cfm/cmd/sch/container"
 	"example/admin/cfm/cmd/sch/interceptors"
 	"github.com/robfig/cron/v3"
 	assert "github.com/selyukovn/go-wm-assert"

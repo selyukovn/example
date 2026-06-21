@@ -1,10 +1,10 @@
 package main
 
 import (
-	"example/admin/front/cmd/common/launcher"
 	"example/admin/front/cmd/http"
 	"example/admin/front/internal/infra/clients/gateway"
 	"flag"
+	"github.com/selyukovn/example_gopkg/launcher"
 	"github.com/selyukovn/go-std"
 	"github.com/selyukovn/go-std/logger"
 	assert "github.com/selyukovn/go-wm-assert"
@@ -57,6 +57,4 @@ func main() {
 			httpServer.Stop,
 		},
 	})
-
-	// -----------------------------------------------------------------------------------------------------------------
 }

@@ -2,7 +2,7 @@ package grpc
 
 import (
 	"context"
-	"example/admin/cfm/cmd/common/container"
+	"example/admin/cfm/cmd/grpc/container"
 	"example/admin/cfm/cmd/grpc/handlers"
 	"example/admin/cfm/cmd/grpc/pb"
 )

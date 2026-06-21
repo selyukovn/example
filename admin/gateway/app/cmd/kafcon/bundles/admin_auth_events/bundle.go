@@ -2,13 +2,13 @@ package admin_auth_events
 
 import (
 	"context"
-	"example/admin/gateway/cmd/common/components/processing"
 	"example/admin/gateway/cmd/kafcon/bundles/admin_auth_events/handlers"
 	"example/admin/gateway/cmd/kafcon/bundles/admin_auth_events/kafapi"
 	"example/admin/gateway/cmd/kafcon/components/dlq"
 	"example/admin/gateway/cmd/kafcon/container"
 	"example/admin/gateway/cmd/kafcon/kernel"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
+	"github.com/selyukovn/example_gopkg/processing"
 	"github.com/selyukovn/go-std"
 	"github.com/selyukovn/go-std/logger"
 )

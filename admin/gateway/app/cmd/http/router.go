@@ -2,7 +2,6 @@ package http
 
 import (
 	"context"
-	"example/admin/gateway/cmd/common/components/processing"
 	"example/admin/gateway/cmd/http/bundles/auth"
 	"example/admin/gateway/cmd/http/bundles/layout"
 	"example/admin/gateway/cmd/http/components/monitoring"
@@ -10,6 +9,7 @@ import (
 	"example/admin/gateway/cmd/http/container"
 	"example/admin/gateway/cmd/http/kernel"
 	"github.com/google/uuid"
+	"github.com/selyukovn/example_gopkg/processing"
 	"github.com/selyukovn/go-std"
 	"github.com/selyukovn/go-std/logger"
 	"net/http"
