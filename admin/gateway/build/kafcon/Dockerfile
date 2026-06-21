@@ -34,8 +34,8 @@ COPY app ./
 # "... If you are building for Alpine Linux (musl), -tags musl must be specified. ..."
 # "... If the bundled librdkafka build is not supported on your platform,
 # or you need a librdkafka with GSSAPI/Kerberos support, you must install librdkafka manually ..."
-RUN CGO_ENABLED=1 GOOS=linux go build -tags musl -o ./server ./cmd/kafcon.server.main.go
-RUN CGO_ENABLED=1 GOOS=linux go build -tags musl -o ./cli_dlq ./cmd/kafcon.cli_dlq.main.go
+RUN CGO_ENABLED=1 GOOS=linux go build -tags musl -o ./consumer ./cmd/kafcon/consumer/
+RUN CGO_ENABLED=1 GOOS=linux go build -tags musl -o ./dlq_proc ./cmd/kafcon/dlq_proc/
 # </>
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -55,8 +55,8 @@ FROM alpine:3.22.1 AS debug
 WORKDIR /app
 
 # <Копирование файлов>
-COPY --from=inner_build /app/server     /app/server
-COPY --from=inner_build /app/cli_dlq    /app/cli_dlq
+COPY --from=inner_build /app/consumer   /app/consumer
+COPY --from=inner_build /app/dlq_proc   /app/dlq_proc
 # дебагер
 COPY --from=inner_debugger /go/bin/dlv  /app/dlv
 # </>
@@ -80,11 +80,11 @@ ENV REDIS_CACHE_USER=""
 ENV REDIS_CACHE_PASSWORD=""
 ENV REDIS_CACHE_DB=0
 
-RUN echo "./dlv --listen=:9998 --headless=true --api-version=2 --accept-multiclient \\" >> ./dlv_cli_dlq.sh && \
-    echo "exec /app/cli_dlq -- \"\$@\"" >> ./dlv_cli_dlq.sh && \
-    chmod +x ./dlv_cli_dlq.sh
+RUN echo "./dlv --listen=:9998 --headless=true --api-version=2 --accept-multiclient \\" >> ./dlv_dlq_proc.sh && \
+    echo "exec /app/dlq_proc -- \"\$@\"" >> ./dlv_dlq_proc.sh && \
+    chmod +x ./dlv_dlq_proc.sh
 
-CMD ["./dlv", "--listen=:9999", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", "/app/server"]
+CMD ["./dlv", "--listen=:9999", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", "/app/consumer"]
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Запуск в обычном режиме (по умолчанию)
@@ -95,8 +95,8 @@ FROM alpine:3.22.1 AS default
 WORKDIR /app
 
 # <Копирование файлов>
-COPY --from=inner_build /app/server     /app/server
-COPY --from=inner_build /app/cli_dlq    /app/cli_dlq
+COPY --from=inner_build /app/consumer   /app/consumer
+COPY --from=inner_build /app/dlq_proc   /app/dlq_proc
 # </>
 
 VOLUME /state
@@ -116,6 +116,6 @@ ENV REDIS_CACHE_USER=""
 ENV REDIS_CACHE_PASSWORD=""
 ENV REDIS_CACHE_DB=0
 
-CMD ["./server"]
+CMD ["./consumer"]
 
 # ----------------------------------------------------------------------------------------------------------------------

@@ -50,14 +50,14 @@
 
 Используемые слои:
 
-- <span style="padding: 0 1em; color: #1a1a1a; background: #f8d3af">cmd / api</span> -- 
-  клиенты ядра приложения (например, http-сервер, планировщик, ...), primary-adapter`ы.
-  Каждый клиент обращается к ядру через Контейнер -- набор компонентов и операций, используемых этим клиентом ядра.
-  Если разница в наборах незначительна, контейнер может быть общим для нескольких клиентов.
+- <span style="padding: 0 1em; color: #1a1a1a; background: #b0b0b0">build</span> -- слой окружения и сборки.
 
 - <span style="padding: 0 1em; color: #1a1a1a; background: #dedaff">adapt</span> --
   не является полноценным слоем, содержит secondary-adapter`ы.
   Выделен из классического слоя инфраструктуры для наглядности.
+
+- <span style="padding: 0 1em; color: #1a1a1a; background: #f8d3af">api</span> --
+  клиенты ядра приложения (например, http-сервер, планировщик, ...), primary-adapter`ы.
 
 - <span style="padding: 0 1em; color: #1a1a1a; background: #c6dcff">opera</span> -- классический операционный слой.
 - <span style="padding: 0 1em; color: #1a1a1a; background: #adf0c7">domain</span> -- классический доменный слой.
@@ -74,14 +74,19 @@
   утилитарный код, который можно рассматривать в рамках проекта как часть стандартной библиотеки языка.
   Например, тип данных Email, функции работы с массивами, ...
 
-- <span style="padding: 0 1em; color: #1a1a1a; background: #b0b0b0">env</span> -- "мнимый" слой окружения.
-
 
 Направление зависимостей -- строго сверху вниз: 
 вышележащий слой имеет доступ только к примыкающим снизу слоям (см. схему).
 
 Исключением является <span style="padding: 0 1em; color: #1a1a1a; background: #e7e7e7">std</span>
 и использование неизменяемых объектов из всех нижележащих слоев в качестве DTO для уменьшения количества трансформаций.
+
+> TODO: ??? обращение к 
+> <span style="padding: 0 1em; color: #1a1a1a; background: #dedaff">adapt</span>
+> из
+> <span style="padding: 0 1em; color: #1a1a1a; background: #f8d3af">api</span>
+> --
+> [gateway/session_closed](admin/gateway/app/internal/api/kafcon/bundles/admin_auth_events/actions/session_closed.go)
 
 Доступ к смежным слоям выполняется через интерфейсы и адаптеры.
 
@@ -208,7 +213,7 @@ TODO
 В идеальной среде в каждом сервисе-приемнике использовалось бы несколько консьюмер-контейнеров на каждый топик.
 В данном проекте для экономии ресурсов каждый сервис-приемник использует один консьюмер-контейнер на все топики,
 однако, разделение по топикам для наглядности выполнено с помощью отдельных горутин-консьюмеров
-(например, [kafcon.server.main.go](admin/gateway/app/cmd/kafcon.server.main.go)).
+(например, [gateway](admin/gateway/app/cmd/kafcon/consumer/main.go)).
 Стоит упомянуть, что _kafka.Consumer_ может обрабатывать несколько топиков одним консьюмером, но это менее наглядно.
 
 Количество запущенных горутин-консьюмеров имеет смысл делать равным количеству партиций в топике,
@@ -241,16 +246,17 @@ TODO
 
 В зависимости от топологии обмена сообщениями сервисы предоставляют небольшие пакеты 
 с высокоуровневым кодом клиента и/или интерфейсом обработчика по аналогии с генерируемыми на основе _Protobuf_ / _OpenApi_
-(например, [kafapi](admin/auth/app/cmd/kafprod/admin_auth_events/kafapi)).
+(например, [kafapi](admin/auth/app/internal/api/kafprod/admin_auth_events/kafapi)).
 
 По той же аналогии в _fan-out_-подобных топологиях в сервисах-приемниках обработчики для удобства разделены по бандлам,
-где один бандл представляет топик (например, [admin_auth_events](admin/gateway/app/cmd/kafcon/bundles/admin_auth_events)).
+где один бандл представляет топик 
+(например, [admin_auth_events](admin/gateway/app/internal/api/kafcon/bundles/admin_auth_events)).
 
 #### Гарантии доставки
 
 Семантика доставки зависит от конкретного сервиса-потребителя / обработчика и топика,
 и может быть реализована как на уровне консьюмера с помощью сохранение оффсета
-(например, [kafcon.server.main.go](admin/gateway/app/cmd/kafcon.server.main.go)),
+(например, [gateway](admin/gateway/app/cmd/kafcon/consumer/main.go)),
 так и на уровне конкретного обработчика при необходимости смешивания различных семантик в рамках одного консьюмера
 (например, --- TODO ---).
 
@@ -323,7 +329,7 @@ TODO
 
 **ВАЖНО**: Остановка консьюмер-группы обязательна перед запуском DLQ-обработки 
 при использовании несогласованной реализации хранилища сообщений и маркеров отравленных групп
-(см. [dlq/storage.go](admin/gateway/app/cmd/kafcon/components/dlq/storage.go)).
+(см. [dlq/storage.go](admin/gateway/app/internal/api/kafcon/components/dlq/storage.go)).
 
 Наиболее простым и универсальным способом возвращения группы сообщений из DLQ в нормальное русло
 является переотправка исправленных сообщений этой группы:
