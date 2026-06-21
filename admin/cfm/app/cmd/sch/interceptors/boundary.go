@@ -2,9 +2,9 @@ package interceptors
 
 import (
 	"context"
-	"example/admin/cfm/cmd/common/components/processing"
-	"example/admin/cfm/cmd/common/container"
+	"example/admin/cfm/cmd/sch/container"
 	"github.com/google/uuid"
+	"github.com/selyukovn/example_gopkg/processing"
 	"github.com/selyukovn/go-std/logger"
 	"runtime/debug"
 	"strings"

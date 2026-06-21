@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"context"
-	"example/admin/cfm/cmd/common/container"
+	"example/admin/cfm/cmd/grpc/container"
 	"example/admin/cfm/cmd/grpc/kernel"
 	"example/admin/cfm/cmd/grpc/pb"
 	"example/admin/cfm/internal/opera/use_cases/create_for_email"

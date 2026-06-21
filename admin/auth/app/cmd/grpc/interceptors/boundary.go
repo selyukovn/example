@@ -2,9 +2,9 @@ package interceptors
 
 import (
 	"context"
-	"example/admin/auth/cmd/common/components/processing"
 	"example/admin/auth/cmd/grpc/kernel"
 	"github.com/google/uuid"
+	"github.com/selyukovn/example_gopkg/processing"
 	"github.com/selyukovn/go-std/logger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

@@ -1,13 +1,14 @@
 package main
 
 import (
-	"example/admin/auth/cmd/common/launcher"
-	"example/admin/auth/cmd/common/monitoring"
-	"example/admin/auth/cmd/common/resources"
+	"database/sql"
 	"example/admin/auth/cmd/grpc"
 	"example/admin/auth/cmd/grpc/container"
 	"flag"
 	"fmt"
+	"github.com/go-sql-driver/mysql"
+	"github.com/selyukovn/example_gopkg/launcher"
+	"github.com/selyukovn/example_gopkg/monitoring"
 	"github.com/selyukovn/go-std"
 	"github.com/selyukovn/go-std/logger"
 	assert "github.com/selyukovn/go-wm-assert"
@@ -40,17 +41,53 @@ func main() {
 	}
 
 	// logIo
-	logIo := resources.NewLogIoFile(argLogFile)
+	logIo := std.Must(os.OpenFile(argLogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666))
 	defer fnClose("logIo", logIo)
 
 	// mysql - master
-	mysqlMaster := resources.OpenMysql(
+	// todo : рефакторинг
+	type tSql = struct {
+		Db                    *sql.DB
+		FnIsDuplicateKeyError func(error) bool
+		FnIsDeadlockError     func(error) bool
+	}
+	xMysql := func(host string, user string, password string, dbName string) tSql {
+		assert.Str().NotEmpty().Must(host)
+		assert.Str().NotEmpty().Must(user)
+		assert.Str().NotEmpty().Must(password)
+		assert.Str().NotEmpty().Must(dbName)
+
+		db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?parseTime=true", user, password, host, dbName))
+		if err != nil {
+			panic(err)
+		}
+
+		fnIsDuplicateKeyError := func(err error) bool {
+			if mysqlErr, ok := err.(*mysql.MySQLError); ok {
+				return mysqlErr.Number == 1062
+			}
+			return false
+		}
+
+		fnIsDeadlockError := func(err error) bool {
+			if mysqlErr, ok := err.(*mysql.MySQLError); ok {
+				return mysqlErr.Number == 1213
+			}
+			return false
+		}
+
+		return tSql{
+			Db:                    db,
+			FnIsDuplicateKeyError: fnIsDuplicateKeyError,
+			FnIsDeadlockError:     fnIsDeadlockError,
+		}
+	}(
 		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_HOST_MASTER"), "env: MYSQL_HOST_MASTER"),
 		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_USER"), "env: MYSQL_USER"),
 		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_PASSWORD"), "env: MYSQL_PASSWORD"),
 		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_DB"), "env: MYSQL_DB"),
 	)
-	defer fnClose("mysqlMaster", mysqlMaster.Db)
+	defer fnClose("xMysql", xMysql.Db)
 
 	// todo : MYSQL_HOST_REPLICA
 
@@ -69,9 +106,9 @@ func main() {
 	// -----------------------------------------------------------------------------------------------------------------
 
 	ctr := container.New(
-		mysqlMaster.Db,
-		mysqlMaster.FnIsDeadlockError,
-		mysqlMaster.FnIsDuplicateKeyError,
+		xMysql.Db,
+		xMysql.FnIsDeadlockError,
+		xMysql.FnIsDuplicateKeyError,
 		assert.Str().NotEmpty().MustGet(os.Getenv("SERVICE_CFM_API_GRPC_BASEURL"), "env: SERVICE_CFM_API_GRPC_BASEURL"),
 		assert.Str().NotEmpty().MustGet(os.Getenv("SERVICE_CFM_API_GRPC_APIKEY"), "env: SERVICE_CFM_API_GRPC_APIKEY"),
 	)
@@ -98,6 +135,4 @@ func main() {
 			monServer.Stop,
 		},
 	})
-
-	// -----------------------------------------------------------------------------------------------------------------
 }

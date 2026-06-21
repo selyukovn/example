@@ -1,13 +1,16 @@
 package main
 
 import (
-	"example/admin/gateway/cmd/common/launcher"
-	"example/admin/gateway/cmd/common/monitoring"
-	"example/admin/gateway/cmd/common/resources"
+	"context"
+	"database/sql"
 	"example/admin/gateway/cmd/kafcon"
 	"example/admin/gateway/cmd/kafcon/container"
 	"flag"
 	"fmt"
+	"github.com/go-sql-driver/mysql"
+	"github.com/redis/go-redis/v9"
+	"github.com/selyukovn/example_gopkg/launcher"
+	"github.com/selyukovn/example_gopkg/monitoring"
 	"github.com/selyukovn/go-std"
 	"github.com/selyukovn/go-std/logger"
 	assert "github.com/selyukovn/go-wm-assert"
@@ -44,20 +47,74 @@ func main() {
 	}
 
 	// logIo
-	logIo := resources.NewLogIoFile(argLogFile)
+	logIo := std.Must(os.OpenFile(argLogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666))
 	defer fnClose("logIo", logIo)
 
-	// mysql
-	mysql := resources.OpenMysql(
-		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_HOST")),
-		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_USER")),
-		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_PASSWORD")),
-		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_DB")),
+	// mysql - master
+	// todo : рефакторинг
+	type tSql = struct {
+		Db                    *sql.DB
+		FnIsDuplicateKeyError func(error) bool
+		FnIsDeadlockError     func(error) bool
+	}
+	xMysql := func(host string, user string, password string, dbName string) tSql {
+		assert.Str().NotEmpty().Must(host)
+		assert.Str().NotEmpty().Must(user)
+		assert.Str().NotEmpty().Must(password)
+		assert.Str().NotEmpty().Must(dbName)
+
+		db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?parseTime=true", user, password, host, dbName))
+		if err != nil {
+			panic(err)
+		}
+
+		fnIsDuplicateKeyError := func(err error) bool {
+			if mysqlErr, ok := err.(*mysql.MySQLError); ok {
+				return mysqlErr.Number == 1062
+			}
+			return false
+		}
+
+		fnIsDeadlockError := func(err error) bool {
+			if mysqlErr, ok := err.(*mysql.MySQLError); ok {
+				return mysqlErr.Number == 1213
+			}
+			return false
+		}
+
+		return tSql{
+			Db:                    db,
+			FnIsDuplicateKeyError: fnIsDuplicateKeyError,
+			FnIsDeadlockError:     fnIsDeadlockError,
+		}
+	}(
+		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_HOST"), "env: MYSQL_HOST"),
+		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_USER"), "env: MYSQL_USER"),
+		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_PASSWORD"), "env: MYSQL_PASSWORD"),
+		assert.Str().NotEmpty().MustGet(os.Getenv("MYSQL_DB"), "env: MYSQL_DB"),
 	)
-	defer fnClose("mysql", mysql.Db)
+	defer fnClose("xMysql", xMysql.Db)
 
 	// redis-cache
-	redisCacheClient := resources.OpenRedis(
+	// todo : рефакторинг
+	redisCacheClient := func(host string, username string, password string, dbNumber uint) *redis.Client {
+		assert.Str().NotEmpty().Must(host)
+		assert.Str().NotEmpty().Must(username)
+		assert.Str().NotEmpty().Must(password)
+
+		opt, err := redis.ParseURL(fmt.Sprintf("redis://%s:%s@%s:6379?db=%d", username, password, host, dbNumber))
+		if err != nil {
+			panic(err)
+		}
+
+		r := redis.NewClient(opt)
+
+		if err := r.Ping(context.Background()).Err(); err != nil {
+			panic(err)
+		}
+
+		return r
+	}(
 		assert.Str().NotEmpty().MustGet(os.Getenv("REDIS_CACHE_HOST")),
 		assert.Str().NotEmpty().MustGet(os.Getenv("REDIS_CACHE_USER")),
 		assert.Str().NotEmpty().MustGet(os.Getenv("REDIS_CACHE_PASSWORD")),
@@ -81,9 +138,9 @@ func main() {
 
 	ctr := container.New(
 		redisCacheClient,
-		mysql.Db,
-		mysql.FnIsDeadlockError,
-		mysql.FnIsDuplicateKeyError,
+		xMysql.Db,
+		xMysql.FnIsDeadlockError,
+		xMysql.FnIsDuplicateKeyError,
 	)
 
 	// -----------------------------------------------------------------------------------------------------------------

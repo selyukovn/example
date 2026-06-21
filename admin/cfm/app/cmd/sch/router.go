@@ -2,7 +2,7 @@ package sch
 
 import (
 	"context"
-	"example/admin/cfm/cmd/common/container"
+	"example/admin/cfm/cmd/sch/container"
 	"example/admin/cfm/cmd/sch/handlers"
 	"time"
 )

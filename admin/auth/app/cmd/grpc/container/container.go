@@ -3,7 +3,6 @@ package container
 import (
 	"context"
 	"database/sql"
-	"example/admin/auth/cmd/common/components/processing"
 	adapt_domain_account "example/admin/auth/internal/adapt/domain/account"
 	adapt_domain_action_request "example/admin/auth/internal/adapt/domain/action_request"
 	adapt_domain_cfm "example/admin/auth/internal/adapt/domain/cfm"
@@ -24,6 +23,7 @@ import (
 	"example/admin/auth/internal/opera/use_cases/sign_out"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/selyukovn/example_gopkg/processing"
 	goroutiner "github.com/selyukovn/go-routiner"
 	"github.com/selyukovn/go-std"
 	"github.com/selyukovn/go-std/logger"

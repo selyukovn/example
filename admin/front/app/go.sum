@@ -2,10 +2,12 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
+github.com/selyukovn/example_gopkg v0.1.0 h1:ln6WkGpGyMmWYbvahAchI4EVjEtXRTDYHwonqpK1iVw=
+github.com/selyukovn/example_gopkg v0.1.0/go.mod h1:hC4biHzC+F95HeFL+sVvt60fr0mkW09QjmPBXgnmVd0=
 github.com/selyukovn/go-routiner v0.2.0 h1:GpOy5q0a2VC9Pmw0pPVWEy9N/QSZsCtNkydjwAeqvns=
 github.com/selyukovn/go-routiner v0.2.0/go.mod h1:2KV308gQQW02SElQGqu6nQiTj5/hSQJ9UGODB8r3YKI=
-github.com/selyukovn/go-std v0.4.0 h1:tejgFtoLaD6fv3h2iKVksrp0mBynHgTMIE64mAT2tKQ=
-github.com/selyukovn/go-std v0.4.0/go.mod h1:b4TXWjeGxAGNY0GDhDqbsxysMvEvr5IUtMboUbngKUw=
+github.com/selyukovn/go-std v0.5.0 h1:ODxqITc2b1ny310JzryvTBNAJLJNyccZF8B+6s5OUSI=
+github.com/selyukovn/go-std v0.5.0/go.mod h1:b4TXWjeGxAGNY0GDhDqbsxysMvEvr5IUtMboUbngKUw=
 github.com/selyukovn/go-wm-assert v0.3.0 h1:GEnpM7kYMKeAFeyR/kTHTDHGCiOFVlFJ5Rw0VIeU10o=
 github.com/selyukovn/go-wm-assert v0.3.0/go.mod h1:EWaJjrITgnQ3PCa66s1S5XO54S8pAaShTWlwROnoQR4=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=

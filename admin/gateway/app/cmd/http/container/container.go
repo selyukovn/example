@@ -2,7 +2,6 @@ package container
 
 import (
 	"context"
-	"example/admin/gateway/cmd/common/components/processing"
 	adapt_infra_cache_loggable "example/admin/gateway/internal/adapt/infra/cache/loggable"
 	adapt_infra_clients_auth_cachable "example/admin/gateway/internal/adapt/infra/clients/auth/cachable"
 	adapt_infra_clients_auth_loggable "example/admin/gateway/internal/adapt/infra/clients/auth/loggable"
@@ -11,6 +10,7 @@ import (
 	infra_clients_auth "example/admin/gateway/internal/infra/clients/auth"
 	infra_clients_auth_grpc "example/admin/gateway/internal/infra/clients/auth/grpc"
 	"github.com/redis/go-redis/v9"
+	"github.com/selyukovn/example_gopkg/processing"
 	assert "github.com/selyukovn/go-wm-assert"
 )
 
