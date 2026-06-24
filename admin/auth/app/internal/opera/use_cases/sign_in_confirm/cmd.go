@@ -3,7 +3,9 @@ package sign_in_confirm
 import (
 	"context"
 	"example/admin/auth/internal/domain/account"
+	"example/admin/auth/internal/domain/action_request"
 	"example/admin/auth/internal/domain/cfm"
+	"example/admin/auth/internal/domain/client"
 	"example/admin/auth/internal/opera/domain_facades"
 	goroutiner "github.com/selyukovn/go-routiner"
 	"github.com/selyukovn/go-std"
@@ -67,13 +69,16 @@ func NewCommand(
 //   - cfm.ErrorFinished
 //   - std.ErrorUnprocessable -- если уже есть сессия
 //   - std.ErrorRuntime
-func (c Command) Execute(args Args) (Result, error) {
-	assert.FalseMust(args.IsNil())
-
-	ctx := args.Ctx()
-	cl := args.Client()
-	signInId := args.SignInId()
-	code := args.Code()
+func (c Command) Execute(
+	ctx context.Context,
+	cl client.Client,
+	signInId action_request.Id,
+	code cfm.Code,
+) (Result, error) {
+	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
+	assert.Cmp[client.Client]().NotEq(client.ClientNil).Must(cl)
+	assert.Cmp[action_request.Id]().NotEq(action_request.IdNil).Must(signInId)
+	assert.Cmp[cfm.Code]().NotEq(cfm.CodeNil).Must(code)
 
 	// находим sign in
 	accId, cfmId, err := c.actReqDomFac.CheckSignIn(ctx, signInId)

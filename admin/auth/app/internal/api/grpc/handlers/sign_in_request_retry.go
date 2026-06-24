@@ -33,7 +33,7 @@ func NewSignInRequestRetry(ucSignInRequestRetry sign_in_request_retry.Command) f
 
 		// --
 
-		res, err := ucSignInRequestRetry.Execute(sign_in_request_retry.NewArgs(ctx, cl, signInId))
+		res, err := ucSignInRequestRetry.Execute(ctx, cl, signInId)
 		switch vErr := err.(type) {
 		case nil:
 		case std.ErrorNotFound:

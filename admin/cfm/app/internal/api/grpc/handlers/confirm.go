@@ -28,7 +28,7 @@ func NewConfirm(ucConfirm confirm.Command) func(ctx context.Context, req *pb.Con
 
 		// --
 
-		res, err := ucConfirm.Execute(confirm.NewArgs(ctx, cfmId, cCode))
+		res, err := ucConfirm.Execute(ctx, cfmId, cCode)
 		switch vErr := err.(type) {
 		case nil:
 		case std.ErrorNotFound:

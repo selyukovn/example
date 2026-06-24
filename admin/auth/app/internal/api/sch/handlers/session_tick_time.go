@@ -9,7 +9,7 @@ import (
 
 func NewSessionTickTime(sessionTickTime session_tick_time.Command) func(ctx context.Context) {
 	return func(ctx context.Context) {
-		err := sessionTickTime.Execute(session_tick_time.NewArgs(ctx, 100))
+		err := sessionTickTime.Execute(ctx, 100)
 		switch err.(type) {
 		case nil:
 		case std.ErrorRuntime:

@@ -1,7 +1,10 @@
 package check_session
 
 import (
+	"context"
 	"example/admin/auth/internal/domain/account"
+	"example/admin/auth/internal/domain/client"
+	"example/admin/auth/internal/domain/session"
 	"example/admin/auth/internal/opera/domain_facades"
 	"github.com/selyukovn/go-std"
 	assert "github.com/selyukovn/go-wm-assert"
@@ -50,12 +53,10 @@ func NewCommand(
 //   - account.ErrorIpWhitelist
 //   - session.ErrorClosed
 //   - std.ErrorRuntime
-func (c Command) Execute(args Args) (Result, error) {
-	assert.FalseMust(args.IsNil())
-
-	ctx := args.Ctx()
-	cl := args.Client()
-	sessId := args.SessId()
+func (c Command) Execute(ctx context.Context, cl client.Client, sessId session.Id) (Result, error) {
+	assert.NotNilDeepMust(ctx)
+	assert.FalseMust(cl.IsNil())
+	assert.FalseMust(sessId.IsNil())
 
 	var err error
 

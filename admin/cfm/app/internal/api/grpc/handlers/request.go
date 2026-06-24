@@ -21,7 +21,7 @@ func NewRequest(ucRequest request.Command) func(ctx context.Context, req *pb.Req
 
 		// --
 
-		res, err := ucRequest.Execute(request.NewArgs(ctx, cfmId))
+		res, err := ucRequest.Execute(ctx, cfmId)
 		switch vErr := err.(type) {
 		case nil:
 		case std.ErrorNotFound:

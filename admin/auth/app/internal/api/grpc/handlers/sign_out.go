@@ -31,7 +31,7 @@ func NewSignOut(ucSignOut sign_out.Command) func(ctx context.Context, req *pb.Si
 
 		// --
 
-		err = ucSignOut.Execute(sign_out.NewArgs(ctx, cl, sessId))
+		err = ucSignOut.Execute(ctx, cl, sessId)
 		switch err.(type) {
 		case nil:
 		case std.ErrorNotFound:

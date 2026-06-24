@@ -41,7 +41,7 @@ func NewSignInConfirm(ucSignInConfirm sign_in_confirm.Command) func(ctx context.
 
 		// --
 
-		res, err := ucSignInConfirm.Execute(sign_in_confirm.NewArgs(ctx, cl, signInId, code))
+		res, err := ucSignInConfirm.Execute(ctx, cl, signInId, code)
 		switch vErr := err.(type) {
 		case nil:
 		case std.ErrorNotFound:
