@@ -5,14 +5,16 @@ import (
 	adapt_domain_event_storage "example/admin/auth/internal/adapt/domain/event_storage"
 	adapt_domain_session "example/admin/auth/internal/adapt/domain/session"
 	api_sch "example/admin/auth/internal/api/sch"
-	api_sch_handlers "example/admin/auth/internal/api/sch/handlers"
-	api_sch_interceptors "example/admin/auth/internal/api/sch/interceptors"
+	api_sch_handlers_session_tick_time "example/admin/auth/internal/api/sch/handlers/session_tick_time"
+	api_sch_kernel "example/admin/auth/internal/api/sch/kernel"
+	api_sch_middlewares "example/admin/auth/internal/api/sch/middlewares"
 	domain_event_storage "example/admin/auth/internal/domain/event_storage"
 	domain_session "example/admin/auth/internal/domain/session"
 	opera_domain_facades "example/admin/auth/internal/opera/domain_facades"
 	opera_use_cases_session_tick_time "example/admin/auth/internal/opera/use_cases/session_tick_time"
 	"flag"
 	"fmt"
+	"github.com/robfig/cron/v3"
 	"github.com/selyukovn/example_gopkg/launcher"
 	"github.com/selyukovn/example_gopkg/monitoring"
 	"github.com/selyukovn/example_gopkg/processing"
@@ -108,18 +110,22 @@ func main() {
 	// Launch
 	// -----------------------------------------------------------------------------------------------------------------
 
-	router := api_sch.NewRouter()
-	router.Register(
-		"sessionTickTime",
-		10*time.Minute,
-		api_sch_handlers.NewSessionTickTime(
+	scheduler := api_sch.NewScheduler(func() *cron.Cron {
+		c := cron.New()
+		api_sch_handlers_session_tick_time.Register(
+			c,
+			10*time.Minute,
 			opera_use_cases_session_tick_time.NewCommand(operaGrt, sessDomFac),
-		),
-	)
-	scheduler := api_sch.NewScheduler(
-		router,
-		api_sch_interceptors.NewBoundary(),
-	)
+			[]api_sch_kernel.Middleware{
+				api_sch_middlewares.TraceSet(),
+				api_sch_middlewares.LogBeginEnd("SessionTickTime"),
+				api_sch_middlewares.OnPanic(func(ctx context.Context, pv any, ds []byte) {
+					logger.PanicFf(ctx, pv, ds, "api_sch_middlewares"+"."+"OnPanic")
+				}),
+			},
+		)
+		return c
+	}())
 
 	monServer := monitoring.NewMonitoringServer()
 

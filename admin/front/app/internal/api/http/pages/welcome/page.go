@@ -17,8 +17,8 @@ const Url = "/welcome/"
 // ---------------------------------------------------------------------------------------------------------------------
 
 func Register(
-	apiClient gateway.ApiClient,
 	mux *http.ServeMux,
+	apiClient gateway.ApiClient,
 	redirectUrlForGuests string,
 ) {
 	mux.Handle("GET "+Url+"{$}", newRenderer(

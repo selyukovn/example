@@ -21,8 +21,8 @@ var config = struct {
 }{}
 
 func Register(
-	apiClient gateway.ApiClient,
 	mux *http.ServeMux,
+	apiClient gateway.ApiClient,
 	appName string,
 	redirectUrlForGuests string,
 	menuNameUrl map[string]string,

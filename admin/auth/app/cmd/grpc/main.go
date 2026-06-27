@@ -9,7 +9,9 @@ import (
 	adapt_domain_session "example/admin/auth/internal/adapt/domain/session"
 	adapt_infra_clients_cfm_loggable "example/admin/auth/internal/adapt/infra/clients/cfm/loggable"
 	api_grpc "example/admin/auth/internal/api/grpc"
-	api_grpc_interceptors "example/admin/auth/internal/api/grpc/interceptors"
+	api_grpc_handlers_auth "example/admin/auth/internal/api/grpc/handlers/auth"
+	api_grpc_kernel "example/admin/auth/internal/api/grpc/kernel"
+	api_grpc_middlewares "example/admin/auth/internal/api/grpc/middlewares"
 	domain_account "example/admin/auth/internal/domain/account"
 	domain_action_request "example/admin/auth/internal/domain/action_request"
 	domain_cfm "example/admin/auth/internal/domain/cfm"
@@ -31,6 +33,7 @@ import (
 	"github.com/selyukovn/go-std"
 	"github.com/selyukovn/go-std/logger"
 	"github.com/selyukovn/go-txr"
+	"google.golang.org/grpc"
 	"io"
 	"log/slog"
 	"os"
@@ -145,18 +148,33 @@ func main() {
 	// Launch
 	// -----------------------------------------------------------------------------------------------------------------
 
-	grpcServer := api_grpc.NewServer(
-		api_grpc.NewRouter(
+	grpcServer := api_grpc.NewServer(func() *grpc.Server {
+		s := grpc.NewServer(grpc.ChainUnaryInterceptor(
+			api_grpc_kernel.RootMiddleware(),
+			api_grpc_middlewares.PanicToError(func(ctx context.Context, pv any, ds []byte) error {
+				logger.PanicFf(ctx, pv, ds, "api_grpc_middlewares"+"."+"PanicToError"+"(outer)")
+				return api_grpc_kernel.ErrorInternal()
+			}),
+			api_grpc_middlewares.Metrics(),
+			api_grpc_middlewares.TraceGet(),
+			api_grpc_middlewares.LogBeginEnd(),
+			api_grpc_middlewares.PanicToError(func(ctx context.Context, pv any, ds []byte) error {
+				logger.PanicFf(ctx, pv, ds, "api_grpc_middlewares"+"."+"PanicToError"+"(inner)")
+				return api_grpc_kernel.ErrorInternal()
+			}),
+			api_grpc_middlewares.AccessKey(env.ApiGrpcApiKey),
+		))
+		api_grpc_handlers_auth.Register(
+			s,
 			opera_use_cases_sign_in_request.NewCommand(accDomFac, actReqDomFac, cfmService),
 			opera_use_cases_sign_in_request_retry.NewCommand(operaGrt, accDomFac, actReqDomFac, cfmService, sessDomFac),
 			opera_use_cases_sign_in_confirm.NewCommand(operaGrt, accDomFac, actReqDomFac, cfmService, sessDomFac),
 			opera_use_cases_sign_out.NewCommand(accDomFac, sessDomFac),
 			opera_use_cases_check_session.NewCommand(accDomFac, sessDomFac),
-		),
-		api_grpc_interceptors.NewBoundary(),
-		api_grpc_interceptors.NewPrometheusMetrics(),
-		api_grpc_interceptors.NewAccessKey(env.ApiGrpcApiKey),
-	)
+			nil,
+		)
+		return s
+	}())
 
 	monServer := monitoring.NewMonitoringServer()
 

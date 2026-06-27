@@ -17,7 +17,7 @@ type ResponseWriter struct {
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
-func WrapResponseWriter(w http.ResponseWriter) *ResponseWriter {
+func wrapResponseWriter(w http.ResponseWriter) *ResponseWriter {
 	return &ResponseWriter{
 		w:      w,
 		status: http.StatusOK, // 200 по дефолту, поскольку WriteHeader(200) может явно не вызываться.
