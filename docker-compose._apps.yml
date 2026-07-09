@@ -12,14 +12,15 @@ name: example
 # ----------------------------------------------------------------------------------------------------------------------
 
 networks:
-  admin-front-network:            # `front` --> `gateway`
-  admin-internal-network:         # `gateway` --> ...внутренние-сервисы... <--> ...внутренние-сервисы ...
-  infrastructure-kafka-network:   # `infrastructure-kafka-...` между собой и миграциями
-  infrastructure-mysql-network:   # `infrastructure-mysql-prometheus-exporter` и миграции --> `infrastructure-...`
-  infrastructure-redis-network:   # `infrastructure-redis-prometheus-exporter` и миграции --> `infrastructure-...`
-  monitoring-internal-network:    # ...внутренние-сервисы... <--> ...внутренние-сервисы ...
-  monitoring-logs-network:        # все экспортеры --> loki
-  monitoring-metrics-network:     # все экспортеры --> prometheus (см. monitoring/build/prometheus/prometheus.yml).
+  admin-front-network:              # `front` --> `gateway`
+  admin-internal-network:           # `gateway` --> ...внутренние-сервисы... <--> ...внутренние-сервисы ...
+  infrastructure-kafka-network:     # `infrastructure-kafka-...` между собой и миграциями
+  infrastructure-mysql-network:     # `infrastructure-mysql-prometheus-exporter` и миграции --> `infrastructure-...`
+  infrastructure-postgres-network:  # `infrastructure-postgres-prometheus-exporter-*` и миграции --> `infrastructure-...`
+  infrastructure-redis-network:     # `infrastructure-redis-prometheus-exporter` и миграции --> `infrastructure-...`
+  monitoring-internal-network:      # ...внутренние-сервисы... <--> ...внутренние-сервисы ...
+  monitoring-logs-network:          # все экспортеры --> loki
+  monitoring-metrics-network:       # все экспортеры --> prometheus (см. monitoring/build/prometheus/prometheus.yml).
 
 services:
   # --------------------------------------------------------------------------------------------------------------------
@@ -215,6 +216,51 @@ services:
     extends:
       file: docker-compose._app_infrastructure.yml
       service: infrastructure-mysql-logs-exporter
+    build:
+      args:
+        LOKI_BASEURL: "http://monitoring-loki:3100"
+    networks:
+      - monitoring-logs-network
+
+  # POSTGRES
+  # --------------------------------------------------------------------------------------------------------------------
+
+  infrastructure-postgres-master:
+    extends:
+      file: docker-compose._app_infrastructure.yml
+      service: infrastructure-postgres-master
+    networks:
+      - infrastructure-postgres-network
+      - admin-internal-network
+
+  infrastructure-postgres-replica:
+    extends:
+      file: docker-compose._app_infrastructure.yml
+      service: infrastructure-postgres-replica
+    networks:
+      - infrastructure-postgres-network
+      - admin-internal-network
+
+  infrastructure-postgres-prometheus-exporter-master:
+    extends:
+      file: docker-compose._app_infrastructure.yml
+      service: infrastructure-postgres-prometheus-exporter-master
+    networks:
+      - infrastructure-postgres-network
+      - monitoring-metrics-network
+
+  infrastructure-postgres-prometheus-exporter-replica:
+    extends:
+      file: docker-compose._app_infrastructure.yml
+      service: infrastructure-postgres-prometheus-exporter-replica
+    networks:
+      - infrastructure-postgres-network
+      - monitoring-metrics-network
+
+  infrastructure-postgres-logs-exporter:
+    extends:
+      file: docker-compose._app_infrastructure.yml
+      service: infrastructure-postgres-logs-exporter
     build:
       args:
         LOKI_BASEURL: "http://monitoring-loki:3100"

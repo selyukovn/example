@@ -15,6 +15,33 @@ if [[ ${tool} == '' && ${arg1} == '' ]]; then
 fi
 
 # ----------------------------------------------------------------------------------------------------------------------
+
+prepare_states() {
+  # Директории, которые являются точками монтирования и не могут быть помещены в git,
+  # должны быть созданы пользователем, запускающим соответствующие контейнеры,
+  # иначе они будут созданы докером от имени root'а в момент монтирования, что может привести к ошибкам доступа.
+
+  if [[ ! -f .env ]]; then
+    echo "Файл .env не найден!"
+    exit 1
+  fi
+
+  # см. infrastructure/postgres/state/server/README.md
+  postgresUserUid=$(grep '^DEPLOY_CONTAINER_USER_UID=' .env | head -n1 | cut -d'=' -f2-)
+  postgresUserGid=$(grep '^DEPLOY_CONTAINER_USER_GID=' .env | head -n1 | cut -d'=' -f2-)
+  postgresMasterDataInternal="./infrastructure/postgres/state/server/master/data/internal"
+  if [[ ! -d ${postgresMasterDataInternal} ]]; then
+    mkdir -p ${postgresMasterDataInternal}
+    chown -R "${postgresUserUid}":"${postgresUserGid}" ${postgresMasterDataInternal}
+  fi
+  postgresReplicaDataInternal="./infrastructure/postgres/state/server/replica/data/internal"
+  if [[ ! -d ${postgresReplicaDataInternal} ]]; then
+    mkdir -p ${postgresReplicaDataInternal}
+    chown -R "${postgresUserUid}":"${postgresUserGid}" ${postgresReplicaDataInternal}
+  fi
+}
+
+# ----------------------------------------------------------------------------------------------------------------------
 # HELP
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -91,6 +118,8 @@ if [[ ${tool} == 'help' ]]; then
 elif [[ ${tool} == 'up' ]]; then
   up_mode=${arg1}
   up_opt1=${arg2}
+
+  prepare_states
 
   # DEV
   if [[ ${up_mode} == 'dev' ]]; then
@@ -202,6 +231,8 @@ elif [[ ${tool} == 'migrate' ]]; then
     return
   fi
 
+  prepare_states
+
   # Если у скрипта есть зависимости (например, у migrate up, вероятно, какие-то базы данных),
   # то их контейнеры не будут остановлены после завершения работы контейнера скрипта.
   # Логично их останавливать, если они не были запущены ранее.
@@ -305,3 +336,5 @@ elif [[ ${tool} == 'go' ]]; then
 else
   echo "Нет такой тулы \"${tool}\"!"
 fi
+
+# ----------------------------------------------------------------------------------------------------------------------

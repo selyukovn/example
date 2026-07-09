@@ -1,0 +1,54 @@
+// https://grafana.com/docs/alloy/latest/tutorials/send-logs-to-loki/
+// https://grafana.com/docs/alloy/latest/tutorials/logs-and-relabeling-basics/
+
+// ---------------------------------------------------------------------------------------------------------------------
+// MASTER
+// ---------------------------------------------------------------------------------------------------------------------
+
+local.file_match "step_0_files_master" {
+  path_targets = [{"__path__" = "/input/master/postgres.json"}]
+  sync_period = "5s"
+}
+loki.source.file "step_1_scrap_master" {
+  targets    = local.file_match.step_0_files_master.targets
+  forward_to = [loki.relabel.step_2_labels_master.receiver]
+}
+loki.relabel "step_2_labels_master" {
+  rule {
+    target_label = "job"
+    replacement = "infrastructure-postgres-master"
+  }
+  forward_to = [loki.write.step_3_push.receiver]
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// REPLCIA
+// ---------------------------------------------------------------------------------------------------------------------
+
+local.file_match "step_0_files_replica" {
+  path_targets = [{"__path__" = "/input/replica/postgres.json"}]
+  sync_period = "5s"
+}
+loki.source.file "step_1_scrap_replica" {
+  targets    = local.file_match.step_0_files_replica.targets
+  forward_to = [loki.relabel.step_2_labels_replica.receiver]
+}
+loki.relabel "step_2_labels_replica" {
+  rule {
+    target_label = "job"
+    replacement = "infrastructure-postgres-replica"
+  }
+  forward_to = [loki.write.step_3_push.receiver]
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// LOKI
+// ---------------------------------------------------------------------------------------------------------------------
+
+loki.write "step_3_push" {
+  endpoint {
+    url = "__LOKI_BASEURL__/loki/api/v1/push"
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------

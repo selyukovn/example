@@ -106,6 +106,17 @@ scrape_configs:
     static_configs:
       - targets: ["infrastructure-mysql-prometheus-exporter:9104"]
 
+  # POSTGRES
+  # --------------------------------------------------------------------------------------------------------------------
+
+  - job_name: infrastructure-postgres-master
+    static_configs:
+      - targets: ["infrastructure-postgres-prometheus-exporter-master:9187"]
+
+  - job_name: infrastructure-postgres-replica
+    static_configs:
+      - targets: ["infrastructure-postgres-prometheus-exporter-replica:9187"]
+
   # REDIS
   # --------------------------------------------------------------------------------------------------------------------
 

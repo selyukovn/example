@@ -242,6 +242,129 @@ services:
           path: infrastructure/mysql/build/logs-exporter
 
   # --------------------------------------------------------------------------------------------------------------------
+  # POSTGRES
+  # --------------------------------------------------------------------------------------------------------------------
+
+  # Внимание!
+  # Исходный образ `postgres` "заточен" на работу под одноименным пользователем.
+  # Если не переопределить пользователя при запуске контейнера,
+  # то логи не будут доступны контейнеру `log-exporter`, поскольку `PGDATA` будет недоступен (владелец -- postgres),
+  # а при использовании отдельного тома для логов сам `postgres` не будет иметь доступа к этому тому (владелец -- $user).
+  # Переопределение пользователя создает некоторые проблемы с использованием смежных файлов внутри контейнера,
+  # порождая ошибки, хотя и не критичные, поскольку основные данные все же будут доступны в `PGDATA`,
+  # но сигнализирующие о проблемах с интеграцией контейнера.
+  # Выявленные файлы/директории нужно монтировать отдельными томами для предоставления к ним доступа в контейнере --
+  # этот способ кажется меньшим из зол по сравнению с другими подобными костылями интеграции,
+  # например, передачей идентификатора пользователя аргументом при сборке образа для предоставления нужных прав.
+
+  infrastructure-postgres-master:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: infrastructure/postgres
+      dockerfile: build/server/master/Dockerfile
+    environment:
+      INIT_POSTGRES_PASSWORD: ${INFRASTRUCTURE_POSTGRES_CLIENT_POSTGRES_PASSWORD}
+      INIT_PROMETHEUS_EXPORTER_PASSWORD: ${INFRASTRUCTURE_POSTGRES_CLIENT_PROMETHEUS_EXPORTER_PASSWORD}
+      INIT_MIGRATOR_PASSWORD: ${INFRASTRUCTURE_POSTGRES_CLIENT_MIGRATOR_PASSWORD}
+      INIT_REPLICATOR_PASSWORD: ${INFRASTRUCTURE_POSTGRES_CLIENT_REPLICATOR_PASSWORD}
+      INIT_REPLICATION_SLOT_1: replica
+    volumes:
+      # см. infrastructure/postgres/state/server/README.md
+      - ./infrastructure/postgres/state/server/master/data/internal:/var/lib/postgresql/data
+      # Нельзя использовать папку логов по умолчанию "/var/lib/postgresql/data/log",
+      # поскольку в момент монтирования эта папка будет создана, и, соответственно, `PGDATA` окажется непустой,
+      # что приведет к ошибке инициализации кластера.
+      # Вариант с монтированием всей `PGDATA` и выборкой логов только из "log" папки небезопасен,
+      # поскольку экспортер логов фактически будет иметь доступ ко всем данным кластера.
+      - ./infrastructure/postgres/state/server/master/logs:/var/log/postgres
+      # При инициализации возникает ошибка "chmod: /var/run/postgresql: Operation not permitted" --
+      # вероятно, из-за попытки подключиться к кластеру через unix-сокет для выполнения инициализирующих скриптов.
+      # Монтировать полный путь "/var/run/postgresql" в этом случае нельзя,
+      # поскольку `chmod` не сможет изменить права на корневую папку тома -- поэтому нужно монтировать "/var/run".
+      - ./infrastructure/postgres/state/server/master/run:/var/run
+      # При выходе из `psql` внутри контейнера будет выполнена неудачная попытка записи в "//.psql_history".
+      # Эту ситуацию можно проигнорировать как весьма незначительную -- том не нужен.
+    develop:
+      watch:
+        - action: rebuild
+          path: infrastructure/postgres/build/server/healthcheck.sh
+        - action: rebuild
+          path: infrastructure/postgres/build/server/master
+
+  # --------------------------------------------------------------------------------------------------------------------
+
+  infrastructure-postgres-replica:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: infrastructure/postgres
+      dockerfile: build/server/replica/Dockerfile
+    environment:
+      INIT_REPLICATOR_PASSWORD: ${INFRASTRUCTURE_POSTGRES_CLIENT_REPLICATOR_PASSWORD}
+      INIT_REPLICATION_HOST: infrastructure-postgres-master
+      INIT_REPLICATION_SLOT: replica
+    volumes:
+      - ./infrastructure/postgres/state/server/replica/data/internal:/var/lib/postgresql/data
+      - ./infrastructure/postgres/state/server/replica/logs:/var/log/postgres
+      - ./infrastructure/postgres/state/server/replica/run:/var/run
+    develop:
+      watch:
+        - action: rebuild
+          path: infrastructure/postgres/build/server/healthcheck.sh
+        - action: rebuild
+          path: infrastructure/postgres/build/server/replica
+
+  # --------------------------------------------------------------------------------------------------------------------
+
+  # Внимание!
+  # Хотя используемый экспортер и поддерживает multi-target,
+  # его настройка в таком виде сложнее (например, из-за тех же прав доступа к файлам) и требует определенных костылей.
+  # Поэтому в данном случае проще использовать отдельные экспортеры для каждого хоста.
+
+  infrastructure-postgres-prometheus-exporter-master:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: infrastructure/postgres
+      dockerfile: build/prometheus-exporter/Dockerfile
+    environment:
+      DATA_SOURCE_URI: "infrastructure-postgres-master:5432/postgres?sslmode=disable"
+      DATA_SOURCE_USER: prometheus_exporter
+      DATA_SOURCE_PASS: ${INFRASTRUCTURE_POSTGRES_CLIENT_PROMETHEUS_EXPORTER_PASSWORD}
+    develop:
+      watch:
+        - action: rebuild
+          path: infrastructure/postgres/build/prometheus-exporter
+
+  infrastructure-postgres-prometheus-exporter-replica:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: infrastructure/postgres
+      dockerfile: build/prometheus-exporter/Dockerfile
+    environment:
+      DATA_SOURCE_URI: "infrastructure-postgres-replica:5432/postgres?sslmode=disable"
+      DATA_SOURCE_USER: prometheus_exporter
+      DATA_SOURCE_PASS: ${INFRASTRUCTURE_POSTGRES_CLIENT_PROMETHEUS_EXPORTER_PASSWORD}
+    develop:
+      watch:
+        - action: rebuild
+          path: infrastructure/postgres/build/prometheus-exporter
+
+  # --------------------------------------------------------------------------------------------------------------------
+
+  infrastructure-postgres-logs-exporter:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: infrastructure/postgres
+      dockerfile: build/logs-exporter/Dockerfile
+    volumes:
+      - ./infrastructure/postgres/state/logs-exporter:/state
+      - ./infrastructure/postgres/state/server/master/logs:/input/master
+      - ./infrastructure/postgres/state/server/replica/logs:/input/replica
+    develop:
+      watch:
+        - action: rebuild
+          path: infrastructure/postgres/build/logs-exporter
+
+  # --------------------------------------------------------------------------------------------------------------------
   # REDIS
   # --------------------------------------------------------------------------------------------------------------------
 

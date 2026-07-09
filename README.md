@@ -15,6 +15,7 @@
 - [`infrastructure`](infrastructure) -- инфраструктурные элементы, вынесенные отдельно для упрощения.
   - [`kafka`](infrastructure/kafka)
   - [`mysql`](infrastructure/mysql)
+  - [`postgres`](infrastructure/postgres)
   - [`redis`](infrastructure/redis)
 
 

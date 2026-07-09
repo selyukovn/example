@@ -56,6 +56,9 @@ x-prototypes:
       MYSQL_HOST: ${INFRASTRUCTURE_MYSQL_HOST_MASTER}
       MYSQL_USER: ${INFRASTRUCTURE_MYSQL_CLIENT_MIGRATION_USER}
       MYSQL_PASSWORD: ${INFRASTRUCTURE_MYSQL_CLIENT_MIGRATION_PASSWORD}
+      POSTGRES_HOST: ${INFRASTRUCTURE_POSTGRES_HOST_MASTER}
+      POSTGRES_USER: migrator
+      POSTGRES_PASSWORD: ${INFRASTRUCTURE_POSTGRES_CLIENT_MIGRATOR_PASSWORD}
       REDIS_HOST: ${INFRASTRUCTURE_REDIS_HOST_DB}
       REDIS_USER: ${INFRASTRUCTURE_REDIS_CLIENT_MIGRATION_USER}
       REDIS_PASSWORD: ${INFRASTRUCTURE_REDIS_CLIENT_MIGRATION_PASSWORD}
@@ -78,6 +81,7 @@ services:
     networks:
       - infrastructure-kafka-network
       - infrastructure-mysql-network
+      - infrastructure-postgres-network
       - infrastructure-redis-network
     depends_on:
       infrastructure-kafka-server-a:
@@ -93,6 +97,8 @@ services:
         condition: service_healthy
         restart: false
       infrastructure-mysql-master:
+        condition: service_healthy
+      infrastructure-postgres-master:
         condition: service_healthy
       infrastructure-redis-db:
         condition: service_healthy
@@ -103,6 +109,7 @@ services:
     networks:
       - infrastructure-kafka-network
       - infrastructure-mysql-network
+      - infrastructure-postgres-network
       - infrastructure-redis-network
     depends_on:
       infrastructure-kafka-server-a:
@@ -118,6 +125,8 @@ services:
         condition: service_healthy
         restart: false
       infrastructure-mysql-master:
+        condition: service_healthy
+      infrastructure-postgres-master:
         condition: service_healthy
       infrastructure-redis-db:
         condition: service_healthy
