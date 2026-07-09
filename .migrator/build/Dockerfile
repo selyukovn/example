@@ -31,7 +31,8 @@ COPY --from=librdkafka /librdkafka/compiled /usr
 # Поскольку мигратор теперь один, то нет смысла в requirements.txt -- проще уже иметь все пакеты в образе.
 RUN pip install \
     confluent-kafka==2.13.2 \
-    mysql-connector-python==9.2.0
+    mysql-connector-python==9.2.0 \
+    redis==7.4.0
 
 WORKDIR /migrations
 

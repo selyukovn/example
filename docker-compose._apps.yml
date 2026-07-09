@@ -224,6 +224,14 @@ services:
       - infrastructure-redis-network
       - admin-internal-network
 
+  infrastructure-redis-db:
+    extends:
+      file: docker-compose._app_infrastructure.yml
+      service: infrastructure-redis-db
+    networks:
+      - infrastructure-redis-network
+      - admin-internal-network
+
   infrastructure-redis-prometheus-exporter:
     extends:
       file: docker-compose._app_infrastructure.yml

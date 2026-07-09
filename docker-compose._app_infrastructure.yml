@@ -263,17 +263,36 @@ services:
         - action: rebuild
           path: infrastructure/redis/build/server/*.sh
 
+  infrastructure-redis-db:
+    user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
+    build:
+      context: infrastructure/redis
+      dockerfile: build/server/Dockerfile
+      args:
+        SERVER_TYPE: db
+    volumes:
+      - ./infrastructure/redis/state/server/db:/data
+    develop:
+      watch:
+        - action: rebuild
+          path: infrastructure/redis/build/server/db.conf
+        - action: rebuild
+          path: infrastructure/redis/build/server/Dockerfile
+        - action: rebuild
+          path: infrastructure/redis/build/server/*.sh
+
   infrastructure-redis-prometheus-exporter:
     user: "${DEPLOY_CONTAINER_USER_UID}:${DEPLOY_CONTAINER_USER_GID}"
     build:
       context: infrastructure/redis
       dockerfile: build/prometheus-exporter/Dockerfile
     environment:
-      REDIS_ADDR: redis://infrastructure-redis-cache:6379
       REDIS_USER: ${INFRASTRUCTURE_REDIS_CLIENT_PROMETHEUS_EXPORTER_USER}
       REDIS_PASSWORD: ${INFRASTRUCTURE_REDIS_CLIENT_PROMETHEUS_EXPORTER_PASSWORD}
     depends_on:
       infrastructure-redis-cache:
+        condition: service_healthy
+      infrastructure-redis-db:
         condition: service_healthy
     develop:
       watch:
