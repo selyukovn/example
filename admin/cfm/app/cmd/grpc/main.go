@@ -6,7 +6,9 @@ import (
 	adapt_domain_cfm_code "example/admin/cfm/internal/adapt/domain/cfm/code"
 	adapt_domain_event_storage "example/admin/cfm/internal/adapt/domain/event_storage"
 	api_grpc "example/admin/cfm/internal/api/grpc"
-	api_grpc_interceptors "example/admin/cfm/internal/api/grpc/interceptors"
+	api_grpc_handlers_cfm "example/admin/cfm/internal/api/grpc/handlers/cfm"
+	api_grpc_kernel "example/admin/cfm/internal/api/grpc/kernel"
+	api_grpc_middlewares "example/admin/cfm/internal/api/grpc/middlewares"
 	domain_cfm "example/admin/cfm/internal/domain/cfm"
 	domain_event_storage "example/admin/cfm/internal/domain/event_storage"
 	opera_domain_facades "example/admin/cfm/internal/opera/domain_facades"
@@ -21,6 +23,7 @@ import (
 	"github.com/selyukovn/go-std"
 	"github.com/selyukovn/go-std/logger"
 	"github.com/selyukovn/go-txr"
+	"google.golang.org/grpc"
 	"io"
 	"log/slog"
 	"os"
@@ -119,16 +122,31 @@ func main() {
 	// Launch
 	// -----------------------------------------------------------------------------------------------------------------
 
-	grpcServer := api_grpc.NewServer(
-		api_grpc.NewRouter(
+	grpcServer := api_grpc.NewServer(func() *grpc.Server {
+		s := grpc.NewServer(grpc.ChainUnaryInterceptor(
+			api_grpc_kernel.RootMiddleware(),
+			api_grpc_middlewares.PanicToError(func(ctx context.Context, pv any, ds []byte) error {
+				logger.PanicFf(ctx, pv, ds, "api_grpc_middlewares"+"."+"PanicToError"+"(outer)")
+				return api_grpc_kernel.ErrorInternal()
+			}),
+			api_grpc_middlewares.Metrics(),
+			api_grpc_middlewares.TraceGet(),
+			api_grpc_middlewares.LogBeginEnd(),
+			api_grpc_middlewares.PanicToError(func(ctx context.Context, pv any, ds []byte) error {
+				logger.PanicFf(ctx, pv, ds, "api_grpc_middlewares"+"."+"PanicToError"+"(inner)")
+				return api_grpc_kernel.ErrorInternal()
+			}),
+			api_grpc_middlewares.AccessKey(env.ApiGrpcApiKey),
+		))
+		api_grpc_handlers_cfm.Register(
+			s,
 			opera_use_cases_create_for_email.NewCommand(cfmDomFac),
 			opera_use_cases_request.NewCommand(operaGrt, cfmDomFac),
 			opera_use_cases_confirm.NewCommand(cfmDomFac),
-		),
-		api_grpc_interceptors.NewBoundary(),
-		api_grpc_interceptors.NewAccessKey(env.ApiGrpcApiKey),
-		api_grpc_interceptors.NewPrometheusMetrics(),
-	)
+			nil,
+		)
+		return s
+	}())
 
 	monServer := monitoring.NewMonitoringServer()
 

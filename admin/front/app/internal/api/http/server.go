@@ -2,8 +2,6 @@ package http
 
 import (
 	"context"
-	"example/admin/front/internal/api/http/kernel"
-	"example/admin/front/internal/infra/clients/gateway"
 	assert "github.com/selyukovn/go-wm-assert"
 	"net"
 	"net/http"
@@ -21,39 +19,12 @@ type Server struct {
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
-// NewServer
-//
-// Паникует при нулевых аргументах.
-func NewServer(
-	apiClient gateway.ApiClient,
-	appName string,
-	baseUrl string,
-	sessionCookieName string,
-) Server {
-	assert.Str().NotEmpty().Must(appName)
-	assert.Str().NotEmpty().Must(baseUrl)
-	assert.Str().NotEmpty().Must(sessionCookieName)
-
-	mux := http.NewServeMux()
-
-	// --
-
-	kernel.Configure(
-		baseUrl,
-		sessionCookieName,
-	)
-
-	registerRoutes(
-		apiClient,
-		mux,
-		appName,
-	)
-
-	// --
+func NewServer(handler http.Handler) Server {
+	assert.NotNilDeepMust(handler)
 
 	s := &http.Server{
 		Addr:    ":80",
-		Handler: mux,
+		Handler: handler,
 	}
 
 	return Server{

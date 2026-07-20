@@ -2,11 +2,9 @@ package sch
 
 import (
 	"context"
-	"example/admin/auth/internal/api/sch/kernel"
 	"github.com/robfig/cron/v3"
-	"github.com/selyukovn/go-std"
+	assert "github.com/selyukovn/go-wm-assert"
 	"sync"
-	"time"
 )
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -22,28 +20,8 @@ type Scheduler struct {
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
-func NewScheduler(
-	router Router,
-	fnInterceptors ...func(string, time.Duration) func(kernel.Handler) kernel.Handler,
-) Scheduler {
-	c := cron.New()
-
-	for _, name := range router.Routes() {
-		timeout, _ := router.RouteTimeout(name)
-
-		handler, _ := router.RouteHandler(name)
-		for i := len(fnInterceptors) - 1; i >= 0; i-- {
-			handler = fnInterceptors[i](name, timeout)(handler)
-		}
-
-		std.Must(c.AddFunc("@every "+timeout.String(), func() {
-			ctx := context.Background()
-			ctx, cancelCtx := context.WithTimeout(ctx, timeout)
-			defer cancelCtx()
-
-			handler(ctx)
-		}))
-	}
+func NewScheduler(c *cron.Cron) Scheduler {
+	assert.NotNilDeepMust(c)
 
 	return Scheduler{
 		c:  c,

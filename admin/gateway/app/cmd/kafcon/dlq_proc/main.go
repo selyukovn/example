@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	adapt_api_components_dlq "example/admin/gateway/internal/adapt/api/kafcon/components/dlq"
+	adapt_api_kafcon_handlers_admin_auth_events_loggable "example/admin/gateway/internal/adapt/api/kafcon/handlers/admin_auth_events/loggable"
+	adapt_api_kafcon_handlers_admin_auth_events_trace_get "example/admin/gateway/internal/adapt/api/kafcon/handlers/admin_auth_events/trace_get"
 	adapt_infra_cache_loggable "example/admin/gateway/internal/adapt/infra/cache/loggable"
 	adapt_infra_clients_auth_cachable "example/admin/gateway/internal/adapt/infra/clients/auth/cachable"
 	api_kafcon "example/admin/gateway/internal/api/kafcon"
-	api_kafcon_bundles "example/admin/gateway/internal/api/kafcon/bundles"
-	api_kafcon_bundles_admin_auth_events "example/admin/gateway/internal/api/kafcon/bundles/admin_auth_events"
+	api_kafcon_handlers_admin_auth_events "example/admin/gateway/internal/api/kafcon/handlers/admin_auth_events"
+	api_kafcon_handlers_admin_auth_events_kafapi "example/admin/gateway/internal/api/kafcon/handlers/admin_auth_events/kafapi"
+	api_kafcon_kernel "example/admin/gateway/internal/api/kafcon/kernel"
 	infra_cache "example/admin/gateway/internal/infra/cache"
 	infra_cache_redis "example/admin/gateway/internal/infra/cache/redis"
 	"flag"
@@ -94,18 +97,29 @@ func main() {
 
 	dlqStorage := adapt_api_components_dlq.NewStorageSQL(sqlTxr)
 
-	router := api_kafcon_bundles.NewRouter()
-	router.Register(
-		api_kafcon_bundles_admin_auth_events.TopicName,
-		api_kafcon_bundles_admin_auth_events.NewHandlerDecoratorDlq(
-			api_kafcon_bundles_admin_auth_events.NewHandlerDefault(sAuthCacher),
-			dlqStorage,
-		),
-	)
-
 	// -----------------------------------------------------------------------------------------------------------------
 	// Launch
 	// -----------------------------------------------------------------------------------------------------------------
+
+	router := api_kafcon_kernel.NewRouter()
+	api_kafcon_handlers_admin_auth_events.Register(
+		router,
+		sAuthCacher,
+		[]func(api_kafcon_handlers_admin_auth_events_kafapi.ServiceInterface) api_kafcon_handlers_admin_auth_events_kafapi.ServiceInterface{
+			func(service api_kafcon_handlers_admin_auth_events_kafapi.ServiceInterface) api_kafcon_handlers_admin_auth_events_kafapi.ServiceInterface {
+				return adapt_api_kafcon_handlers_admin_auth_events_trace_get.NewDecorator(
+					adapt_api_kafcon_handlers_admin_auth_events_loggable.NewDecorator(
+						service,
+					),
+				)
+			},
+		},
+		nil,
+	)
+
+	// Внимание!
+	// Функционал может быть существенно расширен и даже представлен в виде отдельного сервиса с UI,
+	// однако в рамках данного проекта в этом нет необходимости -- достаточно простого обработчика.
 
 	dlqProcessor := api_kafcon.NewDlqProcessor(dlqStorage, router)
 
@@ -113,10 +127,6 @@ func main() {
 	ctx = logger.AddAttrToCtx(ctx, "dlq_cli_id", strings.Replace(uuid.Must(uuid.NewRandom()).String(), "-", "", -1))
 	ctx = logger.AddAttrToCtx(ctx, "dlq_topic", argTopic)
 	ctx = logger.AddAttrToCtx(ctx, "dlq_group", argGroupId)
-
-	// Внимание!
-	// Функционал может быть существенно расширен и даже представлен в виде отдельного сервиса с UI,
-	// однако в рамках данного проекта в этом нет необходимости -- достаточно простого обработчика.
 
 	err := dlqProcessor.Process(ctx, argTopic, argGroupId)
 	if err != nil {

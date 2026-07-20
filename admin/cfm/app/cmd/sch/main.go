@@ -6,14 +6,16 @@ import (
 	adapt_domain_cfm_code "example/admin/cfm/internal/adapt/domain/cfm/code"
 	adapt_domain_event_storage "example/admin/cfm/internal/adapt/domain/event_storage"
 	api_sch "example/admin/cfm/internal/api/sch"
-	api_sch_handlers "example/admin/cfm/internal/api/sch/handlers"
-	api_sch_interceptors "example/admin/cfm/internal/api/sch/interceptors"
+	api_sch_handlers_tick_time "example/admin/cfm/internal/api/sch/handlers/tick_time"
+	api_sch_kernel "example/admin/cfm/internal/api/sch/kernel"
+	api_sch_middlewares "example/admin/cfm/internal/api/sch/middlewares"
 	domain_cfm "example/admin/cfm/internal/domain/cfm"
 	domain_event_storage "example/admin/cfm/internal/domain/event_storage"
 	opera_domain_facades "example/admin/cfm/internal/opera/domain_facades"
 	opera_use_cases_tick_time "example/admin/cfm/internal/opera/use_cases/tick_time"
 	"flag"
 	"fmt"
+	"github.com/robfig/cron/v3"
 	"github.com/selyukovn/example_gopkg/launcher"
 	"github.com/selyukovn/example_gopkg/monitoring"
 	goroutiner "github.com/selyukovn/go-routiner"
@@ -118,18 +120,22 @@ func main() {
 	// Launch
 	// -----------------------------------------------------------------------------------------------------------------
 
-	router := api_sch.NewRouter()
-	router.Register(
-		"tickTime",
-		10*time.Minute,
-		api_sch_handlers.NewTickTime(
+	scheduler := api_sch.NewScheduler(func() *cron.Cron {
+		xCron := cron.New()
+		api_sch_handlers_tick_time.Register(
+			xCron,
+			10*time.Minute,
 			opera_use_cases_tick_time.NewCommand(operaGrt, cfmDomFac),
-		),
-	)
-	scheduler := api_sch.NewScheduler(
-		router,
-		api_sch_interceptors.NewBoundary(),
-	)
+			[]api_sch_kernel.Middleware{
+				api_sch_middlewares.TraceSet(),
+				api_sch_middlewares.LogBeginEnd("TickTime"),
+				api_sch_middlewares.OnPanic(func(ctx context.Context, pv any, ds []byte) {
+					logger.PanicFf(ctx, pv, ds, "api_sch_middlewares"+"."+"OnPanic")
+				}),
+			},
+		)
+		return xCron
+	}())
 
 	monServer := monitoring.NewMonitoringServer()
 

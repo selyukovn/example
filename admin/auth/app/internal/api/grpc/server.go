@@ -2,7 +2,7 @@ package grpc
 
 import (
 	"context"
-	"example/admin/auth/internal/api/grpc/pb"
+	assert "github.com/selyukovn/go-wm-assert"
 	"google.golang.org/grpc"
 	"net"
 )
@@ -19,9 +19,8 @@ type Server struct {
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
-func NewServer(router Router, interceptors ...grpc.UnaryServerInterceptor) Server {
-	s := grpc.NewServer(grpc.ChainUnaryInterceptor(interceptors...))
-	pb.RegisterAuthServiceServer(s, router)
+func NewServer(s *grpc.Server) Server {
+	assert.NotNilDeepMust(s)
 
 	return Server{s: s}
 }

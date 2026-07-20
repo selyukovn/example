@@ -2,11 +2,15 @@ package main
 
 import (
 	adapt_api_components_dlq "example/admin/gateway/internal/adapt/api/kafcon/components/dlq"
+	adapt_api_kafcon_handlers_admin_auth_events_dlq "example/admin/gateway/internal/adapt/api/kafcon/handlers/admin_auth_events/dlq"
+	adapt_api_kafcon_handlers_admin_auth_events_loggable "example/admin/gateway/internal/adapt/api/kafcon/handlers/admin_auth_events/loggable"
+	adapt_api_kafcon_handlers_admin_auth_events_trace_get "example/admin/gateway/internal/adapt/api/kafcon/handlers/admin_auth_events/trace_get"
 	adapt_infra_cache_loggable "example/admin/gateway/internal/adapt/infra/cache/loggable"
 	adapt_infra_clients_auth_cachable "example/admin/gateway/internal/adapt/infra/clients/auth/cachable"
 	api_kafcon "example/admin/gateway/internal/api/kafcon"
-	api_kafcon_bundles "example/admin/gateway/internal/api/kafcon/bundles"
-	api_kafcon_bundles_admin_auth_events "example/admin/gateway/internal/api/kafcon/bundles/admin_auth_events"
+	api_kafcon_handlers_admin_auth_events "example/admin/gateway/internal/api/kafcon/handlers/admin_auth_events"
+	api_kafcon_handlers_admin_auth_events_kafapi "example/admin/gateway/internal/api/kafcon/handlers/admin_auth_events/kafapi"
+	api_kafcon_kernel "example/admin/gateway/internal/api/kafcon/kernel"
 	infra_cache "example/admin/gateway/internal/infra/cache"
 	infra_cache_redis "example/admin/gateway/internal/infra/cache/redis"
 	"flag"
@@ -81,36 +85,47 @@ func main() {
 
 	dlqStorage := adapt_api_components_dlq.NewStorageSQL(sqlTxr)
 
-	router := api_kafcon_bundles.NewRouter()
-	router.Register(
-		api_kafcon_bundles_admin_auth_events.TopicName,
-		api_kafcon_bundles_admin_auth_events.NewHandlerDecoratorDlq(
-			api_kafcon_bundles_admin_auth_events.NewHandlerDefault(sAuthCacher),
-			dlqStorage,
-		),
-	)
-
 	// -----------------------------------------------------------------------------------------------------------------
 	// Launch
 	// -----------------------------------------------------------------------------------------------------------------
 
+	router := api_kafcon_kernel.NewRouter()
+	api_kafcon_handlers_admin_auth_events.Register(
+		router,
+		sAuthCacher,
+		[]func(api_kafcon_handlers_admin_auth_events_kafapi.ServiceInterface) api_kafcon_handlers_admin_auth_events_kafapi.ServiceInterface{
+			func(service api_kafcon_handlers_admin_auth_events_kafapi.ServiceInterface) api_kafcon_handlers_admin_auth_events_kafapi.ServiceInterface {
+				return adapt_api_kafcon_handlers_admin_auth_events_trace_get.NewDecorator(
+					adapt_api_kafcon_handlers_admin_auth_events_loggable.NewDecorator(
+						service,
+					),
+				)
+			},
+		},
+		[]func(api_kafcon_kernel.HandlerInterface) api_kafcon_kernel.HandlerInterface{
+			func(handler api_kafcon_kernel.HandlerInterface) api_kafcon_kernel.HandlerInterface {
+				return adapt_api_kafcon_handlers_admin_auth_events_dlq.NewDecorator(handler, dlqStorage)
+			},
+		},
+	)
+
 	adminAuthEventsCnsA := api_kafcon.NewConsumer(
 		serviceName,
-		api_kafcon_bundles_admin_auth_events.TopicName,
+		api_kafcon_handlers_admin_auth_events.TopicName,
 		"a",
 		env.KafkaBrokersHostPorts,
 		router,
 	)
 	adminAuthEventsCnsB := api_kafcon.NewConsumer(
 		serviceName,
-		api_kafcon_bundles_admin_auth_events.TopicName,
+		api_kafcon_handlers_admin_auth_events.TopicName,
 		"b",
 		env.KafkaBrokersHostPorts,
 		router,
 	)
 	adminAuthEventsCnsC := api_kafcon.NewConsumer(
 		serviceName,
-		api_kafcon_bundles_admin_auth_events.TopicName,
+		api_kafcon_handlers_admin_auth_events.TopicName,
 		"c",
 		env.KafkaBrokersHostPorts,
 		router,

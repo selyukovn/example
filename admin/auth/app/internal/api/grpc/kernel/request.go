@@ -7,23 +7,13 @@ import (
 )
 
 // ---------------------------------------------------------------------------------------------------------------------
-// CTX
-// ---------------------------------------------------------------------------------------------------------------------
 
 const grpcCtxUnaryServerInfoRequestIdKey = "grpc.UnaryServerInfo.requestId"
 const grpcCtxUnaryServerInfoFullMethodKey = "grpc.UnaryServerInfo.fullMethod"
 
-// EnrichCtx
-//
-// Паникует при нулевых аргументах.
-func EnrichCtx(ctx context.Context, requestId string, fullMethod string) context.Context {
-	assert.NotNilDeepMust(ctx)
-	assert.Str().NotEmpty().Must(requestId)
-	assert.Str().NotEmpty().Must(fullMethod)
-
+func enrichCtx(ctx context.Context, requestId string, fullMethod string) context.Context {
 	ctx = context.WithValue(ctx, grpcCtxUnaryServerInfoRequestIdKey, requestId)
 	ctx = context.WithValue(ctx, grpcCtxUnaryServerInfoFullMethodKey, fullMethod)
-
 	return ctx
 }
 
@@ -32,14 +22,14 @@ func EnrichCtx(ctx context.Context, requestId string, fullMethod string) context
 // RequestId
 //
 // Паникует при нулевых аргументах.
-// Паникует, если контекст не обогащен через `kernel.EnrichCtx()`.
+// Паникует, если контекст не обогащен через `kernel.RootMiddleware()`.
 func RequestId(ctx context.Context) string {
 	assert.NotNilDeepMust(ctx)
 
 	v := ctx.Value(grpcCtxUnaryServerInfoRequestIdKey)
 
 	if v == nil {
-		panic("`kernel.RequestId`: похоже, `kernel.EnrichCtx` не был вызван")
+		panic("`kernel.RequestId`: похоже, `kernel.RootMiddleware` не был вызван")
 	}
 
 	return v.(string)
@@ -48,14 +38,14 @@ func RequestId(ctx context.Context) string {
 // FullMethod
 //
 // Паникует при нулевых аргументах.
-// Паникует, если контекст не обогащен через `kernel.EnrichCtx()`.
+// Паникует, если контекст не обогащен через `kernel.RootMiddleware()`.
 func FullMethod(ctx context.Context) string {
 	assert.NotNilDeepMust(ctx)
 
 	v := ctx.Value(grpcCtxUnaryServerInfoFullMethodKey)
 
 	if v == nil {
-		panic("`kernel.FullMethod`: похоже, `kernel.EnrichCtx` не был вызван")
+		panic("`kernel.FullMethod`: похоже, `kernel.RootMiddleware` не был вызван")
 	}
 
 	return v.(string)

@@ -11,15 +11,12 @@ import (
 
 const requestIdKey = "kernel.requestId"
 
-// EnrichRequest
-//
-// Паникует при нулевых аргументах.
-func EnrichRequest(r *http.Request, requestId string) {
+func enrichRequest(r *http.Request, requestId string) {
 	assert.NotNilDeepMust(r)
 	assert.Str().NotEmpty().Must(requestId)
 
 	// Добавление заголовков к полученному запросу кажется костылем, но даже если и так, то это меньшее зло.
-	// Интерфейсы методов `EnrichRequest(*http.Request)` и `RequestId(*http.Request)` согласованы -- это важнее.
+	// Интерфейсы методов `enrichRequest(*http.Request)` и `RequestId(*http.Request)` согласованы -- это важнее.
 	// Альтернативы:
 	// - Enrich(ctx) и RequestId(ctx) -- слишком широко, и с пакетом вяжется только термин RequestId.
 	// - r.Context() вместо хедеров использовать нельзя, поскольку контекст может быть извлечен до вызова этого метода
@@ -30,14 +27,14 @@ func EnrichRequest(r *http.Request, requestId string) {
 // RequestId -- см. `kernel.RequestIdFromCtx()`
 //
 // Паникует при нулевых аргументах.
-// Паникует, если запрос не был обогащен через `kernel.EnrichRequest()`.
+// Паникует, если запрос не был обогащен через `kernel.enrichRequest()`.
 func RequestId(r *http.Request) string {
 	assert.NotNilDeepMust(r)
 
 	v := r.Header.Get(requestIdKey)
 
 	if v == "" {
-		panic("`kernel.RequestId`: похоже, `kernel.EnrichRequest` не был вызван")
+		panic("`kernel.RequestId`: похоже, `kernel.enrichRequest` не был вызван")
 	}
 
 	return v
