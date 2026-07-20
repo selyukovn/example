@@ -1,8 +1,10 @@
 package sign_in_request
 
 import (
+	"context"
 	"example/admin/auth/internal/domain/account"
 	"example/admin/auth/internal/domain/cfm"
+	"example/admin/auth/internal/domain/client"
 	"example/admin/auth/internal/opera/domain_facades"
 	"github.com/selyukovn/go-std"
 	assert "github.com/selyukovn/go-wm-assert"
@@ -54,12 +56,10 @@ func NewCommand(
 //   - account.ErrorDeactivated
 //   - account.ErrorIpWhitelist
 //   - std.ErrorRuntime
-func (c Command) Execute(args Args) (Result, error) {
-	assert.FalseMust(args.IsNil())
-
-	ctx := args.Ctx()
-	cl := args.Client()
-	accEmail := args.Email()
+func (c Command) Execute(ctx context.Context, cl client.Client, accEmail std.Email) (Result, error) {
+	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
+	assert.Cmp[client.Client]().NotEq(client.ClientNil).Must(cl)
+	assert.Cmp[std.Email]().NotEq(std.EmailNil).Must(accEmail)
 
 	var err error
 

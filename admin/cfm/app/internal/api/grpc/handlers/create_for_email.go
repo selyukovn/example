@@ -20,7 +20,7 @@ func NewCreateForEmail(ucCreateForEmail create_for_email.Command) func(ctx conte
 
 		// --
 
-		res, err := ucCreateForEmail.Execute(create_for_email.NewArgs(ctx, email))
+		res, err := ucCreateForEmail.Execute(ctx, email)
 		switch err.(type) {
 		case nil:
 		case std.ErrorRuntime:

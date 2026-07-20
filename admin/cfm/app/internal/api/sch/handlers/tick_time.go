@@ -9,7 +9,7 @@ import (
 
 func NewTickTime(ucTickTime tick_time.Command) func(ctx context.Context) {
 	return func(ctx context.Context) {
-		err := ucTickTime.Execute(tick_time.NewArgs(ctx, 100))
+		err := ucTickTime.Execute(ctx, 100)
 		switch err.(type) {
 		case nil:
 		case std.ErrorRuntime:

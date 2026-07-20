@@ -52,13 +52,9 @@ func NewCommand(
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (c Command) Execute(args Args) error {
-	assert.FalseMust(args.IsNil())
-
-	ctx := args.Ctx()
-	limit := args.Limit()
-
-	// --
+func (c Command) Execute(ctx context.Context, limit uint) error {
+	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
+	assert.Num[uint]().Positive().Must(limit)
 
 	// Находим сессии на тик
 	sessIds, err := c.sessDomFac.GetIdsGoingToExpire(ctx, limit)

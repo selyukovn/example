@@ -32,7 +32,7 @@ func NewCheckSession(ucCheckSession check_session.Command) func(ctx context.Cont
 
 		// --
 
-		res, err := ucCheckSession.Execute(check_session.NewArgs(ctx, cl, sessId))
+		res, err := ucCheckSession.Execute(ctx, cl, sessId)
 		switch vErr := err.(type) {
 		case nil:
 		case std.ErrorNotFound:

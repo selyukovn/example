@@ -1,6 +1,7 @@
 package create_for_email
 
 import (
+	"context"
 	"example/admin/cfm/internal/opera/domain_facades"
 	"github.com/selyukovn/go-std"
 	assert "github.com/selyukovn/go-wm-assert"
@@ -41,11 +42,9 @@ func NewCommand(
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (c Command) Execute(args Args) (Result, error) {
-	assert.FalseMust(args.IsNil())
-
-	ctx := args.Ctx()
-	email := args.Email()
+func (c Command) Execute(ctx context.Context, email std.Email) (Result, error) {
+	assert.NotNilDeepMust(ctx)
+	assert.FalseMust(email.IsNil())
 
 	cfmId, expireAt, err := c.cfmDomFac.CreateForEmail(ctx, email)
 	switch err.(type) {

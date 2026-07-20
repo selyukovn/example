@@ -1,7 +1,9 @@
 package sign_out
 
 import (
+	"context"
 	"example/admin/auth/internal/domain/account"
+	"example/admin/auth/internal/domain/client"
 	"example/admin/auth/internal/domain/session"
 	"example/admin/auth/internal/opera/domain_facades"
 	"github.com/selyukovn/go-std"
@@ -51,12 +53,10 @@ func NewCommand(
 //   - account.ErrorIpWhitelist
 //   - std.ErrorAlreadyDone -- если уже закрыта
 //   - std.ErrorRuntime
-func (c Command) Execute(args Args) error {
-	assert.FalseMust(args.IsNil())
-
-	ctx := args.Ctx()
-	cl := args.Client()
-	sessId := args.SessId()
+func (c Command) Execute(ctx context.Context, cl client.Client, sessId session.Id) error {
+	assert.Cmp[context.Context]().NotEq(nil).Must(ctx)
+	assert.Cmp[client.Client]().NotEq(client.ClientNil).Must(cl)
+	assert.Cmp[session.Id]().NotEq(session.IdNil).Must(sessId)
 
 	var err error
 

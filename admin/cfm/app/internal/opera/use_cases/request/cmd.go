@@ -52,11 +52,9 @@ func NewCommand(
 //   - cfm.ErrorNoAttemptsLeft
 //   - cfm.ErrorRequestsFrequency
 //   - std.ErrorRuntime
-func (c Command) Execute(args Args) (Result, error) {
-	assert.FalseMust(args.IsNil())
-
-	ctx := args.Ctx()
-	cfmId := args.CfmId()
+func (c Command) Execute(ctx context.Context, cfmId cfm.Id) (Result, error) {
+	assert.NotNilDeepMust(ctx)
+	assert.FalseMust(cfmId.IsNil())
 
 	// запоминаем
 	cCode, email, canReqAgain, canReqAttemptsLeft, canReqAfter, err := c.cfmDomFac.Request(ctx, cfmId)

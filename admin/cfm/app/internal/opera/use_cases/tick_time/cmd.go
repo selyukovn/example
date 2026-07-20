@@ -52,13 +52,9 @@ func NewCommand(
 //
 // Ошибки:
 //   - std.ErrorRuntime
-func (c Command) Execute(args Args) error {
-	assert.FalseMust(args.IsNil())
-
-	ctx := args.Ctx()
-	limit := args.Limit()
-
-	// --
+func (c Command) Execute(ctx context.Context, limit uint) error {
+	assert.NotNilDeepMust(ctx)
+	assert.Num[uint]().Positive().Must(limit)
 
 	// Находим конфирмации на тик
 	cfmIds, err := c.cfmDomFac.GetIdsGoingToExpire(ctx, limit)

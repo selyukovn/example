@@ -31,7 +31,7 @@ func NewSignInRequest(ucSignInRequest sign_in_request.Command) func(ctx context.
 
 		// --
 
-		res, err := ucSignInRequest.Execute(sign_in_request.NewArgs(ctx, cl, email))
+		res, err := ucSignInRequest.Execute(ctx, cl, email)
 		switch err.(type) {
 		case nil:
 		case std.ErrorNotFound:
